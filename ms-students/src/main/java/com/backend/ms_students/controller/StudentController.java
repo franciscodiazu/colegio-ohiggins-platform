@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/students") // Coincide con la ruta configurada en el BFF
+@RequestMapping("/api/students") 
 public class StudentController {
 
     @Autowired
