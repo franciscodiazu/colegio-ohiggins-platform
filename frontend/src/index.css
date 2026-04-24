@@ -1,0 +1,13 @@
+/*
+  Root style entrypoint.
+  Keep imports ordered from foundations to components to responsive overrides.
+*/
+
+@import './styles/tokens.css';
+@import './styles/base.css';
+@import './styles/layout.css';
+@import './styles/forms.css';
+@import './styles/auth.css';
+@import './styles/dashboard.css';
+@import './styles/responsive.css';
+@import './styles/asistencia.css';

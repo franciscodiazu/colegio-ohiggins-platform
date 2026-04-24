@@ -1,0 +1,146 @@
+/* Generic page blocks */
+.page-section {
+  width: 100%;
+}
+
+.page-title {
+  margin: 0 0 1rem;
+}
+
+.section-title {
+  margin: 0 0 0.9rem;
+  color: var(--primary);
+}
+
+.section-title--spaced {
+  margin-top: 2rem;
+}
+
+/* Form cards */
+.form-card {
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+  border-radius: 12px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+}
+
+.form-card--md {
+  max-width: 500px;
+}
+
+.form-card--lg {
+  max-width: 650px;
+}
+
+.form-card--split {
+  flex: 1;
+  min-width: 290px;
+}
+
+.form-error {
+  color: #b42318;
+  background: #fee4e2;
+  border: 1px solid #fecdca;
+  border-radius: 8px;
+  padding: 0.65rem 0.8rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+}
+
+.form-success {
+  color: #166534;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+  border-radius: 8px;
+  padding: 0.65rem 0.8rem;
+  font-weight: 600;
+  margin: 0 0 1rem;
+}
+
+.field-group {
+  margin-bottom: 0.9rem;
+}
+
+.field-group--grow2 {
+  flex: 2;
+}
+
+.field-label {
+  display: block;
+  font-weight: 700;
+  margin-bottom: 0.35rem;
+  color: #1a376d;
+}
+
+.field-control {
+  width: 100%;
+  padding: 0.7rem 0.75rem;
+}
+
+.form-row {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.form-row--2 > * {
+  flex: 1;
+}
+
+.form-row--students-state > * {
+  flex: 1;
+}
+
+.split-layout {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Buttons */
+.btn {
+  padding: 0.65rem 1rem;
+  border: none;
+  border-radius: 10px;
+  color: #ffffff;
+  cursor: pointer;
+  font-weight: 700;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.btn:hover {
+  opacity: 0.98;
+  transform: translateY(-1px);
+}
+
+.btn:disabled {
+  opacity: 0.75;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn--block {
+  width: 100%;
+}
+
+.btn--primary {
+  background: #0056b3;
+}
+
+.btn--success {
+  background: #18794e;
+}
+
+.btn--indigo {
+  background: #5b3ac9;
+}
+
+.btn--info {
+  background: #0e7490;
+}
+
+.btn--neutral {
+  background: #475569;
+}
