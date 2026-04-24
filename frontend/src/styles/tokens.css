@@ -1,0 +1,15 @@
+@import url('https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap');
+
+/* Design tokens */
+:root {
+  --primary: #153e87;
+  --primary-hover: #1d4ea3;
+  --secondary: #2f7be9;
+  --bg-color: #edf2fb;
+  --card-bg: #ffffff;
+  --text-main: #12203b;
+  --text-muted: #5f6f86;
+  --border: #d6e1f0;
+  --shadow-soft: 0 10px 24px rgba(14, 34, 78, 0.08);
+  --shadow-hover: 0 14px 28px rgba(14, 34, 78, 0.14);
+}

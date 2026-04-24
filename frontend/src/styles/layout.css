@@ -1,0 +1,119 @@
+/* Main layout containers */
+.app-container,
+.layout-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.layout-section {
+  width: 100%;
+}
+
+.layout-section__header {
+  margin-bottom: 1.1rem;
+  padding: 0.2rem 0 0.6rem;
+  border-bottom: 1px solid rgba(38, 84, 167, 0.12);
+}
+
+.layout-section__title {
+  margin: 0;
+  font-size: clamp(1.25rem, 1.5vw, 1.55rem);
+}
+
+.layout-section__subtitle {
+  margin: 0.35rem 0 0;
+  color: var(--text-muted);
+  max-width: 72ch;
+}
+
+.layout-card {
+  border: 1px solid var(--border);
+  background: linear-gradient(180deg, #ffffff, #fdfefe);
+  border-radius: 14px;
+  padding: 1.25rem;
+  margin-bottom: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.layout-card--md {
+  max-width: 500px;
+}
+
+.layout-card--lg {
+  max-width: 650px;
+}
+
+.layout-card--split {
+  flex: 1;
+  min-width: 290px;
+}
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 2.5rem;
+}
+
+.header h1 {
+  color: var(--primary);
+  font-size: 2.2rem;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.5px;
+}
+
+.header p {
+  color: var(--text-muted);
+  font-size: 1.1rem;
+  margin-top: 0;
+}
+
+/* Navigation */
+.nav-bar {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  background-color: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(6px);
+  padding: 0.75rem;
+  border-radius: 12px;
+  box-shadow: var(--shadow-soft);
+  margin-bottom: 2rem;
+  border: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.nav-btn {
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background-color: transparent;
+  color: var(--text-muted);
+  transition: all 0.2s ease-in-out;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav-btn:hover {
+  background-color: var(--bg-color);
+  color: var(--primary);
+}
+
+.nav-btn.active {
+  background-color: var(--primary);
+  color: white;
+  box-shadow: 0 4px 10px rgba(21, 62, 135, 0.34);
+}
+
+.nav-btn:focus-visible {
+  outline: 3px solid rgba(59, 130, 246, 0.35);
+  outline-offset: 2px;
+}

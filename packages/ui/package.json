@@ -1,0 +1,31 @@
+{
+  "name": "@colegio-ohiggins/ui",
+  "version": "0.1.0",
+  "private": false,
+  "type": "module",
+  "main": "dist/colegio-ui.umd.js",
+  "module": "dist/colegio-ui.es.js",
+  "exports": {
+    ".": {
+      "import": "./dist/colegio-ui.es.js",
+      "require": "./dist/colegio-ui.umd.js"
+    },
+    "./styles.css": "./dist/ui.css"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite",
+    "preview": "vite preview"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^6.0.1",
+    "vite": "^8.0.1"
+  }
+}

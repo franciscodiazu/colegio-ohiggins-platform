@@ -1,0 +1,75 @@
+/* Responsive rules */
+@media (max-width: 768px) {
+  .layout-container,
+  .app-container {
+    padding: 1rem;
+  }
+
+  .nav-bar {
+    justify-content: stretch;
+  }
+
+  .nav-btn {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  .summary-strip {
+    grid-template-columns: 1fr;
+  }
+
+  .students-detail-grid {
+    gap: 0.55rem;
+  }
+
+  .session-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .auth-links {
+    justify-content: center;
+    gap: 0.35rem;
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .auth-link,
+  .auth-link:last-child {
+    text-align: center;
+  }
+
+  .auth-stage--hero {
+    grid-template-columns: 1fr;
+    border-radius: 16px;
+  }
+
+  .auth-hero {
+    min-height: 220px;
+    padding: 1.4rem 1.2rem;
+  }
+
+  .auth-card--hero {
+    border-radius: 0;
+    padding: 1.25rem 1rem;
+  }
+
+  .form-row {
+    flex-direction: column;
+  }
+
+  .eval-course-query {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .layout-card--split,
+  .layout-card--md,
+  .layout-card--lg,
+  .form-card--split,
+  .form-card--md,
+  .form-card--lg {
+    max-width: 100%;
+    min-width: 0;
+  }
+}
