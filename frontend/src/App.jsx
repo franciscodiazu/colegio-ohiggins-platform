@@ -5,6 +5,7 @@ import { LayoutContainer } from './components/layout/BaseLayout';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
+import Dashboard from './pages/Dashboard';
 import Estudiantes from './pages/Estudiantes';
 import Asistencia from './pages/Asistencia';
 import Evaluaciones from './pages/Evaluaciones';
@@ -15,6 +16,7 @@ import { USER_ROLES } from './services/authMockService';
 const SESSION_STORAGE_KEY = 'coh_platform_session';
 
 const NAV_ITEMS = [
+  { key: 'dashboard', label: 'Inicio' },
   { key: 'estudiantes', label: 'Estudiantes' },
   { key: 'asistencia', label: 'Asistencia' },
   { key: 'evaluaciones', label: 'Evaluaciones y Notas' },
@@ -34,7 +36,7 @@ const readInitialSession = () => {
   }
 };
 
-// ─── Componente: vista de módulo en preparación ───────────────────────────────
+// ─── Componente: módulo en preparación ───────────────────────────────────────
 
 function PendingAccessView() {
   return (
@@ -49,7 +51,8 @@ function PendingAccessView() {
 
 // ─── Componente: vistas del dashboard según navegación ────────────────────────
 
-function DashboardView({ vistaActual }) {
+function DashboardView({ vistaActual, session }) {
+  if (vistaActual === 'dashboard') return <Dashboard session={session} />;
   if (vistaActual === 'estudiantes') return <Estudiantes />;
   if (vistaActual === 'asistencia') return <Asistencia />;
   if (vistaActual === 'evaluaciones') return <Evaluaciones />;
@@ -59,7 +62,7 @@ function DashboardView({ vistaActual }) {
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 function App() {
-  const [vistaActual, setVistaActual] = useState('estudiantes');
+  const [vistaActual, setVistaActual] = useState('dashboard');
   const [session, setSession] = useState(readInitialSession);
   const [authView, setAuthView] = useState('login');
 
@@ -71,7 +74,7 @@ function App() {
 
   const handleLogout = () => {
     setSession(null);
-    setVistaActual('estudiantes');
+    setVistaActual('dashboard');
     localStorage.removeItem(SESSION_STORAGE_KEY);
   };
 
@@ -113,7 +116,7 @@ function App() {
 
       <main>
         {isProfesor ? (
-          <DashboardView vistaActual={vistaActual} />
+          <DashboardView vistaActual={vistaActual} session={session} />
         ) : (
           <PendingAccessView />
         )}

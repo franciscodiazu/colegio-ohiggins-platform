@@ -222,3 +222,181 @@
     border-top: 1px solid var(--border);
   }
 }
+
+/* ─── Dashboard ─────────────────────────────────────────────────────────────── */
+
+.dash-loading {
+  color: var(--text-muted);
+  padding: 2rem 0;
+  text-align: center;
+}
+
+/* Grid de métricas principales */
+.dash-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.8rem;
+  margin-bottom: 1.5rem;
+}
+
+/* Tarjeta de métrica */
+.dash-metric-card {
+  border-radius: 14px;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-soft);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.dash-metric-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+}
+
+.dash-metric-card--blue   { background: linear-gradient(135deg, #e8f0fe, #dbeafe); }
+.dash-metric-card--indigo { background: linear-gradient(135deg, #ede9fe, #ddd6fe); }
+.dash-metric-card--teal   { background: linear-gradient(135deg, #e6faf7, #ccfbf1); }
+.dash-metric-card--green  { background: linear-gradient(135deg, #dcfce7, #bbf7d0); }
+.dash-metric-card--amber  { background: linear-gradient(135deg, #fef9c3, #fef08a); }
+
+.dash-metric-card__label {
+  margin: 0 0 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.dash-metric-card__value {
+  margin: 0 0 0.2rem;
+  font-size: 2rem;
+  font-weight: 800;
+  color: var(--primary);
+  line-height: 1;
+}
+
+.dash-metric-card__sub {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+/* Layout de dos columnas */
+.dash-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.dash-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+/* Tarjeta de sección */
+.dash-section-card {
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.1rem 1.2rem;
+  background: #ffffff;
+  box-shadow: var(--shadow-soft);
+}
+
+.dash-section-card--full {
+  height: 100%;
+}
+
+.dash-section-card__title {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* Barra de progreso */
+.dash-progress-row {
+  margin-bottom: 1rem;
+}
+
+.dash-progress-row:last-child {
+  margin-bottom: 0;
+}
+
+.dash-progress-row__header {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.3rem;
+}
+
+.dash-progress-row__label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.dash-progress-row__pct {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.dash-progress-row__detail {
+  margin: 0.25rem 0 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.dash-progress-track {
+  height: 8px;
+  background: #e9eff8;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.dash-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+
+/* Lista de cursos */
+.dash-course-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dash-course-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  background: #f4f8ff;
+  border: 1px solid var(--border);
+}
+
+.dash-course-item__name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.dash-course-item__count {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .dash-metrics-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .dash-split {
+    grid-template-columns: 1fr;
+  }
+}
