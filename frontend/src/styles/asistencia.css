@@ -78,9 +78,147 @@
   width: auto;
 }
 
-.auth-hero__logo {
-  display: block;
-  width: 200px;
+/* ─── App header: barra superior con logo, nav y sesión ────────────────────── */
+
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.65rem 1rem;
   margin-bottom: 1.5rem;
-  /* sin filter */
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  background: linear-gradient(90deg, #ffffff, #f4f8ff);
+  box-shadow: var(--shadow-soft);
+  flex-wrap: wrap;
+}
+
+.app-header__brand {
+  flex-shrink: 0;
+}
+
+.app-header__logo {
+  height: 40px;
+  width: auto;
+  display: block;
+}
+
+.app-header__nav {
+  display: flex;
+  gap: 0.4rem;
+  flex: 1;
+  flex-wrap: wrap;
+}
+
+.app-header__session {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+/* ─── Avatar con inicial ────────────────────────────────────────────────────── */
+
+.session-avatar {
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+/* ─── Info de sesión ────────────────────────────────────────────────────────── */
+
+.session-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  line-height: 1;
+}
+
+.session-info__name {
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--text-main);
+  white-space: nowrap;
+}
+
+/* ─── Badge de rol ──────────────────────────────────────────────────────────── */
+
+.session-role-badge {
+  display: inline-block;
+  padding: 0.15rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+
+.session-role-badge--profesor {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.session-role-badge--estudiante {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.session-role-badge--apoderado {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+/* ─── Botón salir ───────────────────────────────────────────────────────────── */
+
+.btn--logout {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  font-size: 0.83rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+}
+
+.btn--logout:hover {
+  background: #fee2e2;
+  color: #991b1b;
+  border-color: #fca5a5;
+}
+
+/* ─── Responsive: header en móvil ───────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+  .app-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+  }
+
+  .app-header__nav {
+    justify-content: stretch;
+  }
+
+  .app-header__nav .nav-btn {
+    flex: 1 1 100%;
+    justify-content: center;
+  }
+
+  .app-header__session {
+    margin-left: 0;
+    justify-content: space-between;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--border);
+  }
 }
