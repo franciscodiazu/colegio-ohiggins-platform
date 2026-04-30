@@ -28,29 +28,31 @@ export default function Login({ onLogin, onGoToRegister, onGoToForgot }) {
 
   return (
     <div className="auth-shell">
-      <LayoutSection
-        className="login-section"
-        title="Ingreso a la Plataforma"
-        subtitle="Accede con tu cuenta institucional para continuar"
-      >
+      <LayoutSection className="login-section" title="Ingreso">
         <div className="auth-stage auth-stage--hero">
+
+          {/* Panel izquierdo: identidad institucional */}
           <article className="auth-hero" aria-hidden="true">
-            <p className="auth-hero__eyebrow">Colegio Bernardo O'Higgins</p>
+            <img
+              src="/logo-white.svg"
+              alt="Colegio Bernardo O'Higgins"
+              className="auth-hero__logo"
+            />
             <h3 className="auth-hero__title">Bienvenido de vuelta</h3>
             <p className="auth-hero__text">
-              Gestion academica en un entorno claro, confiable y pensado para la comunidad escolar.
+              Gestión académica en un entorno claro, confiable y pensado para la comunidad escolar.
             </p>
           </article>
 
+          {/* Panel derecho: formulario */}
           <LayoutCard className="auth-card auth-card--hero auth-form-panel">
-            <h3 className="auth-form-title">Iniciar sesion</h3>
+            <h3 className="auth-form-title">Iniciar sesión</h3>
+
             {error ? <p className="form-error">{error}</p> : null}
 
             <form className="auth-login-form" onSubmit={handleSubmit}>
               <div className="field-group">
-                <label className="field-label" htmlFor="correo-profesor">
-                  Correo
-                </label>
+                <label className="field-label" htmlFor="correo-profesor">Correo institucional</label>
                 <input
                   id="correo-profesor"
                   type="email"
@@ -63,9 +65,7 @@ export default function Login({ onLogin, onGoToRegister, onGoToForgot }) {
               </div>
 
               <div className="field-group">
-                <label className="field-label" htmlFor="clave-profesor">
-                  Contraseña
-                </label>
+                <label className="field-label" htmlFor="clave-profesor">Contraseña</label>
                 <input
                   id="clave-profesor"
                   type="password"
@@ -83,7 +83,7 @@ export default function Login({ onLogin, onGoToRegister, onGoToForgot }) {
                   checked={rememberMe}
                   onChange={(event) => setRememberMe(event.target.checked)}
                 />
-                <span>Recordar sesion</span>
+                <span>Recordar sesión</span>
               </label>
 
               <button type="submit" className="btn btn--primary btn--block" disabled={isSubmitting}>
@@ -96,10 +96,11 @@ export default function Login({ onLogin, onGoToRegister, onGoToForgot }) {
                 Crear cuenta
               </button>
               <button type="button" className="auth-link" onClick={onGoToForgot}>
-                Olvide mi contraseña
+                Olvidé mi contraseña
               </button>
             </div>
           </LayoutCard>
+
         </div>
       </LayoutSection>
     </div>

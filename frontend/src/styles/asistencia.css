@@ -55,3 +55,32 @@
   outline: 2px solid var(--secondary);
   outline-offset: -2px;
 }
+
+/* ─── Logo en páginas de autenticación ─────────────────────────────────────── */
+
+.auth-hero__logo {
+  display: block;
+  width: 200px;
+  margin-bottom: 1.5rem;
+  filter: brightness(0) invert(1); /* lo convierte a blanco para el fondo azul */
+}
+
+.auth-logo-header {
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0 1.2rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.2rem;
+}
+
+.auth-form-logo {
+  height: 52px;
+  width: auto;
+}
+
+.auth-hero__logo {
+  display: block;
+  width: 200px;
+  margin-bottom: 1.5rem;
+  /* sin filter */
+}

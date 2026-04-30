@@ -39,20 +39,22 @@ export default function ForgotPassword({ onGoToLogin }) {
 
   return (
     <div className="auth-shell">
-      <LayoutSection
-        title="Recuperar Contraseña"
-        subtitle="Proceso temporal local. Mas adelante se conectara con la base de datos y correo real."
-      >
+      <LayoutSection className="login-section" title="Recuperar contraseña">
         <div className="auth-stage">
           <LayoutCard className="layout-card--md auth-card auth-form-panel">
+
+            <div className="auth-logo-header">
+              <img src="/logo.svg" alt="Colegio Bernardo O'Higgins" className="auth-form-logo" />
+            </div>
+
+            <h3 className="auth-form-title">Recuperar contraseña</h3>
+
             {error ? <p className="form-error">{error}</p> : null}
             {success ? <p className="form-success">{success}</p> : null}
 
             <form onSubmit={handleSubmit}>
               <div className="field-group">
-                <label className="field-label" htmlFor="correo-recuperacion">
-                  Correo
-                </label>
+                <label className="field-label" htmlFor="correo-recuperacion">Correo institucional</label>
                 <input
                   id="correo-recuperacion"
                   type="email"
@@ -64,9 +66,7 @@ export default function ForgotPassword({ onGoToLogin }) {
               </div>
 
               <div className="field-group">
-                <label className="field-label" htmlFor="nueva-clave">
-                  Nueva contraseña
-                </label>
+                <label className="field-label" htmlFor="nueva-clave">Nueva contraseña</label>
                 <input
                   id="nueva-clave"
                   type="password"
@@ -78,9 +78,7 @@ export default function ForgotPassword({ onGoToLogin }) {
               </div>
 
               <div className="field-group">
-                <label className="field-label" htmlFor="confirmar-nueva-clave">
-                  Confirmar nueva contraseña
-                </label>
+                <label className="field-label" htmlFor="confirmar-nueva-clave">Confirmar nueva contraseña</label>
                 <input
                   id="confirmar-nueva-clave"
                   type="password"

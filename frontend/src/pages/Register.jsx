@@ -41,34 +41,34 @@ export default function Register({ onGoToLogin }) {
 
   return (
     <div className="auth-shell">
-      <LayoutSection
-        title="Crear Cuenta"
-        subtitle="Registra una cuenta temporal local. Mas adelante la conectaremos a base de datos."
-      >
+      <LayoutSection className="login-section" title="Crear cuenta">
         <div className="auth-stage">
           <LayoutCard className="layout-card--md auth-card auth-form-panel">
+
+            <div className="auth-logo-header">
+              <img src="/logo.svg" alt="Colegio Bernardo O'Higgins" className="auth-form-logo" />
+            </div>
+
+            <h3 className="auth-form-title">Crear cuenta</h3>
+
             {error ? <p className="form-error">{error}</p> : null}
             {success ? <p className="form-success">{success}</p> : null}
 
             <form onSubmit={handleSubmit}>
               <div className="field-group">
-                <label className="field-label" htmlFor="nombre-profesor">
-                  Nombre completo
-                </label>
+                <label className="field-label" htmlFor="nombre-profesor">Nombre completo</label>
                 <input
                   id="nombre-profesor"
                   type="text"
                   className="field-control"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
-                  placeholder="Ej: Ana Perez"
+                  placeholder="Ej: Ana Pérez"
                 />
               </div>
 
               <div className="field-group">
-                <label className="field-label" htmlFor="correo-registro">
-                  Correo
-                </label>
+                <label className="field-label" htmlFor="correo-registro">Correo institucional</label>
                 <input
                   id="correo-registro"
                   type="email"
@@ -80,9 +80,7 @@ export default function Register({ onGoToLogin }) {
               </div>
 
               <div className="field-group">
-                <label className="field-label" htmlFor="clave-registro">
-                  Contraseña
-                </label>
+                <label className="field-label" htmlFor="clave-registro">Contraseña</label>
                 <input
                   id="clave-registro"
                   type="password"
@@ -94,9 +92,7 @@ export default function Register({ onGoToLogin }) {
               </div>
 
               <div className="field-group">
-                <label className="field-label" htmlFor="clave-registro-confirmar">
-                  Confirmar contraseña
-                </label>
+                <label className="field-label" htmlFor="clave-registro-confirmar">Confirmar contraseña</label>
                 <input
                   id="clave-registro-confirmar"
                   type="password"
