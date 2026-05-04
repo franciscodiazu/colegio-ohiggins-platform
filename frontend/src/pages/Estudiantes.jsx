@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { LayoutCard, LayoutSection } from '../components/layout/BaseLayout';
 import { studentsMockService } from '../services/studentsMockService';
+import ConfirmModal from '../components/ConfirmModal';
+import TableSkeleton from '../components/TableSkeleton';
 
 const emptyFeedback = { error: '', success: '' };
 
@@ -9,25 +11,18 @@ export default function Estudiantes() {
   const [selectedStudentId, setSelectedStudentId] = useState(null);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [cursosDetalle, setCursosDetalle] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // Feedback separado por sección
   const [createFeedback, setCreateFeedback] = useState(emptyFeedback);
   const [editFeedback, setEditFeedback] = useState(emptyFeedback);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const [createForm, setCreateForm] = useState({
-    nombre: '',
-    correo: '',
-    curso: '',
-    telefono: '',
-    cursosAsociados: '',
+    nombre: '', correo: '', curso: '', telefono: '', cursosAsociados: '',
   });
 
   const [editForm, setEditForm] = useState({
-    nombre: '',
-    correo: '',
-    curso: '',
-    telefono: '',
-    cursosAsociados: '',
+    nombre: '', correo: '', curso: '', telefono: '', cursosAsociados: '',
   });
 
   const totalCursos = new Set(estudiantes.map((item) => item.curso)).size;
@@ -54,7 +49,12 @@ export default function Estudiantes() {
   };
 
   useEffect(() => {
-    cargarEstudiantes();
+    const bootstrap = async () => {
+      setLoading(true);
+      await cargarEstudiantes();
+      setLoading(false);
+    };
+    bootstrap();
   }, []);
 
   // ── Helpers ────────────────────────────────────────────────────────────────
@@ -95,7 +95,7 @@ export default function Estudiantes() {
     }
   };
 
-  // ── Handlers ───────────────────────────────────────────────────────────────
+  // ── Handlers ──────────────────────────────────────────────────────────────
 
   const handleRegisterStudent = async (e) => {
     e.preventDefault();
@@ -119,7 +119,7 @@ export default function Estudiantes() {
     }
   };
 
-  const handleUpdateStudent = async (e) => {
+  const handleUpdateClick = (e) => {
     e.preventDefault();
     setEditFeedback(emptyFeedback);
 
@@ -133,6 +133,13 @@ export default function Estudiantes() {
       setEditFeedback({ error: validationError, success: '' });
       return;
     }
+
+    setConfirmOpen(true);
+  };
+
+  const handleConfirmUpdate = async () => {
+    setConfirmOpen(false);
+    setEditFeedback(emptyFeedback);
 
     try {
       const updated = await studentsMockService.updateStudent(selectedStudentId, editForm);
@@ -170,16 +177,25 @@ export default function Estudiantes() {
       title="Gestión de Estudiantes"
       subtitle="Registra, consulta y actualiza la información de los estudiantes del establecimiento."
     >
+      <ConfirmModal
+        open={confirmOpen}
+        title="¿Actualizar información?"
+        message={`Estás a punto de modificar los datos de ${selectedStudent?.nombre || 'este estudiante'}. Esta acción sobreescribirá la información actual.`}
+        confirmText="Sí, actualizar"
+        cancelText="Cancelar"
+        variant="warning"
+        onConfirm={handleConfirmUpdate}
+        onCancel={() => setConfirmOpen(false)}
+      />
 
-      {/* ── Métricas rápidas ── */}
       <div className="summary-strip">
         <div className="summary-item">
           <p className="summary-item__label">Estudiantes registrados</p>
-          <p className="summary-item__value">{estudiantes.length}</p>
+          <p className="summary-item__value">{loading ? '—' : estudiantes.length}</p>
         </div>
         <div className="summary-item">
           <p className="summary-item__label">Cursos activos</p>
-          <p className="summary-item__value">{totalCursos}</p>
+          <p className="summary-item__value">{loading ? '—' : totalCursos}</p>
         </div>
         <div className="summary-item">
           <p className="summary-item__label">Estado del módulo</p>
@@ -187,89 +203,49 @@ export default function Estudiantes() {
         </div>
       </div>
 
-      {/* ════════════════════════════════════════════
-          SECCIÓN 1 — REGISTRO
-      ════════════════════════════════════════════ */}
+      {/* ① Registrar */}
       <div className="asistencia-section-label">
         <span className="asistencia-step-badge">1</span>
         <h3 className="asistencia-section-heading">Registrar nuevo estudiante</h3>
       </div>
 
       <LayoutCard className="layout-card--split students-panel">
-
         {createFeedback.error && <p className="form-error">{createFeedback.error}</p>}
         {createFeedback.success && <p className="form-success">{createFeedback.success}</p>}
 
         <form className="students-form" onSubmit={handleRegisterStudent}>
           <div className="field-group">
             <label className="field-label" htmlFor="create-est-nombre">Nombre completo</label>
-            <input
-              id="create-est-nombre"
-              type="text"
-              className="field-control"
-              value={createForm.nombre}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, nombre: e.target.value }))}
-              placeholder="Ej: Juan Pérez"
-            />
+            <input id="create-est-nombre" type="text" className="field-control" value={createForm.nombre}
+              onChange={(e) => setCreateForm((prev) => ({ ...prev, nombre: e.target.value }))} placeholder="Ej: Juan Pérez" />
           </div>
-
           <div className="field-group">
             <label className="field-label" htmlFor="create-est-correo">Correo</label>
-            <input
-              id="create-est-correo"
-              type="email"
-              className="field-control"
-              value={createForm.correo}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, correo: e.target.value }))}
-              placeholder="correo@alum.cl"
-            />
+            <input id="create-est-correo" type="email" className="field-control" value={createForm.correo}
+              onChange={(e) => setCreateForm((prev) => ({ ...prev, correo: e.target.value }))} placeholder="correo@alum.cl" />
           </div>
-
           <div className="form-row form-row--2">
             <div className="field-group">
               <label className="field-label" htmlFor="create-est-curso">Curso base</label>
-              <input
-                id="create-est-curso"
-                type="text"
-                className="field-control"
-                value={createForm.curso}
-                onChange={(e) => setCreateForm((prev) => ({ ...prev, curso: e.target.value }))}
-                placeholder="Ej: 1A"
-              />
+              <input id="create-est-curso" type="text" className="field-control" value={createForm.curso}
+                onChange={(e) => setCreateForm((prev) => ({ ...prev, curso: e.target.value }))} placeholder="Ej: 1A" />
             </div>
-
             <div className="field-group">
               <label className="field-label" htmlFor="create-est-telefono">Teléfono</label>
-              <input
-                id="create-est-telefono"
-                type="text"
-                className="field-control"
-                value={createForm.telefono}
-                onChange={(e) => setCreateForm((prev) => ({ ...prev, telefono: e.target.value }))}
-                placeholder="+56 9 ..."
-              />
+              <input id="create-est-telefono" type="text" className="field-control" value={createForm.telefono}
+                onChange={(e) => setCreateForm((prev) => ({ ...prev, telefono: e.target.value }))} placeholder="+56 9 ..." />
             </div>
           </div>
-
           <div className="field-group">
             <label className="field-label" htmlFor="create-est-cursos">Cursos asociados (separados por coma)</label>
-            <input
-              id="create-est-cursos"
-              type="text"
-              className="field-control"
-              value={createForm.cursosAsociados}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, cursosAsociados: e.target.value }))}
-              placeholder="Matemáticas, Lenguaje, Historia"
-            />
+            <input id="create-est-cursos" type="text" className="field-control" value={createForm.cursosAsociados}
+              onChange={(e) => setCreateForm((prev) => ({ ...prev, cursosAsociados: e.target.value }))} placeholder="Matemáticas, Lenguaje, Historia" />
           </div>
-
           <button type="submit" className="btn btn--primary btn--block">Registrar estudiante</button>
         </form>
       </LayoutCard>
 
-      {/* ════════════════════════════════════════════
-          SECCIÓN 2 — LISTADO
-      ════════════════════════════════════════════ */}
+      {/* ② Listado */}
       <div className="asistencia-section-label section-title--spaced">
         <span className="asistencia-step-badge">2</span>
         <h3 className="asistencia-section-heading">Listado de estudiantes</h3>
@@ -286,58 +262,46 @@ export default function Estudiantes() {
               <th>Acción</th>
             </tr>
           </thead>
-          <tbody>
-            {estudiantes.length === 0 ? (
-              <tr>
-                <td colSpan="5" className="empty-state-cell">No hay estudiantes registrados actualmente.</td>
-              </tr>
-            ) : (
-              estudiantes.map((est) => (
-                <tr
-                  key={est.id}
-                  className={selectedStudentId === est.id ? 'app-table__row--selected' : ''}
-                >
-                  <td>{est.id}</td>
-                  <td>{est.nombre}</td>
-                  <td>{est.correo}</td>
-                  <td>{est.curso}</td>
-                  <td>
-                    <button
-                      type="button"
-                      className="btn btn--neutral students-row-btn"
-                      onClick={() => handleSelectStudent(est.id)}
-                    >
-                      Ver detalle
-                    </button>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
+          {loading ? (
+            <TableSkeleton cols={5} rows={4} />
+          ) : (
+            <tbody>
+              {estudiantes.length === 0 ? (
+                <tr><td colSpan="5" className="empty-state-cell">No hay estudiantes registrados actualmente.</td></tr>
+              ) : (
+                estudiantes.map((est) => (
+                  <tr key={est.id} className={selectedStudentId === est.id ? 'app-table__row--selected' : ''}>
+                    <td>{est.id}</td>
+                    <td>{est.nombre}</td>
+                    <td>{est.correo}</td>
+                    <td>{est.curso}</td>
+                    <td>
+                      <button type="button" className="btn btn--neutral students-row-btn" onClick={() => handleSelectStudent(est.id)}>
+                        Ver detalle
+                      </button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          )}
         </table>
       </section>
 
-      {/* ════════════════════════════════════════════
-          SECCIÓN 3 — DETALLE Y EDICIÓN
-      ════════════════════════════════════════════ */}
+      {/* ③ Detalle y edición */}
       <div className="asistencia-section-label section-title--spaced">
         <span className="asistencia-step-badge">3</span>
         <h3 className="asistencia-section-heading">Detalle y actualización</h3>
       </div>
 
       <LayoutCard className="students-panel students-panel--detail">
-
         {!selectedStudent ? (
-          <p className="asistencia-hint">
-            👆 Selecciona un estudiante del listado para ver y editar su información.
-          </p>
+          <p className="asistencia-hint">Selecciona un estudiante del listado para ver y editar su información.</p>
         ) : (
           <div className="students-detail">
-
             {editFeedback.error && <p className="form-error">{editFeedback.error}</p>}
             {editFeedback.success && <p className="form-success">{editFeedback.success}</p>}
 
-            {/* Datos actuales */}
             <div className="students-detail-grid">
               <p><strong>ID:</strong> {selectedStudent.id}</p>
               <p><strong>Nombre:</strong> {selectedStudent.nombre}</p>
@@ -345,11 +309,8 @@ export default function Estudiantes() {
               <p><strong>Curso base:</strong> {selectedStudent.curso}</p>
             </div>
 
-            {/* Cursos asociados */}
             <div className="students-actions">
-              <button type="button" className="btn btn--info" onClick={handleLoadCourses}>
-                Consultar cursos asociados
-              </button>
+              <button type="button" className="btn btn--info" onClick={handleLoadCourses}>Consultar cursos asociados</button>
             </div>
 
             <div className="students-courses">
@@ -365,71 +326,39 @@ export default function Estudiantes() {
               )}
             </div>
 
-            {/* Formulario de edición */}
-            <form className="students-form" onSubmit={handleUpdateStudent}>
+            <form className="students-form" onSubmit={handleUpdateClick}>
               <div className="field-group">
                 <label className="field-label" htmlFor="edit-est-nombre">Nombre completo</label>
-                <input
-                  id="edit-est-nombre"
-                  type="text"
-                  className="field-control"
-                  value={editForm.nombre}
-                  onChange={(e) => setEditForm((prev) => ({ ...prev, nombre: e.target.value }))}
-                />
+                <input id="edit-est-nombre" type="text" className="field-control" value={editForm.nombre}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, nombre: e.target.value }))} />
               </div>
-
               <div className="field-group">
                 <label className="field-label" htmlFor="edit-est-correo">Correo</label>
-                <input
-                  id="edit-est-correo"
-                  type="email"
-                  className="field-control"
-                  value={editForm.correo}
-                  onChange={(e) => setEditForm((prev) => ({ ...prev, correo: e.target.value }))}
-                />
+                <input id="edit-est-correo" type="email" className="field-control" value={editForm.correo}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, correo: e.target.value }))} />
               </div>
-
               <div className="form-row form-row--2">
                 <div className="field-group">
                   <label className="field-label" htmlFor="edit-est-curso">Curso base</label>
-                  <input
-                    id="edit-est-curso"
-                    type="text"
-                    className="field-control"
-                    value={editForm.curso}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, curso: e.target.value }))}
-                  />
+                  <input id="edit-est-curso" type="text" className="field-control" value={editForm.curso}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, curso: e.target.value }))} />
                 </div>
-
                 <div className="field-group">
                   <label className="field-label" htmlFor="edit-est-telefono">Teléfono</label>
-                  <input
-                    id="edit-est-telefono"
-                    type="text"
-                    className="field-control"
-                    value={editForm.telefono}
-                    onChange={(e) => setEditForm((prev) => ({ ...prev, telefono: e.target.value }))}
-                  />
+                  <input id="edit-est-telefono" type="text" className="field-control" value={editForm.telefono}
+                    onChange={(e) => setEditForm((prev) => ({ ...prev, telefono: e.target.value }))} />
                 </div>
               </div>
-
               <div className="field-group">
                 <label className="field-label" htmlFor="edit-est-cursos">Cursos asociados (separados por coma)</label>
-                <input
-                  id="edit-est-cursos"
-                  type="text"
-                  className="field-control"
-                  value={editForm.cursosAsociados}
-                  onChange={(e) => setEditForm((prev) => ({ ...prev, cursosAsociados: e.target.value }))}
-                />
+                <input id="edit-est-cursos" type="text" className="field-control" value={editForm.cursosAsociados}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, cursosAsociados: e.target.value }))} />
               </div>
-
               <button type="submit" className="btn btn--success btn--block">Actualizar información</button>
             </form>
           </div>
         )}
       </LayoutCard>
-
     </LayoutSection>
   );
 }
