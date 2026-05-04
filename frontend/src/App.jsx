@@ -9,6 +9,7 @@ import Dashboard from './pages/Dashboard';
 import Estudiantes from './pages/Estudiantes';
 import Asistencia from './pages/Asistencia';
 import Evaluaciones from './pages/Evaluaciones';
+import NotFound from './pages/NotFound';
 import { USER_ROLES } from './services/authMockService';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
@@ -21,6 +22,9 @@ const NAV_ITEMS = [
   { key: 'asistencia', label: 'Asistencia' },
   { key: 'evaluaciones', label: 'Evaluaciones y Notas' },
 ];
+
+// Vistas válidas del sistema
+const VALID_VIEWS = new Set(NAV_ITEMS.map((item) => item.key));
 
 // ─── Helper: leer sesión guardada ─────────────────────────────────────────────
 
@@ -36,7 +40,7 @@ const readInitialSession = () => {
   }
 };
 
-// ─── Componente: módulo en preparación ───────────────────────────────────────
+// ─── Componente: módulo en preparación ────────────────────────────────────────
 
 function PendingAccessView() {
   return (
@@ -51,12 +55,13 @@ function PendingAccessView() {
 
 // ─── Componente: vistas del dashboard según navegación ────────────────────────
 
-function DashboardView({ vistaActual, session }) {
+function DashboardView({ vistaActual, session, onGoHome }) {
   if (vistaActual === 'dashboard') return <Dashboard session={session} />;
   if (vistaActual === 'estudiantes') return <Estudiantes />;
   if (vistaActual === 'asistencia') return <Asistencia />;
   if (vistaActual === 'evaluaciones') return <Evaluaciones />;
-  return null;
+  // Vista no reconocida → página 404
+  return <NotFound onGoHome={onGoHome} />;
 }
 
 // ─── Componente principal ─────────────────────────────────────────────────────
@@ -77,6 +82,13 @@ function App() {
     setVistaActual('dashboard');
     localStorage.removeItem(SESSION_STORAGE_KEY);
   };
+
+  // Navegación segura: solo permite vistas válidas
+  const handleNavigate = (key) => {
+    setVistaActual(VALID_VIEWS.has(key) ? key : 'not-found');
+  };
+
+  const handleGoHome = () => setVistaActual('dashboard');
 
   // ── Vista sin sesión: autenticación ──────────────────────────────────────────
 
@@ -109,14 +121,18 @@ function App() {
       <Navbar
         items={NAV_ITEMS}
         activeKey={vistaActual}
-        onChange={setVistaActual}
+        onChange={handleNavigate}
         session={session}
         onLogout={handleLogout}
       />
 
       <main>
         {isProfesor ? (
-          <DashboardView vistaActual={vistaActual} session={session} />
+          <DashboardView
+            vistaActual={vistaActual}
+            session={session}
+            onGoHome={handleGoHome}
+          />
         ) : (
           <PendingAccessView />
         )}

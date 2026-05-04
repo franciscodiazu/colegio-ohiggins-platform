@@ -1,41 +1,69 @@
-import { useState } from 'react';
 import { LayoutCard, LayoutSection } from '../components/layout/BaseLayout';
 import { registerUser } from '../services/authMockService';
+import { useFieldValidation, rules } from '../hooks/useFieldValidation';
+import FormField from '../components/FormField';
+import { useState } from 'react';
 
 export default function Register({ onGoToLogin }) {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [submitFeedback, setSubmitFeedback] = useState({ error: '', success: '' });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // ── Campos con validación individual ──────────────────────────────────────────
+
+  const nombre = useFieldValidation([
+    rules.required('El nombre'),
+  ]);
+
+  const email = useFieldValidation([
+    rules.required('El correo'),
+    rules.institutionalEmail(),
+  ]);
+
+  const password = useFieldValidation([
+    rules.required('La contraseña'),
+    rules.minLength(6),
+  ]);
+
+  const confirmPassword = useFieldValidation([
+    rules.required('La confirmación'),
+    rules.matchField(password.value, 'contraseña'),
+  ]);
+
+  // ── Handler de envío ───────────────────────────────────────────────────────────
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    setError('');
-    setSuccess('');
+    setSubmitFeedback({ error: '', success: '' });
+
+    // Validar todos los campos antes de enviar
+    const isValid = [
+      nombre.validate(),
+      email.validate(),
+      password.validate(),
+      confirmPassword.validate(),
+    ].every(Boolean);
+
+    if (!isValid) return;
+
     setIsSubmitting(true);
 
-    if (password !== confirmPassword) {
-      setError('Las contraseñas no coinciden.');
-      setIsSubmitting(false);
-      return;
-    }
-
-    const result = registerUser({ name, email, password });
+    const result = registerUser({
+      name: nombre.value,
+      email: email.value,
+      password: password.value,
+    });
 
     if (!result.ok) {
-      setError(result.error);
+      setSubmitFeedback({ error: result.error, success: '' });
       setIsSubmitting(false);
       return;
     }
 
-    setSuccess('Cuenta creada correctamente. Ahora puedes iniciar sesión.');
-    setName('');
-    setEmail('');
-    setPassword('');
-    setConfirmPassword('');
+    setSubmitFeedback({ error: '', success: 'Cuenta creada correctamente. Ahora puedes iniciar sesión.' });
+    nombre.reset();
+    email.reset();
+    password.reset();
+    confirmPassword.reset();
     setIsSubmitting(false);
   };
 
@@ -51,57 +79,62 @@ export default function Register({ onGoToLogin }) {
 
             <h3 className="auth-form-title">Crear cuenta</h3>
 
-            {error ? <p className="form-error">{error}</p> : null}
-            {success ? <p className="form-success">{success}</p> : null}
+            {submitFeedback.error && <p className="form-error">{submitFeedback.error}</p>}
+            {submitFeedback.success && <p className="form-success">{submitFeedback.success}</p>}
 
-            <form onSubmit={handleSubmit}>
-              <div className="field-group">
-                <label className="field-label" htmlFor="nombre-profesor">Nombre completo</label>
+            <form onSubmit={handleSubmit} noValidate>
+
+              <FormField id="nombre-profesor" label="Nombre completo" error={nombre.error} touched={nombre.touched}>
                 <input
                   id="nombre-profesor"
                   type="text"
-                  className="field-control"
-                  value={name}
-                  onChange={(event) => setName(event.target.value)}
+                  className={`field-control ${nombre.touched && nombre.error ? 'field-control--error' : ''}`}
+                  value={nombre.value}
+                  onChange={nombre.onChange}
+                  onBlur={nombre.onBlur}
                   placeholder="Ej: Ana Pérez"
+                  autoComplete="name"
                 />
-              </div>
+              </FormField>
 
-              <div className="field-group">
-                <label className="field-label" htmlFor="correo-registro">Correo institucional</label>
+              <FormField id="correo-registro" label="Correo institucional" error={email.error} touched={email.touched}>
                 <input
                   id="correo-registro"
                   type="email"
-                  className="field-control"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
-                  placeholder="correo@ejemplo.cl"
+                  className={`field-control ${email.touched && email.error ? 'field-control--error' : ''}`}
+                  value={email.value}
+                  onChange={email.onChange}
+                  onBlur={email.onBlur}
+                  placeholder="correo@profesor.cl"
+                  autoComplete="email"
                 />
-              </div>
+              </FormField>
 
-              <div className="field-group">
-                <label className="field-label" htmlFor="clave-registro">Contraseña</label>
+              <FormField id="clave-registro" label="Contraseña" error={password.error} touched={password.touched}>
                 <input
                   id="clave-registro"
                   type="password"
-                  className="field-control"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  placeholder="Crea una contraseña"
+                  className={`field-control ${password.touched && password.error ? 'field-control--error' : ''}`}
+                  value={password.value}
+                  onChange={password.onChange}
+                  onBlur={password.onBlur}
+                  placeholder="Mínimo 6 caracteres"
+                  autoComplete="new-password"
                 />
-              </div>
+              </FormField>
 
-              <div className="field-group">
-                <label className="field-label" htmlFor="clave-registro-confirmar">Confirmar contraseña</label>
+              <FormField id="clave-registro-confirmar" label="Confirmar contraseña" error={confirmPassword.error} touched={confirmPassword.touched}>
                 <input
                   id="clave-registro-confirmar"
                   type="password"
-                  className="field-control"
-                  value={confirmPassword}
-                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  className={`field-control ${confirmPassword.touched && confirmPassword.error ? 'field-control--error' : ''}`}
+                  value={confirmPassword.value}
+                  onChange={confirmPassword.onChange}
+                  onBlur={confirmPassword.onBlur}
                   placeholder="Repite la contraseña"
+                  autoComplete="new-password"
                 />
-              </div>
+              </FormField>
 
               <button type="submit" className="btn btn--primary btn--block" disabled={isSubmitting}>
                 {isSubmitting ? 'Creando cuenta...' : 'Crear cuenta'}

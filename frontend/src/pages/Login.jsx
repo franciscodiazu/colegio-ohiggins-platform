@@ -1,23 +1,44 @@
 import { useState } from 'react';
 import { LayoutCard, LayoutSection } from '../components/layout/BaseLayout';
 import { loginUser } from '../services/authMockService';
+import { useFieldValidation, rules } from '../hooks/useFieldValidation';
+import FormField from '../components/FormField';
 
 export default function Login({ onLogin, onGoToRegister, onGoToForgot }) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(true);
-  const [error, setError] = useState('');
+  const [submitError, setSubmitError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // ── Campos con validación individual ──────────────────────────────────────────
+
+  const email = useFieldValidation([
+    rules.required('El correo'),
+    rules.email(),
+  ]);
+
+  const password = useFieldValidation([
+    rules.required('La contraseña'),
+  ]);
+
+  // ── Handler de envío ───────────────────────────────────────────────────────────
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    setError('');
+    setSubmitError('');
+
+    const isValid = [
+      email.validate(),
+      password.validate(),
+    ].every(Boolean);
+
+    if (!isValid) return;
+
     setIsSubmitting(true);
 
-    const result = loginUser({ email, password });
+    const result = loginUser({ email: email.value, password: password.value });
 
     if (!result.ok) {
-      setError(result.error);
+      setSubmitError(result.error);
       setIsSubmitting(false);
       return;
     }
@@ -48,34 +69,35 @@ export default function Login({ onLogin, onGoToRegister, onGoToForgot }) {
           <LayoutCard className="auth-card auth-card--hero auth-form-panel">
             <h3 className="auth-form-title">Iniciar sesión</h3>
 
-            {error ? <p className="form-error">{error}</p> : null}
+            {submitError && <p className="form-error">{submitError}</p>}
 
-            <form className="auth-login-form" onSubmit={handleSubmit}>
-              <div className="field-group">
-                <label className="field-label" htmlFor="correo-profesor">Correo institucional</label>
+            <form className="auth-login-form" onSubmit={handleSubmit} noValidate>
+
+              <FormField id="correo-profesor" label="Correo institucional" error={email.error} touched={email.touched}>
                 <input
                   id="correo-profesor"
                   type="email"
-                  className="field-control"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
+                  className={`field-control ${email.touched && email.error ? 'field-control--error' : ''}`}
+                  value={email.value}
+                  onChange={email.onChange}
+                  onBlur={email.onBlur}
                   placeholder="correo@ejemplo.cl"
                   autoComplete="email"
                 />
-              </div>
+              </FormField>
 
-              <div className="field-group">
-                <label className="field-label" htmlFor="clave-profesor">Contraseña</label>
+              <FormField id="clave-profesor" label="Contraseña" error={password.error} touched={password.touched}>
                 <input
                   id="clave-profesor"
                   type="password"
-                  className="field-control"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
+                  className={`field-control ${password.touched && password.error ? 'field-control--error' : ''}`}
+                  value={password.value}
+                  onChange={password.onChange}
+                  onBlur={password.onBlur}
                   placeholder="Ingresa tu contraseña"
                   autoComplete="current-password"
                 />
-              </div>
+              </FormField>
 
               <label className="auth-remember">
                 <input

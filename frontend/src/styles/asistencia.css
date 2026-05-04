@@ -400,3 +400,249 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ─── ConfirmModal ───────────────────────────────────────────────────────────── */
+
+.confirm-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 22, 50, 0.45);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.confirm-modal__panel {
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 2rem 2rem 1.6rem;
+  width: min(100%, 420px);
+  box-shadow: 0 24px 48px rgba(10, 22, 50, 0.22);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.75rem;
+  animation: modal-in 0.18s ease;
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.95) translateY(8px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.confirm-modal__icon {
+  width: 3rem;
+  height: 3rem;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  font-weight: 800;
+  flex-shrink: 0;
+  margin-bottom: 0.25rem;
+}
+
+.confirm-modal__icon--danger  { background: #fee2e2; color: #991b1b; }
+.confirm-modal__icon--warning { background: #fef3c7; color: #92400e; }
+.confirm-modal__icon--info    { background: #dbeafe; color: #1e40af; }
+
+.confirm-modal__title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.confirm-modal__message {
+  margin: 0;
+  font-size: 0.92rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  max-width: 34ch;
+}
+
+.confirm-modal__actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+  width: 100%;
+  justify-content: center;
+}
+
+/* Variantes de botón para el modal */
+.btn--danger  { background: #dc2626; }
+.btn--warning { background: #d97706; }
+
+.btn--cancel {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  padding: 0.65rem 1.2rem;
+  border-radius: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn--cancel:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+/* ─── Skeleton loading ───────────────────────────────────────────────────────── */
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton-cell {
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #e8edf5 25%, #f4f7fc 50%, #e8edf5 75%);
+  background-size: 800px 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.skeleton-cell--label {
+  width: 70%;
+  height: 10px;
+  margin-bottom: 0.4rem;
+}
+
+.skeleton-cell--value {
+  width: 40%;
+  height: 28px;
+  border-radius: 8px;
+}
+
+.skeleton-row td {
+  padding: 0.9rem 0.75rem;
+}
+
+/* ─── TableSkeleton ──────────────────────────────────────────────────────────── */
+
+.skeleton-row td {
+  padding: 0.75rem;
+}
+
+.skeleton-cell {
+  height: 14px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #e8edf5 25%, #f4f7fc 50%, #e8edf5 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.4s ease infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ─── Validación visual de campos ────────────────────────────────────────────── */
+
+.field-group--error .field-label {
+  color: #b42318;
+}
+
+.field-control--error {
+  border-color: #f04438 !important;
+  background: #fffbfa;
+}
+
+.field-control--error:focus {
+  border-color: #f04438 !important;
+  box-shadow: 0 0 0 3px rgba(240, 68, 56, 0.12) !important;
+}
+
+.field-input-wrapper {
+  position: relative;
+}
+
+.field-error-icon {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  background: #f04438;
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.field-error-message {
+  margin: 0.3rem 0 0;
+  font-size: 0.8rem;
+  color: #b42318;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.field-error-message::before {
+  content: '';
+  display: inline-block;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #b42318;
+  flex-shrink: 0;
+}
+
+/* ─── Página 404 ─────────────────────────────────────────────────────────────── */
+
+.not-found {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 4rem 1rem;
+  min-height: 420px;
+}
+
+.not-found__code {
+  margin: 0 0 0.5rem;
+  font-size: clamp(5rem, 15vw, 9rem);
+  font-weight: 800;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  letter-spacing: -4px;
+  user-select: none;
+}
+
+.not-found__title {
+  margin: 0 0 0.75rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.not-found__message {
+  margin: 0 0 2rem;
+  max-width: 42ch;
+  color: var(--text-muted);
+  line-height: 1.6;
+  font-size: 0.97rem;
+}
+
+.not-found__btn {
+  padding: 0.75rem 2rem;
+  font-size: 0.95rem;
+}
