@@ -1,0 +1,17 @@
+# IDEs
+.idea/
+.vscode/
+*.iml
+
+# Dependencias accidentales en raíz
+node_modules/
+**/node_modules/
+
+# OS y Temporales
+.DS_Store
+Thumbs.db
+.*-lock.json
+
+# Entorno
+.env
+.env.*
