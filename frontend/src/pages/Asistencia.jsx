@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { LayoutCard, LayoutSection } from '../components/layout/BaseLayout';
 import { attendanceMockService } from '../services/attendanceMockService';
-import { studentsMockService } from '../services/studentsMockService';
+import { studentsService } from '../services/bffClient';
 import TableSkeleton from '../components/TableSkeleton';
 
 const estadoLabel = { PRESENTE: 'Presente', AUSENTE: 'Ausente', JUSTIFICADO: 'Justificado' };
@@ -39,7 +39,7 @@ export default function Asistencia() {
       setLoading(true);
       try {
         const [studentsList, classesList, attendanceList] = await Promise.all([
-          studentsMockService.listStudents(),
+          studentsService.listStudents(),
           attendanceMockService.listClasses(),
           attendanceMockService.listAttendanceRecords(),
         ]);

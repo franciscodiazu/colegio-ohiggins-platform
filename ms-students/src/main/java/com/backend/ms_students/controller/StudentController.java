@@ -37,4 +37,18 @@ public class StudentController {
                 .map(student -> new ResponseEntity<>(student, HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
+
+    // Actualizar estudiante existente
+    @PutMapping("/{id}")
+    public ResponseEntity<Student> updateStudent(@PathVariable Long id, @RequestBody Student studentDetails) {
+        return studentRepository.findById(id)
+                .map(student -> {
+                    student.setRut(studentDetails.getRut());
+                    student.setName(studentDetails.getName());
+                    student.setGrade(studentDetails.getGrade());
+                    Student updatedStudent = studentRepository.save(student);
+                    return new ResponseEntity<>(updatedStudent, HttpStatus.OK);
+                })
+                .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
+    }
 }

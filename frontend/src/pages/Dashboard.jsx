@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { LayoutSection } from '../components/layout/BaseLayout';
-import { studentsMockService } from '../services/studentsMockService';
+import { studentsService } from '../services/bffClient';
 import { attendanceMockService } from '../services/attendanceMockService';
 import { evaluationsMockService } from '../services/evaluationsMockService';
 
@@ -121,7 +121,7 @@ export default function Dashboard({ session }) {
     const bootstrap = async () => {
       try {
         const [studentsList, classesList, attendanceList, evalList, gradesList] = await Promise.all([
-          studentsMockService.listStudents(),
+          studentsService.listStudents(),
           attendanceMockService.listClasses(),
           attendanceMockService.listAttendanceRecords(),
           evaluationsMockService.listEvaluations(),

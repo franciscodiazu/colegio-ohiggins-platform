@@ -1,6 +1,6 @@
-﻿import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { LayoutCard, LayoutSection } from '../components/layout/BaseLayout';
-import { studentsMockService } from '../services/studentsMockService';
+import { studentsService } from '../services/bffClient';
 import { evaluationsMockService } from '../services/evaluationsMockService';
 import TableSkeleton from '../components/TableSkeleton';
 
@@ -37,7 +37,7 @@ export default function Evaluaciones() {
       setLoading(true);
       try {
         const [studentsList, evaluationsList, gradesList] = await Promise.all([
-          studentsMockService.listStudents(),
+          studentsService.listStudents(),
           evaluationsMockService.listEvaluations(),
           evaluationsMockService.listGrades(),
         ]);

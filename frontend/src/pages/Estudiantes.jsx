@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { LayoutCard, LayoutSection } from '../components/layout/BaseLayout';
-import { studentsMockService } from '../services/studentsMockService';
+import { studentsService } from '../services/bffClient';
 import ConfirmModal from '../components/ConfirmModal';
 import TableSkeleton from '../components/TableSkeleton';
 
@@ -31,7 +31,7 @@ export default function Estudiantes() {
 
   const cargarEstudiantes = async (keepSelection = true) => {
     try {
-      const list = await studentsMockService.listStudents();
+      const list = await studentsService.listStudents();
       setEstudiantes(list);
 
       if (!keepSelection) return;
@@ -70,7 +70,7 @@ export default function Estudiantes() {
     try {
       const source = Array.isArray(studentsCache) ? studentsCache : estudiantes;
       const local = source.find((item) => item.id === Number(studentId));
-      const detail = local || (await studentsMockService.getStudentById(studentId));
+      const detail = local || (await studentsService.getStudentById(studentId));
 
       if (!detail) {
         setSelectedStudent(null);
@@ -108,7 +108,7 @@ export default function Estudiantes() {
     }
 
     try {
-      const created = await studentsMockService.createStudent(createForm);
+      const created = await studentsService.createStudent(createForm);
       setCreateForm({ nombre: '', correo: '', curso: '', telefono: '', cursosAsociados: '' });
       await cargarEstudiantes(false);
       await handleSelectStudent(created.id);
@@ -142,7 +142,7 @@ export default function Estudiantes() {
     setEditFeedback(emptyFeedback);
 
     try {
-      const updated = await studentsMockService.updateStudent(selectedStudentId, editForm);
+      const updated = await studentsService.updateStudent(selectedStudentId, editForm);
       if (!updated) {
         setEditFeedback({ error: 'No encontramos el estudiante seleccionado.', success: '' });
         return;
@@ -162,7 +162,7 @@ export default function Estudiantes() {
       return;
     }
     try {
-      const courses = await studentsMockService.listStudentCourses(selectedStudentId);
+      const courses = await studentsService.listStudentCourses(selectedStudentId);
       setCursosDetalle(courses);
     } catch (err) {
       console.error('Error al consultar cursos', err);
