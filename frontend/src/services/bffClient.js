@@ -1,6 +1,8 @@
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8080';
+// Configuración de URL con soporte para variables de entorno (Docker/local)
+// VITE_API_URL se define en .env para Docker, o defaults a localhost para desarrollo local
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
 
 export const bffClient = axios.create({
     baseURL: API_URL,
