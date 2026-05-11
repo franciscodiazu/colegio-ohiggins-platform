@@ -9,7 +9,7 @@
 # -----------------------------------------------------------------------------
 # STAGE 1: Build
 # -----------------------------------------------------------------------------
-FROM maven:3.8.5-openjdk-17-slim AS builder
+FROM maven:3.9-eclipse-temurin-21-alpine AS builder
 
 # Labels de build
 LABEL stage=builder
@@ -36,7 +36,7 @@ RUN mvn clean package -DskipTests -B && \
 # -----------------------------------------------------------------------------
 # STAGE 2: Runtime
 # -----------------------------------------------------------------------------
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 
 # Labels para trazabilidad
 LABEL maintainer="Colegio Ohiggins DevOps Team"

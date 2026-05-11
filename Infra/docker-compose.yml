@@ -202,6 +202,8 @@ services:
     build:
       context: ../
       dockerfile: Infra/docker/frontend.Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://backend-bff:8080}
     container_name: colegio-frontend
     hostname: frontend
     restart: unless-stopped

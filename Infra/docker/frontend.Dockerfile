@@ -27,6 +27,9 @@ RUN npm ci --only=production=false
 # Copiar código fuente desde la carpeta frontend
 COPY frontend/ .
 
+# Definir ARG para VITE_API_URL (build-time)
+ARG VITE_API_URL=http://backend-bff:8080
+
 # Build de la aplicación
 RUN npm run build
 
