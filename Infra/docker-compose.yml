@@ -44,12 +44,12 @@ services:
     
     # Healthcheck para dependencias
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${DB_ROOT_PASSWORD}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+
     # Seguridad: No ejecutar como root
     security_opt:
       - no-new-privileges:true
@@ -74,7 +74,7 @@ services:
     container_name: colegio-ms-students
     hostname: ms-students
     restart: unless-stopped
-    
+
     environment:
       # Puerto del servicio
       SERVER_PORT: ${MS_STUDENTS_PORT:-8081}
@@ -108,7 +108,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
-      start_period: 45s
+      start_period: 90s
 
   # ===========================================================================
   # Microservicio: ms-attendance
@@ -119,8 +119,8 @@ services:
       dockerfile: Infra/docker/attendance.Dockerfile
     container_name: colegio-ms-attendance
     hostname: ms-attendance
-    restart: unless-stopped
-    
+    restart: on-failure
+
     environment:
       SERVER_PORT: ${MS_ATTENDANCE_PORT:-8082}
       
@@ -150,7 +150,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 5
-      start_period: 45s
+      start_period: 90s
 
    # ===========================================================================
    # Gateway BFF (Backend for Frontend)
@@ -161,8 +161,8 @@ services:
       dockerfile: Infra/docker/bff.Dockerfile
     container_name: colegio-bff
     hostname: backend-bff
-    restart: unless-stopped
-    
+    restart: on-failure
+
     environment:
       SERVER_PORT: ${BFF_PORT:-8080}
       
@@ -192,10 +192,10 @@ services:
 
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
-      interval: 15s
-      timeout: 5s
-      retries: 5
-      start_period: 45s
+      interval: 20s
+      timeout: 10s
+      retries: 6
+      start_period: 120s
 
   # ===========================================================================
   # Frontend (React + Vite)
@@ -222,7 +222,7 @@ services:
     
     depends_on:
       backend-bff:
-        condition: service_healthy
+        condition: service_started
 
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/"]
