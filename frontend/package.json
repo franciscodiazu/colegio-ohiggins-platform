@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@colegio-ohiggins/ui": "file:../packages/ui",
-    "axios": "^1.14.0",
+    "axios": "^1.16.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-router-dom": "^7.13.2"
@@ -25,6 +25,17 @@
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.4.0",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10",
     "vite": "^8.0.1"
+  },
+  "lint-staged": {
+    "*.{js,jsx}": [
+      "eslint --fix",
+      "eslint"
+    ],
+    "*.json": [
+      "prettier --write"
+    ]
   }
 }

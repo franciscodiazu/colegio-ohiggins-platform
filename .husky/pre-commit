@@ -1,0 +1,22 @@
+#!/bin/sh
+. "$(dirname "$0")/_/husky.sh"
+
+echo "Ejecutando chequeos antes del commit..."
+
+cd frontend || { echo "Error: No se encontró la carpeta frontend"; exit 1; }
+
+echo "→ Ejecutando lint-staged..."
+npx lint-staged
+if [ $? -ne 0 ]; then
+  echo "Error: Hay problemas de linting. Corrígelos antes de commitear."
+  exit 1
+fi
+
+echo "→ Ejecutando ESLint completo..."
+npm run lint
+if [ $? -ne 0 ]; then
+  echo "Error: ESLint detectó problemas en el código."
+  exit 1
+fi
+
+echo "Todo correcto. Commit permitido."

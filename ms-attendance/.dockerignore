@@ -1,0 +1,31 @@
+# Maven build artifacts
+target/
+.mvn/mvnw
+.mvn/mvnw.cmd
+
+# IDE
+.vscode/
+.idea/
+*.iml
+*.class
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# GIT
+.git/
+.gitignore
+
+# Node (en caso de que se llame desde frontend)
+node_modules/
+npm-debug.log
+
+# Env
+.env.local
+.env.*.local
+

@@ -1,0 +1,56 @@
+# Git
+.git
+.gitignore
+.gitattributes
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json.bak
+.npm
+
+# React/Vite
+dist/
+build/
+.env.local
+.env.*.local
+.vite
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+.editorconfig
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+.circleci/
+
+# Testing
+coverage/
+.nyc_output/
+
+# Terraform
+.terraform/
+*.tfstate*
+
+# Logs
+logs/
+*.log
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Root files (no necesarios en contenedor)
+README.md
+REPORTE*.txt
+LICENSE
+.gitpod.yml
+

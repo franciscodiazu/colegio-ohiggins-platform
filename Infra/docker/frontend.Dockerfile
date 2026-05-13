@@ -20,15 +20,17 @@ WORKDIR /app
 # Copiar archivos de dependencias primero (optimización de caché)
 # El contexto es la raíz del proyecto, por eso usamos frontend/
 COPY frontend/package*.json ./
+COPY frontend/vite.config.js ./
 
 # Instalar dependencias con npm ci (más rápido y determinista)
 RUN npm ci --only=production=false
 
 # Copiar código fuente desde la carpeta frontend
-COPY frontend/ .
+COPY frontend/. .
 
 # Definir ARG para VITE_API_URL (build-time)
 ARG VITE_API_URL=http://backend-bff:8080
+ENV VITE_API_URL=${VITE_API_URL}
 
 # Build de la aplicación
 RUN npm run build

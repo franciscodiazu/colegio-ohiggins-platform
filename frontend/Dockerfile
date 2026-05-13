@@ -13,6 +13,8 @@ RUN npm ci
 # Copiamos el resto del código del frontend
 COPY frontend/ .
 
+run ls -la src/hoks && ls -la src/components
+
 # Variable de entorno para el build de Vite
 ARG VITE_API_URL
 ENV VITE_API_URL=${VITE_API_URL}
