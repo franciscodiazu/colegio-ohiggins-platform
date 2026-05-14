@@ -6,6 +6,5 @@ class MsAttendanceApplicationTests {
 
     @Test
     void contextLoads() {
-        // Test desactivado: requiere conexión a MySQL
     }
 }
