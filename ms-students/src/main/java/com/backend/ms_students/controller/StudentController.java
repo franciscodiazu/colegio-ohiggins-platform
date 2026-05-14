@@ -1,7 +1,7 @@
 package com.backend.ms_students.controller;
 
 import com.backend.ms_students.model.Student;
-import com.backend.ms_students.repository.StudentRepository;
+import com.backend.ms_students.service.StudentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,25 +15,25 @@ import java.util.List;
 public class StudentController {
 
     @Autowired
-    private StudentRepository studentRepository;
+    private StudentService studentService;
 
     // Obtener todos los estudiantes
     @GetMapping
     public List<Student> getAllStudents() {
-        return studentRepository.findAll();
+        return studentService.getAllStudents();
     }
 
     // Registrar un nuevo estudiante (Validación tecnológica)
     @PostMapping
     public ResponseEntity<Student> createStudent(@RequestBody Student student) {
-        Student savedStudent = studentRepository.save(student);
+        Student savedStudent = studentService.createStudent(student);
         return new ResponseEntity<>(savedStudent, HttpStatus.CREATED);
     }
 
     // Buscar por ID (Útil para el perfil del alumno)
     @GetMapping("/{id}")
     public ResponseEntity<Student> getStudentById(@PathVariable Long id) {
-        return studentRepository.findById(id)
+        return studentService.getStudentById(id)
                 .map(student -> new ResponseEntity<>(student, HttpStatus.OK))
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
@@ -41,13 +41,9 @@ public class StudentController {
     // Actualizar estudiante existente
     @PutMapping("/{id}")
     public ResponseEntity<Student> updateStudent(@PathVariable Long id, @RequestBody Student studentDetails) {
-        return studentRepository.findById(id)
+        return studentService.updateStudent(id, studentDetails)
                 .map(student -> {
-                    student.setRut(studentDetails.getRut());
-                    student.setName(studentDetails.getName());
-                    student.setGrade(studentDetails.getGrade());
-                    Student updatedStudent = studentRepository.save(student);
-                    return new ResponseEntity<>(updatedStudent, HttpStatus.OK);
+                    return new ResponseEntity<>(student, HttpStatus.OK);
                 })
                 .orElse(new ResponseEntity<>(HttpStatus.NOT_FOUND));
     }
