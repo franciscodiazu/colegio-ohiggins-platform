@@ -1,38 +1,36 @@
 package com.backend.ms_students.service;
 
+import com.backend.ms_students.dto.StudentRequestDto;
+import com.backend.ms_students.exception.EntidadNoEncontradaException;
+import com.backend.ms_students.factory.StudentFactory;
 import com.backend.ms_students.model.Student;
 import com.backend.ms_students.repository.StudentRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import java.util.Map;
 
-import java.util.List;
-import java.util.Optional;
-
+@Slf4j
 @Service
+@Transactional
 public class StudentService {
 
-    @Autowired
-    private StudentRepository studentRepository;
+    private final StudentRepository repository;
+    private final Map<String, StudentFactory> factories;
 
-    public List<Student> getAllStudents() {
-        return studentRepository.findAll();
+    public StudentService(StudentRepository repository, Map<String, StudentFactory> factories) {
+        this.repository = repository;
+        this.factories = factories;
     }
 
-    public Student createStudent(Student student) {
-        return studentRepository.save(student);
+    public Student registrar(StudentRequestDto dto) {
+        log.info("Registrando estudiante RUT: {}", dto.getRut());
+        Student student = factories.get("REGULAR").crearEstudiante(dto);
+        return repository.save(student);
     }
 
-    public Optional<Student> getStudentById(Long id) {
-        return studentRepository.findById(id);
-    }
-
-    public Optional<Student> updateStudent(Long id, Student studentDetails) {
-        return studentRepository.findById(id)
-                .map(student -> {
-                    student.setRut(studentDetails.getRut());
-                    student.setName(studentDetails.getName());
-                    student.setGrade(studentDetails.getGrade());
-                    return studentRepository.save(student);
-                });
+    public Student obtenerPorId(Long id) {
+        return repository.findById(id)
+            .orElseThrow(() -> new EntidadNoEncontradaException("Estudiante no encontrado: " + id));
     }
 }
