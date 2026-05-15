@@ -33,7 +33,7 @@ export default function Evaluaciones() {
   const [queryFeedback, setQueryFeedback] = useState(emptyFeedback);
 
   useEffect(() => {
-    const bootstrap = async () => {
+    const loadInitialData = async () => {
       setLoading(true);
       try {
         const [studentsList, evaluationsList, gradesList] = await Promise.all([
@@ -50,7 +50,7 @@ export default function Evaluaciones() {
         setLoading(false);
       }
     };
-    bootstrap();
+    loadInitialData();
   }, []);
 
   const evaluationsById = useMemo(() => evaluaciones.reduce((acc, ev) => { acc[ev.id] = ev; return acc; }, {}), [evaluaciones]);
@@ -74,13 +74,13 @@ export default function Evaluaciones() {
     ? 0
     : (calificaciones.reduce((acc, g) => acc + Number(g.nota), 0) / calificaciones.length).toFixed(1);
 
-  const mapGradeRows = (grades) => grades.map((grade) => {
+  const mapGradeRowsWithDetails = (grades) => grades.map((grade) => {
     const evaluation = evaluationsById[grade.evaluationId];
     const student = studentsById[grade.studentId];
     return { ...grade, evaluationNombre: evaluation?.nombre || '-', evaluationFecha: evaluation?.fecha || '-', studentNombre: student?.nombre || '-' };
   });
 
-  const handleCrearEvaluacion = (e) => {
+  const handleAddEvaluation = (e) => {
     e.preventDefault();
     setCreateEvalFeedback(emptyFeedback);
     evaluationsMockService.createEvaluation(evaluationForm)
@@ -92,7 +92,7 @@ export default function Evaluaciones() {
       .catch((err) => setCreateEvalFeedback({ error: err.message || 'No se pudo registrar la evaluación.', success: '' }));
   };
 
-  const handleSelectEvaluationForEdit = (evaluationId) => {
+  const handleSelectEvaluationToEdit = (evaluationId) => {
     setSelectedEvaluationId(evaluationId);
     setEditEvalFeedback(emptyFeedback);
     const selected = evaluaciones.find((item) => item.id === Number(evaluationId));
@@ -100,7 +100,7 @@ export default function Evaluaciones() {
     setEditEvaluationForm({ nombre: selected.nombre, curso: selected.curso, fecha: selected.fecha, ponderacion: String(selected.ponderacion), descripcion: selected.descripcion || '' });
   };
 
-  const handleActualizarEvaluacion = (e) => {
+  const handleUpdateEvaluation = (e) => {
     e.preventDefault();
     setEditEvalFeedback(emptyFeedback);
     if (!selectedEvaluationId) { setEditEvalFeedback({ error: 'Selecciona una evaluación para actualizar.', success: '' }); return; }
@@ -113,7 +113,7 @@ export default function Evaluaciones() {
       .catch((err) => setEditEvalFeedback({ error: err.message || 'No se pudo actualizar la evaluación.', success: '' }));
   };
 
-  const handleRegistrarCalificacion = (e) => {
+  const handleAddGrade = (e) => {
     e.preventDefault();
     setGradeFeedback(emptyFeedback);
     evaluationsMockService.createGrade(gradeForm)
@@ -131,7 +131,7 @@ export default function Evaluaciones() {
     if (!queryStudentId) { setQueryFeedback({ error: 'Selecciona un estudiante para consultar sus calificaciones.', success: '' }); return; }
     evaluationsMockService.listGradesByStudent(queryStudentId)
       .then((records) => {
-        const mapped = mapGradeRows(records);
+        const mapped = mapGradeRowsWithDetails(records);
         setStudentQueryRows(mapped);
         setQueryFeedback({ error: '', success: `${mapped.length} registro(s) encontrado(s).` });
       })
@@ -180,7 +180,7 @@ export default function Evaluaciones() {
           <h3 className="section-title">Registrar nueva evaluación</h3>
           {createEvalFeedback.error && <p className="form-error">{createEvalFeedback.error}</p>}
           {createEvalFeedback.success && <p className="form-success">{createEvalFeedback.success}</p>}
-          <form className="module-form" onSubmit={handleCrearEvaluacion}>
+          <form className="module-form" onSubmit={handleAddEvaluation}>
             <div className="field-group">
               <label className="field-label" htmlFor="eval-name">Nombre de evaluación</label>
               <input id="eval-name" type="text" className="field-control" placeholder="Ej: Prueba Coef 1" value={evaluationForm.nombre}
@@ -222,11 +222,11 @@ export default function Evaluaciones() {
           )}
           {editEvalFeedback.error && <p className="form-error">{editEvalFeedback.error}</p>}
           {editEvalFeedback.success && <p className="form-success">{editEvalFeedback.success}</p>}
-          <form className="module-form" onSubmit={handleActualizarEvaluacion}>
+           <form className="module-form" onSubmit={handleUpdateEvaluation}>
             <div className="field-group">
               <label className="field-label" htmlFor="edit-evaluation-select">Evaluación a editar</label>
               <select id="edit-evaluation-select" className="field-control" value={selectedEvaluationId}
-                onChange={(e) => handleSelectEvaluationForEdit(e.target.value)}>
+                onChange={(e) => handleSelectEvaluationToEdit(e.target.value)}>
                 <option value="">-- Selecciona una evaluación --</option>
                 {evaluaciones.map((ev) => <option key={ev.id} value={ev.id}>{ev.nombre} ({ev.curso})</option>)}
               </select>
@@ -301,7 +301,7 @@ export default function Evaluaciones() {
         )}
         {gradeFeedback.error && <p className="form-error">{gradeFeedback.error}</p>}
         {gradeFeedback.success && <p className="form-success">{gradeFeedback.success}</p>}
-        <form className="module-form" onSubmit={handleRegistrarCalificacion}>
+        <form className="module-form" onSubmit={handleAddGrade}>
           <div className="field-group">
             <label className="field-label" htmlFor="grade-eval">Evaluación</label>
             <select id="grade-eval" className="field-control" value={gradeForm.evaluationId}

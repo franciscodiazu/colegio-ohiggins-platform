@@ -67,8 +67,33 @@ const validateGradePayload = (payload) => {
 
   const grade = Number(payload.nota);
   if (!Number.isFinite(grade) || grade < 1.0 || grade > 7.0) {
-    throw new Error('La nota debe estar en rango 1.0 a 7.0.');
+    throw new Error('La nota debe estar en rango 1.0 a 7.0 (escala chilena, exigencia al 60%).');
   }
+};
+
+/**
+ * Convierte puntaje porcentual (0-100) a escala de notas chilena (1.0-7.0).
+ * Aplicación de exigencia al 60%: puntuación menor a 60% = nota 1.0
+ * @param {number} scorePercent - Puntaje de 0 a 100
+ * @returns {number} Nota de 1.0 a 7.0, redondeada a 1 decimal
+ */
+const convertScoreToGrade = (scorePercent) => {
+  const score = Number(scorePercent);
+  if (!Number.isFinite(score) || score < 0 || score > 100) {
+    throw new Error('El puntaje debe estar entre 0 y 100.');
+  }
+
+  // Lógica chilena: Por debajo de 60% = nota mínima 1.0
+  if (score < 60) {
+    return 1.0;
+  }
+
+  // Conversión proporcional: 60-100 → 4.0-7.0
+  // Fórmula: ((score - 60) / 40) * 3 + 4
+  const grade = ((score - 60) / 40) * 3 + 4;
+
+  // Redondeo a 1 decimal (estándar chileno con MINSEDUC)
+  return Math.round(grade * 10) / 10;
 };
 
 export const evaluationsMockService = {
@@ -172,3 +197,6 @@ export const evaluationsMockService = {
     return delay(filtered);
   },
 };
+
+export { convertScoreToGrade };
+
