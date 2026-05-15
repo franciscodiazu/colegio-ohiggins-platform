@@ -15,3 +15,9 @@ Thumbs.db
 # Entorno
 .env
 .env.*
+
+# Maven logs
+*.log
+mvn-test.log
+mvw-debug.log
+target/
