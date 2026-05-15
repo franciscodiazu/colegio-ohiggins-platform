@@ -10,4 +10,14 @@ export default defineConfig({
       '@colegio-ohiggins/ui': resolve(__dirname, '../packages/ui/src/index.js'),
     },
   },
+  // Dev server proxy: forward any /api requests to the BFF
+  server: {
+    proxy: {
+      '/api': {
+        target: process.env.VITE_API_URL || 'http://localhost:8080',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
+  },
 })
