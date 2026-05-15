@@ -18,32 +18,32 @@ public class RestTemplateConfig {
 
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder) {
-        // Configuración de HttpClient con timeouts para resiliencia en AWS
+        // 1. Configuración de HttpClient 5 (Apache)
         RequestConfig requestConfig = RequestConfig.custom()
-            .setConnectTimeout(Timeout.ofSeconds(5))           // 5 segundos
-            .setResponseTimeout(Timeout.ofSeconds(10))         // 10 segundos (lectura)
-            .build();
+                .setConnectTimeout(Timeout.ofSeconds(5))
+                .setResponseTimeout(Timeout.ofSeconds(10))
+                .build();
 
-        // Pool de conexiones para mejor manejo de concurrencia y evitar leaks en AWS
-        PoolingHttpClientConnectionManager connectionManager =
-            new PoolingHttpClientConnectionManager();
-        connectionManager.setMaxTotal(100);                    // 100 conexiones totales
-        connectionManager.setDefaultMaxPerRoute(20);           // 20 por ruta
-        connectionManager.setValidateAfterInactivity(TimeValue.ofSeconds(30));  // Validar conexiones después de 30s inactivo
+        // 2. Gestión de Pool de conexiones
+        PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
+        connectionManager.setMaxTotal(100);
+        connectionManager.setDefaultMaxPerRoute(20);
+        // Usamos evict para limpiar conexiones inactivas, ideal para entornos AWS/Cloud
+        connectionManager.setValidateAfterInactivity(TimeValue.ofSeconds(30));
 
         CloseableHttpClient httpClient = HttpClients.custom()
-            .setDefaultRequestConfig(requestConfig)
-            .setConnectionManager(connectionManager)
-            .build();
+                .setDefaultRequestConfig(requestConfig)
+                .setConnectionManager(connectionManager)
+                .evictIdleConnections(TimeValue.ofMinutes(1)) // Limpieza automática de zombies
+                .build();
 
-        HttpComponentsClientHttpRequestFactory factory = 
-            new HttpComponentsClientHttpRequestFactory(httpClient);
+        HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpClient);
 
+        // 3. Builder de Spring modernizado (Sin "set", usando Duration directamente)
         return builder
-            .requestFactory(() -> factory)
-            .setConnectTimeout(Duration.ofSeconds(5))
-            .setReadTimeout(Duration.ofSeconds(10))
-            .build();
+                .requestFactory(() -> factory)
+                .connectTimeout(Duration.ofSeconds(5)) // Cambiado: de setConnectTimeout -> connectTimeout
+                .readTimeout(Duration.ofSeconds(10))   // Cambiado: de setReadTimeout -> readTimeout
+                .build();
     }
 }
-
