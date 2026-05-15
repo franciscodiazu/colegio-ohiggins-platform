@@ -9,6 +9,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.Map;
+import java.util.List;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -32,5 +34,27 @@ public class StudentService {
     public Student obtenerPorId(Long id) {
         return repository.findById(id)
             .orElseThrow(() -> new EntidadNoEncontradaException("Estudiante no encontrado: " + id));
+    }
+
+    // Compatibility methods used by legacy tests and controller layer.
+    public List<Student> getAllStudents() {
+        return repository.findAll();
+    }
+
+    public Student createStudent(Student student) {
+        return repository.save(student);
+    }
+
+    public Optional<Student> getStudentById(Long id) {
+        return repository.findById(id);
+    }
+
+    public Optional<Student> updateStudent(Long id, Student details) {
+        return repository.findById(id).map(existing -> {
+            existing.setRut(details.getRut());
+            existing.setName(details.getName());
+            existing.setGrade(details.getGrade());
+            return repository.save(existing);
+        });
     }
 }
