@@ -7,6 +7,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
+import java.util.List;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,35 +39,7 @@ public class StudentController {
     }
 
     // Legacy endpoints (absolute paths) for compatibility with tests and BFF
-    @GetMapping(path = "/api/students")
-    public ResponseEntity<List<Student>> getAllStudents() {
-        return ResponseEntity.ok(service.getAllStudents());
-    }
-
-    @PostMapping(path = "/api/students")
-    public ResponseEntity<Student> createStudent(@RequestBody Student student) {
-        Student saved = service.createStudent(student);
-        return ResponseEntity.status(HttpStatus.CREATED).body(saved);
-    }
-
-    @GetMapping(path = "/api/students/{id}")
-    public ResponseEntity<?> getStudentById(@PathVariable Long id) {
-        Optional<Student> s = service.getStudentById(id);
-        if (s.isPresent()) {
-            return ResponseEntity.ok(s.get());
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new RespuestaError("Estudiante no encontrado"));
-    }
-
-    @PutMapping(path = "/api/students/{id}")
-    public ResponseEntity<?> updateStudent(@PathVariable Long id, @RequestBody Student dto) {
-        dto.setId(id);
-        Optional<Student> updated = service.updateStudent(id, dto);
-        if (updated.isPresent()) {
-            return ResponseEntity.ok(updated.get());
-        }
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(new RespuestaError("Estudiante no encontrado para actualizar"));
-    }
+    // (Kept below a single set of legacy endpoints with explicit MediaType)
 
     public static record RespuestaError(String mensaje) {}
 

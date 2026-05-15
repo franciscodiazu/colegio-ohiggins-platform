@@ -35,4 +35,26 @@ public class StudentService {
         return repository.findById(id)
             .orElseThrow(() -> new EntidadNoEncontradaException("Estudiante no encontrado: " + id));
     }
+
+    // Métodos compatibles con tests y endpoints legacy
+    public List<Student> getAllStudents() {
+        return repository.findAll();
+    }
+
+    public Student createStudent(Student student) {
+        return repository.save(student);
+    }
+
+    public Optional<Student> getStudentById(Long id) {
+        return repository.findById(id);
+    }
+
+    public Optional<Student> updateStudent(Long id, Student details) {
+        return repository.findById(id).map(existing -> {
+            existing.setRut(details.getRut());
+            existing.setName(details.getName());
+            existing.setGrade(details.getGrade());
+            return repository.save(existing);
+        });
+    }
 }
