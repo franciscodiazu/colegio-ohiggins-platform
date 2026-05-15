@@ -73,7 +73,7 @@ public class ControladorAsistencia {
             content = @Content(
                 mediaType = "application/json",
                 schema = @Schema(implementation = RespuestaError.class, example =
-                    "{\"mensaje\": \"El servicio académico no está disponible. No se puede validar el estudiante.\"}")
+                    "{\"mensaje\": \"Validación temporalmente no disponible. Intente nuevamente más tarde.\"}")
             )
         ),
         @ApiResponse(
