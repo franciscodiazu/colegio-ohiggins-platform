@@ -94,7 +94,8 @@ services:
       LOGGING_LEVEL_ROOT: ${LOGGING_LEVEL_ROOT:-INFO}
     
     ports:
-      - "${MS_STUDENTS_PORT:-8081}:8081"
+      # Service port intentionally NOT published to the host to enforce access via BFF.
+      # In development you can publish by setting MS_STUDENTS_PORT if needed.
     
     networks:
       - colegio-network
@@ -136,7 +137,8 @@ services:
       LOGGING_LEVEL_ROOT: ${LOGGING_LEVEL_ROOT:-INFO}
     
     ports:
-      - "${MS_ATTENDANCE_PORT:-8082}:8082"
+      # Service port intentionally NOT published to the host to enforce access via BFF.
+      # In development you can publish by setting MS_ATTENDANCE_PORT if needed.
     
     networks:
       - colegio-network
