@@ -2,22 +2,14 @@ package com.backend.ms_attendance.service;
 
 import com.backend.ms_attendance.dto.AsistenciaRequestDto;
 import com.backend.ms_attendance.dto.EstadísticasAsistenciaDto;
-import com.backend.ms_attendance.exception.EntidadNoEncontradaException;
-import com.backend.ms_attendance.exception.ServicioNoDisponibleException;
 import com.backend.ms_attendance.factory.AsistenciaFactory;
 import com.backend.ms_attendance.model.RegistroAsistencia;
 import com.backend.ms_attendance.model.RegistroInasistencia;
 import com.backend.ms_attendance.model.RegistroAtraso;
 import com.backend.ms_attendance.repository.RepositorioRegistroAsistencia;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestClientResponseException;
-import org.springframework.http.ResponseEntity;
-import org.springframework.http.HttpStatus;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -29,23 +21,19 @@ public class ServicioAsistencia {
 
     private final Map<String, AsistenciaFactory> mapaFactory;
     private final RepositorioRegistroAsistencia repositorio;
-    private final RestTemplate restTemplate;
-    private final String urlServicioEstudiantes;
+    private final ClienteEstudiantes clienteEstudiantes;
 
     public ServicioAsistencia(
         Map<String, AsistenciaFactory> mapaFactory,
         RepositorioRegistroAsistencia repositorio,
-        RestTemplate restTemplate,
-        @Value("${services.students.url}") String urlServicioEstudiantes
+        ClienteEstudiantes clienteEstudiantes
     ) {
         this.mapaFactory = mapaFactory;
         this.repositorio = repositorio;
-        this.restTemplate = restTemplate;
-        this.urlServicioEstudiantes = urlServicioEstudiantes;
+        this.clienteEstudiantes = clienteEstudiantes;
 
         log.info("ServicioAsistencia inicializado con {} factories registradas",
             mapaFactory.size());
-        log.info("Servicio de Estudiantes URL configurada: {}", urlServicioEstudiantes);
         mapaFactory.forEach((clave, factory) ->
             log.debug("  - Factory registrada: {} -> {}", clave, factory.getClass().getSimpleName())
         );
@@ -59,7 +47,7 @@ public class ServicioAsistencia {
         // Si el estudiante no existe, se lanza EntidadNoEncontradaException (404)
         // Si el servicio no responde, se lanza ServicioNoDisponibleException (503)
         // La ejecución NO continúa más allá de este punto
-        validarExistenciaEstudiante(dto.getEstudianteId());
+        clienteEstudiantes.validarExistenciaEstudiante(dto.getEstudianteId());
 
         // BLOQUEANTE 2: Validación del DTO para el tipo de registro
         if (!dto.esValidoParaTipo()) {
@@ -113,73 +101,6 @@ public class ServicioAsistencia {
         } catch (Exception e) {
             log.error("Error CRÍTICO persistiendo registro: {}", e.getMessage(), e);
             throw new RuntimeException("Error guardando registro en base de datos", e);
-        }
-    }
-
-    private void validarExistenciaEstudiante(Long estudianteId) {
-        String urlValidacion = String.format("%s/api/v1/estudiantes/%d",
-            urlServicioEstudiantes, estudianteId);
-
-        log.debug("Validando existencia de estudiante ID {} en: {}",
-            estudianteId, urlValidacion);
-
-        try {
-            ResponseEntity<Object> respuesta = restTemplate.getForEntity(urlValidacion, Object.class);
-
-            if (respuesta.getStatusCode() != HttpStatus.OK) {
-                log.error(
-                    "Estudiante {} no validado. Status HTTP: {} en URL: {}",
-                    estudianteId, respuesta.getStatusCode(), urlValidacion
-                );
-                throw new EntidadNoEncontradaException(
-                    String.format(
-                        "Estudiante con ID %d no encontrado en el servicio académico.",
-                        estudianteId
-                    )
-                );
-            }
-
-            log.info("Estudiante ID {} VALIDADO correctamente en: {}",
-                estudianteId, urlValidacion);
-
-        } catch (RestClientResponseException e) {
-            // Error HTTP específico (ej: 404, 500)
-            log.error(
-                "Error HTTP {} al validar estudiante {}. URL consultada: {}. Mensaje: {}",
-                e.getRawStatusCode(), estudianteId, urlValidacion, e.getMessage(), e
-            );
-
-            if (e.getRawStatusCode() == 404) {
-                throw new EntidadNoEncontradaException(
-                    String.format(
-                        "Estudiante con ID %d no encontrado en el servicio académico.",
-                        estudianteId
-                    )
-                );
-            } else {
-                throw new ServicioNoDisponibleException(
-                    String.format(
-                        "El servicio académico no responde correctamente. " +
-                        "Status: %d. Estudiante ID: %d",
-                        e.getRawStatusCode(), estudianteId
-                    )
-                );
-            }
-
-        } catch (RestClientException e) {
-            // Error de conexión: timeout, conexión rechazada, DNS error, etc.
-            log.error(
-                "Falló la validación inter-servicio para estudiante {}. " +
-                "URL consultada: {}. Tipo de error: {}. Mensaje: {}",
-                estudianteId, urlValidacion, e.getClass().getSimpleName(), e.getMessage(), e
-            );
-            throw new ServicioNoDisponibleException(
-                String.format(
-                    "El servicio académico no está disponible. " +
-                    "No se puede validar el estudiante ID %d. Error: %s",
-                    estudianteId, e.getClass().getSimpleName()
-                ), e
-            );
         }
     }
 
