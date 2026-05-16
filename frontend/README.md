@@ -219,3 +219,13 @@ Para crear una cuenta de prueba, usar el formulario de **Registro** con cualquie
 - La capa de servicios mock simula tiempos de respuesta reales mediante `setTimeout` de 120ms, lo que permite apreciar los estados de carga (skeleton).
 - Los datos persisten entre sesiones gracias a localStorage. Para reiniciar el estado, abrir DevTools → Application → Local Storage → limpiar las claves con prefijo `coh_`.
 - El sistema está preparado para conectarse a un backend real: reemplazar el cuerpo de cada función en los archivos `*MockService.js` por llamadas HTTP sin modificar los componentes.
+
+---
+
+## Ética y responsabilidad
+
+La solución fue diseñada para un contexto académico y de demostración, por lo que evita el uso de datos personales reales en los flujos de prueba. Los registros que se almacenan en `localStorage` deben entenderse como información simulada y no como una fuente autorizada para datos sensibles.
+
+Además, la interfaz favorece el uso responsable del sistema al mostrar validaciones, confirmaciones y estados de carga claros antes de ejecutar acciones críticas. Esto reduce errores operativos y ayuda a mantener la trazabilidad de las operaciones de gestión académica.
+
+Finalmente, el proyecto promueve la transparencia técnica al separar la lógica de negocio en servicios reutilizables, lo que facilita auditoría, mantenimiento y futura sustitución de los mocks por integraciones reales sin alterar la experiencia de uso.
