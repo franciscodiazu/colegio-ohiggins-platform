@@ -42,8 +42,8 @@ LABEL maintainer="Colegio Ohiggins DevOps Team"
 LABEL version="1.0.0"
 LABEL description="Backend BFF - Spring Boot API Gateway"
 
-# Instalar utilidades necesarias (sin curl/wget para reducir superficie de ataque)
-RUN apk add --no-cache dumb-init
+# Instalar utilidades mínimas para healthcheck y arranque seguro
+RUN apk add --no-cache dumb-init curl
 
 # Crear usuario no-root para ejecutar la aplicación
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
@@ -59,9 +59,9 @@ COPY --from=builder /app/target/dependency/BOOT-INF/classes /app
 # Cambiar propietario a usuario no-root
 RUN chown -R appuser:appgroup /app
 
-# Health check (usando shell ya que no tenemos curl)
+# Health check basado en Actuator para reflejar disponibilidad real
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD pgrep java || exit 1
+    CMD curl -f http://localhost:8080/actuator/health || exit 1
 
 # Exponer puerto
 EXPOSE 8080
