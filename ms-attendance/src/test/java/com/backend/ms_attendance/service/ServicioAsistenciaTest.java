@@ -3,113 +3,232 @@ package com.backend.ms_attendance.service;
 import com.backend.ms_attendance.dto.AsistenciaRequestDto;
 import com.backend.ms_attendance.exception.EntidadNoEncontradaException;
 import com.backend.ms_attendance.exception.ServicioNoDisponibleException;
+import com.backend.ms_attendance.model.RegistroAsistencia;
+import com.backend.ms_attendance.repository.RepositorioRegistroAsistencia;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.test.web.client.MockRestServiceServer;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
+import static org.springframework.test.web.client.response.MockRestResponseCreators.*;
 
 @SpringBootTest
-@DisplayName("Tests de ServicioAsistencia")
+@DisplayName("Tests Consolidados de ServicioAsistencia e Infraestructura de Red")
 public class ServicioAsistenciaTest {
 
     @Autowired
     private ServicioAsistencia servicioAsistencia;
 
-    @MockBean
+    @Autowired
+    private RestTemplate restTemplate;
+
+    @Autowired
     private ClienteEstudiantes clienteEstudiantes;
 
+    @Autowired
+    private RepositorioRegistroAsistencia repositorio;
+
+    private MockRestServiceServer mockServer;
+    private final String urlEsperada = "http://ms-students:8081/api/v1/estudiantes/";
+
+    @BeforeEach
+    void setUp() {
+        mockServer = MockRestServiceServer.createServer(restTemplate);
+    }
+
     @Test
-    @DisplayName("❌ Crear asistencia con estudiante inexistente (404)")
+    @DisplayName("Crear asistencia con estudiante inexistente (404)")
     void testCrearAsistencia_EstudianteNoExiste() {
-        // GIVEN
         Long estudianteIdInvalido = 999L;
         AsistenciaRequestDto dto = new AsistenciaRequestDto();
         dto.setEstudianteId(estudianteIdInvalido);
         dto.setFechaRegistro(LocalDate.now());
         dto.setTipoRegistro("PRESENTE");
 
-        // WHEN
-        doThrow(new EntidadNoEncontradaException("Estudiante 999 no encontrado"))
-            .when(clienteEstudiantes)
-            .validarExistenciaEstudiante(estudianteIdInvalido);
+        mockServer.expect(requestTo(urlEsperada + estudianteIdInvalido))
+                .andRespond(withStatus(HttpStatus.NOT_FOUND));
 
-        // THEN
         assertThrows(
-            EntidadNoEncontradaException.class,
-            () -> servicioAsistencia.crearAsistencia(dto)
+                EntidadNoEncontradaException.class,
+                () -> servicioAsistencia.crearAsistencia(dto)
         );
 
-        verify(clienteEstudiantes, times(1)).validarExistenciaEstudiante(estudianteIdInvalido);
+        mockServer.verify();
     }
 
     @Test
     @DisplayName("Crear asistencia con servicio no disponible (503)")
     void testCrearAsistencia_ServicioNoDisponible() {
-        // GIVEN
         Long estudianteId = 1002L;
         AsistenciaRequestDto dto = new AsistenciaRequestDto();
         dto.setEstudianteId(estudianteId);
         dto.setFechaRegistro(LocalDate.now());
         dto.setTipoRegistro("PRESENTE");
 
-        // WHEN
-        doThrow(new ServicioNoDisponibleException("ms-students timeout"))
-            .when(clienteEstudiantes)
-            .validarExistenciaEstudiante(estudianteId);
+        mockServer.expect(requestTo(urlEsperada + estudianteId))
+                .andRespond(withStatus(HttpStatus.INTERNAL_SERVER_ERROR));
 
-        // THEN
         assertThrows(
-            ServicioNoDisponibleException.class,
-            () -> servicioAsistencia.crearAsistencia(dto)
+                ServicioNoDisponibleException.class,
+                () -> servicioAsistencia.crearAsistencia(dto)
         );
+        mockServer.verify();
     }
 
     @Test
     @DisplayName("Factory no existe para tipo (bloqueante 3)")
     void testCrearAsistencia_FactoryNoExiste() {
-        // GIVEN - Factory no registrada en Context
         Long estudianteId = 1001L;
         AsistenciaRequestDto dto = new AsistenciaRequestDto();
         dto.setEstudianteId(estudianteId);
         dto.setFechaRegistro(LocalDate.now());
         dto.setTipoRegistro("TIPO_INEXISTENTE");
 
-        // WHEN
-        doNothing().when(clienteEstudiantes).validarExistenciaEstudiante(estudianteId);
+        mockServer.expect(requestTo(urlEsperada + estudianteId))
+                .andRespond(withSuccess("true", MediaType.APPLICATION_JSON));
 
-        // THEN - Factory no está registrada
         assertThrows(
-            IllegalArgumentException.class,
-            () -> servicioAsistencia.crearAsistencia(dto)
+                IllegalArgumentException.class,
+                () -> servicioAsistencia.crearAsistencia(dto)
         );
+        mockServer.verify();
     }
 
     @Test
     @DisplayName("Validación de estudiante es prioritaria (bloqueante 1)")
     void testValidacionEsPrimero() {
-        // GIVEN
         Long estudianteId = 1001L;
         AsistenciaRequestDto dto = new AsistenciaRequestDto();
         dto.setEstudianteId(estudianteId);
         dto.setFechaRegistro(LocalDate.now());
         dto.setTipoRegistro("PRESENTE");
 
-        // WHEN
-        doThrow(new EntidadNoEncontradaException("No existe"))
-            .when(clienteEstudiantes)
-            .validarExistenciaEstudiante(estudianteId);
+        mockServer.expect(requestTo(urlEsperada + estudianteId))
+                .andRespond(withStatus(HttpStatus.NOT_FOUND));
 
-        // THEN - Bloqueante 1 se ejecuta PRIMERO, antes que cualquier otro
-        assertThrows(EntidadNoEncontradaException.class, 
-            () -> servicioAsistencia.crearAsistencia(dto));
+        assertThrows(
+                EntidadNoEncontradaException.class,
+                () -> servicioAsistencia.crearAsistencia(dto)
+        );
 
-        verify(clienteEstudiantes, times(1)).validarExistenciaEstudiante(estudianteId);
+        mockServer.verify();
+    }
+
+    @Test
+    @DisplayName("Crear asistencia tipo PRESENTE exitosamente")
+    void testCrearAsistencia_PresenteExitoso() {
+        Long estudianteId = 1001L;
+        AsistenciaRequestDto dto = new AsistenciaRequestDto();
+        dto.setEstudianteId(estudianteId);
+        dto.setFechaRegistro(LocalDate.now());
+        dto.setTipoRegistro("PRESENTE");
+
+        mockServer.expect(requestTo(urlEsperada + estudianteId))
+                .andRespond(withSuccess("true", MediaType.APPLICATION_JSON));
+
+        RegistroAsistencia resultado = servicioAsistencia.crearAsistencia(dto);
+
+        assertNotNull(resultado);
+        assertEquals("PRESENTE", resultado.obtenerEstado());
+        assertEquals(estudianteId, resultado.getEstudianteId());
+        mockServer.verify();
+    }
+
+    @Test
+    @DisplayName("Crear asistencia tipo ATRASO exitosamente")
+    void testCrearAsistencia_AtrasoExitoso() {
+        Long estudianteId = 1001L;
+        AsistenciaRequestDto dto = new AsistenciaRequestDto();
+        dto.setEstudianteId(estudianteId);
+        dto.setFechaRegistro(LocalDate.now());
+        dto.setTipoRegistro("ATRASO");
+        dto.setHoraLlegada(LocalTime.of(8, 30));
+
+        mockServer.expect(requestTo(urlEsperada + estudianteId))
+                .andRespond(withSuccess("true", MediaType.APPLICATION_JSON));
+
+        RegistroAsistencia resultado = servicioAsistencia.crearAsistencia(dto);
+
+        assertNotNull(resultado);
+        assertEquals("ATRASO", resultado.obtenerEstado());
+        assertEquals(estudianteId, resultado.getEstudianteId());
+        mockServer.verify();
+    }
+
+    @Test
+    @DisplayName("ClienteEstudiantes debe responder exitosamente ante payload JSON válido")
+    void testClienteEstudiantes_CasoFeliz() {
+        Long estudianteId = 1L;
+        mockServer.expect(requestTo(urlEsperada + estudianteId))
+                .andRespond(withSuccess("true", MediaType.APPLICATION_JSON));
+
+        assertDoesNotThrow(() -> clienteEstudiantes.validarExistenciaEstudiante(estudianteId));
+        mockServer.verify();
+    }
+
+    @Test
+    @DisplayName("ClienteEstudiantes lanza excepción si ms-students devuelve payload inválido")
+    void testClienteEstudiantes_PayloadInvalido() {
+        Long estudianteId = 2L;
+        mockServer.expect(requestTo(urlEsperada + estudianteId))
+                .andRespond(withStatus(HttpStatus.BAD_REQUEST));
+
+        assertThrows(
+                Exception.class,
+                () -> clienteEstudiantes.validarExistenciaEstudiante(estudianteId)
+        );
+        mockServer.verify();
+    }
+
+    @Test
+    @DisplayName("DTO nulo causa NullPointerException en flujo")
+    void testCrearAsistencia_DTONulo() {
+        assertThrows(
+                NullPointerException.class,
+                () -> servicioAsistencia.crearAsistencia(null)
+        );
+    }
+
+    @Test
+    @DisplayName("DTO con tipo null activa CircuitBreaker en validación")
+    void testCrearAsistencia_SinTipoRegistro() {
+        AsistenciaRequestDto dto = new AsistenciaRequestDto();
+        dto.setEstudianteId(1001L);
+        dto.setFechaRegistro(LocalDate.of(2026, 5, 17));
+        dto.setTipoRegistro(null);
+
+        assertThrows(
+                ServicioNoDisponibleException.class,
+                () -> servicioAsistencia.crearAsistencia(dto)
+        );
+    }
+
+    @Test
+    @DisplayName("CircuitBreaker se abre ante fallos repetidos (503)")
+    void testCircuitBreakerAbierto() {
+        Long estudianteId = 1003L;
+        AsistenciaRequestDto dto = new AsistenciaRequestDto();
+        dto.setEstudianteId(estudianteId);
+        dto.setFechaRegistro(LocalDate.of(2026, 5, 17));
+        dto.setTipoRegistro("PRESENTE");
+
+        mockServer.expect(requestTo(urlEsperada + estudianteId))
+                .andRespond(withStatus(HttpStatus.SERVICE_UNAVAILABLE));
+
+        assertThrows(
+                ServicioNoDisponibleException.class,
+                () -> servicioAsistencia.crearAsistencia(dto)
+        );
+        mockServer.verify();
     }
 }

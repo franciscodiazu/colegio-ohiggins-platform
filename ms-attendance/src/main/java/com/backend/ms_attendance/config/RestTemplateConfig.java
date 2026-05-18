@@ -11,39 +11,39 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
-import java.time.Duration;
 
 @Configuration
 public class RestTemplateConfig {
 
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder) {
-        // 1. Configuración de HttpClient 5 (Apache)
+        // 1. Configuración de HttpClient 5 (Apache) - Centralización de Timeouts
         RequestConfig requestConfig = RequestConfig.custom()
-                .setConnectTimeout(Timeout.ofSeconds(5))
-                .setResponseTimeout(Timeout.ofSeconds(10))
+                .setConnectTimeout(Timeout.ofSeconds(5))   // Tiempo límite para establecer el socket TCP
+                .setResponseTimeout(Timeout.ofSeconds(10)) // Tiempo límite para esperar paquetes de datos (Read Timeout)
                 .build();
 
-        // 2. Gestión de Pool de conexiones
+        // 2. Gestión de Pool de conexiones óptimo para microservicios en la nube (AWS)
         PoolingHttpClientConnectionManager connectionManager = new PoolingHttpClientConnectionManager();
-        connectionManager.setMaxTotal(100);
-        connectionManager.setDefaultMaxPerRoute(20);
-        // Usamos evict para limpiar conexiones inactivas, ideal para entornos AWS/Cloud
+        connectionManager.setMaxTotal(100);           // Máximo de conexiones simultáneas totales en el pool
+        connectionManager.setDefaultMaxPerRoute(20);    // Máximo de conexiones simultáneas hacia el mismo microservicio (ms-students)
+
+        // Verifica si una conexión inactiva sigue viva antes de reusarla, evitando sockets rotos
         connectionManager.setValidateAfterInactivity(TimeValue.ofSeconds(30));
 
         CloseableHttpClient httpClient = HttpClients.custom()
                 .setDefaultRequestConfig(requestConfig)
                 .setConnectionManager(connectionManager)
-                .evictIdleConnections(TimeValue.ofMinutes(1)) // Limpieza automática de zombies
+                .evictIdleConnections(TimeValue.ofMinutes(1)) // Limpieza automática de sockets zombie/muertos por el proxy o ALB
                 .build();
 
         HttpComponentsClientHttpRequestFactory factory = new HttpComponentsClientHttpRequestFactory(httpClient);
 
-        // 3. Builder de Spring modernizado (Sin "set", usando Duration directamente)
+        // 3. Inicialización del componente RestTemplate de Spring
+        // Delegamos el control de timeouts de forma EXCLUSIVA a la factoría de Apache HttpClient 5.
+        // Removemos los métodos .connectTimeout() y .readTimeout() del builder para evitar sobreescritura de propiedades.
         return builder
                 .requestFactory(() -> factory)
-                .connectTimeout(Duration.ofSeconds(5)) // Cambiado: de setConnectTimeout -> connectTimeout
-                .readTimeout(Duration.ofSeconds(10))   // Cambiado: de setReadTimeout -> readTimeout
                 .build();
     }
 }

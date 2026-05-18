@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { LayoutSection } from '../components/layout/BaseLayout';
 import { studentsService } from '../services/bffClient';
-import { attendanceMockService } from '../services/attendanceMockService';
+import { attendanceService } from '../services/attendanceService';
 import { evaluationsMockService } from '../services/evaluationsMockService';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -117,29 +117,29 @@ export default function Dashboard({ session }) {
   const [calificaciones, setCalificaciones] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const bootstrap = async () => {
-      try {
-        const [studentsList, classesList, attendanceList, evalList, gradesList] = await Promise.all([
-          studentsService.listStudents(),
-          attendanceMockService.listClasses(),
-          attendanceMockService.listAttendanceRecords(),
-          evaluationsMockService.listEvaluations(),
-          evaluationsMockService.listGrades(),
-        ]);
-        setStudents(studentsList);
-        setClasses(classesList);
-        setAttendanceRecords(attendanceList);
-        setEvaluaciones(evalList);
-        setCalificaciones(gradesList);
-      } catch (err) {
-        console.error('Error al cargar datos del dashboard:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    bootstrap();
-  }, []);
+   useEffect(() => {
+     const bootstrap = async () => {
+       try {
+         const [studentsList, classesList, attendanceList, evalList, gradesList] = await Promise.all([
+           studentsService.listStudents(),
+           attendanceService.listClasses(),
+           attendanceService.listAttendanceRecords(),
+           evaluationsMockService.listEvaluations(),
+           evaluationsMockService.listGrades(),
+         ]);
+         setStudents(studentsList);
+         setClasses(classesList);
+         setAttendanceRecords(attendanceList);
+         setEvaluaciones(evalList);
+         setCalificaciones(gradesList);
+       } catch (err) {
+         console.error('Error al cargar datos del dashboard:', err);
+       } finally {
+         setLoading(false);
+       }
+     };
+     bootstrap();
+   }, []);
 
   // ── Estadísticas derivadas ────────────────────────────────────────────────────
 

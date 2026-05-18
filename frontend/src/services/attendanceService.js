@@ -8,11 +8,58 @@ import { bffClient } from './bffClient';
 export const attendanceService = {
 
     /**
+     * Lista todas las clases registradas
+     */
+    async listClasses() {
+        try {
+            const response = await bffClient.get(`/api/clases`);
+            return response.data || [];
+        } catch (error) {
+            console.error('[attendanceService:listClasses]', {
+                status: error.response?.status,
+                message: error.response?.data?.message,
+                timestamp: new Date().toISOString()
+            });
+            throw error;
+        }
+    },
+
+    /**
+     * Crea una nueva clase
+     * @param {Object} classForm - { fecha, curso, asignatura, bloque }
+     * @returns {Promise<Object>} Clase creada
+     */
+    async createClass(classForm) {
+        try {
+            if (!classForm.fecha || !classForm.curso || !classForm.asignatura) {
+                throw new Error('Fecha, curso y asignatura son obligatorios');
+            }
+
+            const response = await bffClient.post('/api/clases', classForm);
+
+            console.info('[attendanceService:createClass] Success', {
+                classId: response.data?.id,
+                curso: classForm.curso,
+                timestamp: new Date().toISOString()
+            });
+
+            return response.data;
+        } catch (error) {
+            console.error('[attendanceService:createClass] Error', {
+                timestamp: new Date().toISOString(),
+                status: error.response?.status,
+                message: error.response?.data?.message || error.message
+            });
+            throw error;
+        }
+    },
+
+    /**
      * Lista todos los registros de asistencia
      */
     async listAttendanceRecords() {
         try {
-            const response = await bffClient.get('/api/asistencia/listar');
+            const response = await bffClient.get(`/api/asistencia`);
             return response.data || [];
         } catch (error) {
             console.error('[attendanceService:listAttendanceRecords]', {
@@ -26,22 +73,22 @@ export const attendanceService = {
 
     /**
      * Crea un nuevo registro de asistencia
-     * @param {Object} payload - { estudianteId, fecha_registro, tipo_registro }
+     * @param {Object} payload - { classId, studentId, estado, observacion }
      * @returns {Promise<Object>} Registro creado
      */
     async createAttendanceRecord(payload) {
         try {
             // Validar payload obligatorio
-            if (!payload.estudianteId || !payload.fecha_registro || !payload.tipo_registro) {
-                throw new Error('Estudiante, fecha y tipo de registro son obligatorios');
+            if (!payload.classId || !payload.studentId || !payload.estado) {
+                throw new Error('Clase, estudiante y estado son obligatorios');
             }
 
-            // Mapear desde frontend a backend si es necesario
+            // Mapear desde frontend a backend
             const backendPayload = {
-                estudiante_id: payload.estudianteId,
-                fecha_registro: payload.fecha_registro,
-                tipo_registro: payload.tipo_registro,
-                ...(payload.horaLlegada && { hora_llegada: payload.horaLlegada })
+                clase_id: payload.classId,
+                estudiante_id: payload.studentId,
+                estado: payload.estado,
+                ...(payload.observacion && { observacion: payload.observacion })
             };
 
             // POST a BFF (que routea a ms-attendance)
@@ -49,7 +96,7 @@ export const attendanceService = {
 
             console.info('[attendanceService:createAttendanceRecord] Success', {
                 recordId: response.data?.id,
-                studentId: payload.estudianteId,
+                studentId: payload.studentId,
                 timestamp: new Date().toISOString()
             });
 
@@ -58,7 +105,7 @@ export const attendanceService = {
         } catch (error) {
             const errorInfo = {
                 timestamp: new Date().toISOString(),
-                studentId: payload.estudianteId,
+                studentId: payload.studentId,
                 status: error.response?.status,
                 message: error.response?.data?.message || error.message
             };
@@ -67,7 +114,7 @@ export const attendanceService = {
 
             // Diferenciar errores
             if (error.response?.status === 404) {
-                error.userMessage = 'Estudiante no encontrado. Verifica el ID.';
+                error.userMessage = 'Estudiante o clase no encontrado. Verifica los datos.';
                 error.type = 'STUDENT_NOT_FOUND';
             } else if (error.response?.status === 503) {
                 error.userMessage = 'El servicio de asistencia está en mantenimiento. Intenta más tarde.';
@@ -118,7 +165,7 @@ export const attendanceService = {
     },
 
     /**
-     * Obtiene estadísticas de asistencia
+     * Obtiene estadísticas de asistencia por estudiante
      */
     async getAttendanceStats(studentId) {
         try {

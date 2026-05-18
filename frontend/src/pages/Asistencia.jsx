@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { LayoutCard, LayoutSection } from '../components/layout/BaseLayout';
-import { attendanceMockService } from '../services/attendanceMockService';
+import { attendanceService } from '../services/attendanceService';
 import { studentsService } from '../services/bffClient';
 import TableSkeleton from '../components/TableSkeleton';
 
@@ -37,20 +37,20 @@ export default function Asistencia() {
   useEffect(() => {
     const bootstrap = async () => {
       setLoading(true);
-      try {
-        const [studentsList, classesList, attendanceList] = await Promise.all([
-          studentsService.listStudents(),
-          attendanceMockService.listClasses(),
-          attendanceMockService.listAttendanceRecords(),
-        ]);
-        setStudents(studentsList);
-        setClasses(classesList);
-        setAttendanceRecords(attendanceList);
-      } catch (err) {
-        console.error('No se pudo cargar el módulo de asistencia', err);
-      } finally {
-        setLoading(false);
-      }
+       try {
+         const [studentsList, classesList, attendanceList] = await Promise.all([
+           studentsService.listStudents(),
+           attendanceService.listClasses(),
+           attendanceService.listAttendanceRecords(),
+         ]);
+         setStudents(studentsList);
+         setClasses(classesList);
+         setAttendanceRecords(attendanceList);
+       } catch (err) {
+         console.error('No se pudo cargar el módulo de asistencia', err);
+       } finally {
+         setLoading(false);
+       }
     };
     bootstrap();
   }, []);
@@ -87,57 +87,57 @@ export default function Asistencia() {
   const today = new Date().toISOString().slice(0, 10);
   const classesToday = classes.filter((c) => c.fecha === today).length;
 
-  const handleRegisterClass = async (e) => {
-    e.preventDefault();
-    setClassFeedback(emptyFeedback);
-    try {
-      const created = await attendanceMockService.createClass(classForm);
-      setClasses((prev) => [...prev, created]);
-      setClassForm((prev) => ({ ...prev, curso: '', asignatura: '', bloque: '' }));
-      setClassFeedback({ error: '', success: 'Clase registrada correctamente.' });
-    } catch (err) {
-      setClassFeedback({ error: err.message || 'No se pudo registrar la clase.', success: '' });
-    }
-  };
+   const handleRegisterClass = async (e) => {
+     e.preventDefault();
+     setClassFeedback(emptyFeedback);
+     try {
+       const created = await attendanceService.createClass(classForm);
+       setClasses((prev) => [...prev, created]);
+       setClassForm((prev) => ({ ...prev, curso: '', asignatura: '', bloque: '' }));
+       setClassFeedback({ error: '', success: 'Clase registrada correctamente.' });
+     } catch (err) {
+       setClassFeedback({ error: err.message || 'No se pudo registrar la clase.', success: '' });
+     }
+   };
 
-  const handleRegisterAttendance = async (e) => {
-    e.preventDefault();
-    setAttendanceFeedback(emptyFeedback);
-    if (!attendanceForm.classId || !attendanceForm.studentId) {
-      setAttendanceFeedback({ error: 'Debes seleccionar clase y estudiante.', success: '' });
-      return;
-    }
-    try {
-      const created = await attendanceMockService.createAttendanceRecord(attendanceForm);
-      setAttendanceRecords((prev) => [...prev, created]);
-      setAttendanceForm((prev) => ({ ...prev, studentId: '', estado: 'PRESENTE', observacion: '' }));
-      setAttendanceFeedback({ error: '', success: 'Asistencia registrada correctamente.' });
-    } catch (err) {
-      setAttendanceFeedback({ error: err.message || 'No se pudo registrar la asistencia.', success: '' });
-    }
-  };
+   const handleRegisterAttendance = async (e) => {
+     e.preventDefault();
+     setAttendanceFeedback(emptyFeedback);
+     if (!attendanceForm.classId || !attendanceForm.studentId) {
+       setAttendanceFeedback({ error: 'Debes seleccionar clase y estudiante.', success: '' });
+       return;
+     }
+     try {
+       const created = await attendanceService.createAttendanceRecord(attendanceForm);
+       setAttendanceRecords((prev) => [...prev, created]);
+       setAttendanceForm((prev) => ({ ...prev, studentId: '', estado: 'PRESENTE', observacion: '' }));
+       setAttendanceFeedback({ error: '', success: 'Asistencia registrada correctamente.' });
+     } catch (err) {
+       setAttendanceFeedback({ error: err.message || 'No se pudo registrar la asistencia.', success: '' });
+     }
+   };
 
-  const handleQueryByStudent = async (e) => {
-    e.preventDefault();
-    setQueryFeedback(emptyFeedback);
-    if (!queryStudentId) { setQueryFeedback({ error: 'Selecciona un estudiante para consultar.', success: '' }); return; }
-    try {
-      const records = await attendanceMockService.listAttendanceByStudent(queryStudentId);
-      setStudentQueryRows(mapRowsWithContext(records));
-      setQueryFeedback({ error: '', success: `${records.length} registro(s) encontrado(s).` });
-    } catch { setQueryFeedback({ error: 'No se pudo consultar la asistencia por estudiante.', success: '' }); }
-  };
+   const handleQueryByStudent = async (e) => {
+     e.preventDefault();
+     setQueryFeedback(emptyFeedback);
+     if (!queryStudentId) { setQueryFeedback({ error: 'Selecciona un estudiante para consultar.', success: '' }); return; }
+     try {
+       const records = await attendanceService.listAttendanceByStudent(queryStudentId);
+       setStudentQueryRows(mapRowsWithContext(records));
+       setQueryFeedback({ error: '', success: `${records.length} registro(s) encontrado(s).` });
+     } catch { setQueryFeedback({ error: 'No se pudo consultar la asistencia por estudiante.', success: '' }); }
+   };
 
-  const handleQueryByCourse = async (e) => {
-    e.preventDefault();
-    setQueryFeedback(emptyFeedback);
-    if (!queryCourse) { setQueryFeedback({ error: 'Selecciona un curso para consultar.', success: '' }); return; }
-    try {
-      const records = await attendanceMockService.listAttendanceByCourse(queryCourse, classes);
-      setCourseQueryRows(mapRowsWithContext(records));
-      setQueryFeedback({ error: '', success: `${records.length} registro(s) encontrado(s).` });
-    } catch { setQueryFeedback({ error: 'No se pudo consultar la asistencia por curso.', success: '' }); }
-  };
+   const handleQueryByCourse = async (e) => {
+     e.preventDefault();
+     setQueryFeedback(emptyFeedback);
+     if (!queryCourse) { setQueryFeedback({ error: 'Selecciona un curso para consultar.', success: '' }); return; }
+     try {
+       const records = await attendanceService.listAttendanceByCourse(queryCourse, classes);
+       setCourseQueryRows(mapRowsWithContext(records));
+       setQueryFeedback({ error: '', success: `${records.length} registro(s) encontrado(s).` });
+     } catch { setQueryFeedback({ error: 'No se pudo consultar la asistencia por curso.', success: '' }); }
+   };
 
   return (
     <LayoutSection

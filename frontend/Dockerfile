@@ -13,13 +13,11 @@ RUN npm ci
 # Copiamos el resto del código del frontend
 COPY frontend/ .
 
-run ls -la src/hoks && ls -la src/components
-
-# Variable de entorno para el build de Vite
-ARG VITE_API_URL
+# Variable de entorno para el build de Vite (ARG para build time)
+ARG VITE_API_URL=http://localhost:8080/api
 ENV VITE_API_URL=${VITE_API_URL}
 
-# Ejecutamos el build
+# Ejecutamos el build con la variable de entorno inyectada
 RUN npm run build
 
 # ETAPA 2: Servidor de Producción (Nginx)

@@ -27,11 +27,8 @@ RUN mvn dependency:go-offline -B
 # Copiar código fuente
 COPY ms-students/src ./src
 
-# Compilar y empaquetar (skip tests para build rápido, se testea en CI)
-RUN mvn clean package -DskipTests -B && \
-    mkdir -p target/dependency && \
-    cd target/dependency && \
-    jar -xf ../*.jar
+# Compilar, ejecutar tests y empaquetar JAR
+RUN mvn clean package -B
 
 # -----------------------------------------------------------------------------
 # STAGE 2: Runtime
@@ -52,10 +49,8 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 # Directorio de trabajo
 WORKDIR /app
 
-# Copiar JAR descomprimido desde el stage de build (mejor rendimiento)
-COPY --from=builder /app/target/dependency/BOOT-INF/lib /app/lib
-COPY --from=builder /app/target/dependency/META-INF /app/META-INF
-COPY --from=builder /app/target/dependency/BOOT-INF/classes /app
+# Copiar JAR ejecutable de Spring Boot
+COPY --from=builder /app/target/*.jar app.jar
 
 # Cambiar propietario a usuario no-root
 RUN chown -R appuser:appgroup /app
@@ -73,5 +68,5 @@ USER appuser
 # Usar dumb-init para manejo correcto de señales
 ENTRYPOINT ["dumb-init", "--"]
 
-# Comando de inicio - Ajustar el nombre de la clase principal según el paquete real
-CMD ["java", "-cp", "/app:/app/lib/*", "com.backend.ms_students.MsStudentsApplication"]
+# Comando de inicio
+CMD ["java", "-jar", "app.jar"]

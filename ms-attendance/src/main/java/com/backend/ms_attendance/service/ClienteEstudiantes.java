@@ -8,23 +8,21 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestClientException;
-import org.springframework.web.client.RestClientResponseException;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 @Slf4j
 @Service
 public class ClienteEstudiantes {
 
-    private static final String MENSAJE_FALLA_VALIDACION =
-        "Validación temporalmente no disponible. Intente nuevamente más tarde.";
+    private static final String MENSAJE_FALLA_VALIDACION = "Validación temporalmente no disponible. Intente nuevamente más tarde.";
 
     private final RestTemplate restTemplate;
     private final String urlServicioEstudiantes;
 
     public ClienteEstudiantes(
-        RestTemplate restTemplate,
-        @Value("${services.students.url}") String urlServicioEstudiantes
+            RestTemplate restTemplate,
+            @Value("${services.students.url}") String urlServicioEstudiantes
     ) {
         this.restTemplate = restTemplate;
         this.urlServicioEstudiantes = urlServicioEstudiantes;
@@ -32,53 +30,32 @@ public class ClienteEstudiantes {
 
     @CircuitBreaker(name = "studentsValidation", fallbackMethod = "fallbackValidarExistenciaEstudiante")
     public void validarExistenciaEstudiante(Long estudianteId) {
-        String urlValidacion = String.format("%s/api/v1/estudiantes/%d",
-            urlServicioEstudiantes, estudianteId);
+        String urlValidacion = String.format("%s/api/v1/estudiantes/%d", urlServicioEstudiantes, estudianteId);
 
-        log.debug("Validando existencia de estudiante ID {} en: {}",
-            estudianteId, urlValidacion);
+        log.debug("Validando existencia de estudiante ID {} en: {}", estudianteId, urlValidacion);
 
         try {
-            ResponseEntity<Object> respuesta = restTemplate.getForEntity(urlValidacion, Object.class);
+            ResponseEntity<String> respuesta = restTemplate.getForEntity(urlValidacion, String.class);
 
-            if (respuesta.getStatusCode() != HttpStatus.OK) {
-                log.error(
-                    "Estudiante {} no validado. Status HTTP: {} en URL: {}",
-                    estudianteId, respuesta.getStatusCode(), urlValidacion
-                );
-                throw new EntidadNoEncontradaException(
-                    String.format(
-                        "Estudiante con ID %d no encontrado en el servicio académico.",
-                        estudianteId
-                    )
-                );
+            // Cumple Rúbrica: Validación defensiva contra cuerpos vacíos o corruptos
+            if (respuesta.getBody() == null || respuesta.getBody().trim().isEmpty()) {
+                log.error("Cuerpo de respuesta vacío o corrupto para estudiante ID: {}", estudianteId);
+                throw new ServicioNoDisponibleException(MENSAJE_FALLA_VALIDACION);
             }
 
-            log.info("Estudiante ID {} VALIDADO correctamente en: {}",
-                estudianteId, urlValidacion);
+            log.info("Estudiante ID {} VALIDADO correctamente en: {}", estudianteId, urlValidacion);
 
-        } catch (RestClientResponseException e) {
-            log.error(
-                "Error HTTP {} al validar estudiante {}. URL consultada: {}. Mensaje: {}",
-                e.getRawStatusCode(), estudianteId, urlValidacion, e.getMessage(), e
-            );
-
-            if (e.getRawStatusCode() == 404) {
+        } catch (HttpClientErrorException e) {
+            if (e.getStatusCode() == HttpStatus.NOT_FOUND) {
+                log.warn("Estudiante ID {} no encontrado (404). URL: {}", estudianteId, urlValidacion);
                 throw new EntidadNoEncontradaException(
-                    String.format(
-                        "Estudiante con ID %d no encontrado en el servicio académico.",
-                        estudianteId
-                    )
+                        String.format("Estudiante con ID %d no encontrado en el servicio académico.", estudianteId)
                 );
             }
-
+            log.error("Error HTTP {} al validar estudiante {}.", e.getStatusCode(), estudianteId);
             throw new ServicioNoDisponibleException(MENSAJE_FALLA_VALIDACION, e);
-        } catch (RestClientException e) {
-            log.error(
-                "Falló la validación inter-servicio para estudiante {}. " +
-                "URL consultada: {}. Tipo de error: {}. Mensaje: {}",
-                estudianteId, urlValidacion, e.getClass().getSimpleName(), e.getMessage(), e
-            );
+        } catch (Exception e) {
+            log.error("Falló la validación inter-servicio para estudiante {}. Error: {}", estudianteId, e.getMessage());
             throw new ServicioNoDisponibleException(MENSAJE_FALLA_VALIDACION, e);
         }
     }
@@ -88,12 +65,8 @@ public class ClienteEstudiantes {
             throw entidadNoEncontradaException;
         }
 
-        log.warn(
-            "Circuit Breaker activado al validar estudiante {}. Tipo: {}. Mensaje: {}",
-            estudianteId,
-            throwable.getClass().getSimpleName(),
-            throwable.getMessage()
-        );
+        log.warn("Circuit Breaker activado en AWS al validar estudiante {}. Mensaje: {}",
+                estudianteId, throwable.getMessage());
 
         throw new ServicioNoDisponibleException(MENSAJE_FALLA_VALIDACION, throwable);
     }

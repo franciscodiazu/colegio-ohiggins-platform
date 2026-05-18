@@ -93,17 +93,16 @@ services:
       # Logging
       LOGGING_LEVEL_ROOT: ${LOGGING_LEVEL_ROOT:-INFO}
     
-    ports:
-      # Service port intentionally NOT published to the host to enforce access via BFF.
-      # In development you can publish by setting MS_STUDENTS_PORT if needed.
-    
+    # Service port intentionally NOT published to the host to enforce access via BFF.
+    # In development you can publish by setting MS_STUDENTS_PORT if needed.
+
     networks:
       - colegio-network
-    
+
     depends_on:
       mysql:
         condition: service_healthy
-    
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
       interval: 15s
@@ -124,29 +123,28 @@ services:
 
     environment:
       SERVER_PORT: ${MS_ATTENDANCE_PORT:-8082}
-      
+
       DB_HOST: ${DB_HOST:-mysql}
       DB_PORT: ${DB_PORT:-3306}
       DB_NAME: ${DB_NAME_ATTENDANCE:-db_record}
       DB_USERNAME: ${DB_USERNAME:-app_colegio}
       DB_PASSWORD: ${DB_PASSWORD:-Ohiggins_Secur3_2026!}
-      
+
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "false"
-      
+
       LOGGING_LEVEL_ROOT: ${LOGGING_LEVEL_ROOT:-INFO}
-    
-    ports:
-      # Service port intentionally NOT published to the host to enforce access via BFF.
-      # In development you can publish by setting MS_ATTENDANCE_PORT if needed.
-    
+
+    # Service port intentionally NOT published to the host to enforce access via BFF.
+    # In development you can publish by setting MS_ATTENDANCE_PORT if needed.
+
     networks:
       - colegio-network
-    
+
     depends_on:
       mysql:
         condition: service_healthy
-    
+
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
       interval: 15s
@@ -154,8 +152,8 @@ services:
       retries: 5
       start_period: 90s
 
-   # ===========================================================================
-   # Gateway BFF (Backend for Frontend)
+    # ===========================================================================
+    # Gateway BFF (Backend for Frontend)
   # ===========================================================================
   backend-bff:
     build:
@@ -167,23 +165,23 @@ services:
 
     environment:
       SERVER_PORT: ${BFF_PORT:-8080}
-      
+
       # URLs de los microservicios (service discovery via Docker DNS)
       MS_STUDENTS_URL: ${MS_STUDENTS_URL:-http://ms-students:8081}
       MS_ATTENDANCE_URL: ${MS_ATTENDANCE_URL:-http://ms-attendance:8082}
-      
+
       # CORS
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://frontend:8080}
-      
+
       # Logging
       LOGGING_LEVEL_ROOT: ${LOGGING_LEVEL_ROOT:-INFO}
-    
+
     ports:
       - "${BFF_PORT:-8080}:8080"
-    
+
     networks:
       - colegio-network
-    
+
     depends_on:
       mysql:
         condition: service_healthy
@@ -211,17 +209,17 @@ services:
     container_name: colegio-frontend
     hostname: frontend
     restart: unless-stopped
-    
+
     environment:
       # Variable para build time (Vite la usa durante el build)
       VITE_API_URL: ${VITE_API_URL:-http://backend-bff:8080}
-    
+
     ports:
       - "${FRONTEND_PORT:-5173}:8080"
-    
+
     networks:
       - colegio-network
-    
+
     depends_on:
       backend-bff:
         condition: service_started
@@ -249,4 +247,4 @@ networks:
       config:
         - subnet: 172.20.0.0/16
     # Comunicación interna segura entre contenedores
-    internal: false  # Cambiar a true para bloquear acceso externo directo a DB
+    internal: false  # Cambiar a true para bloquear acceso externo directo a DB"

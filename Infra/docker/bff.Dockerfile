@@ -26,11 +26,8 @@ RUN mvn dependency:go-offline -B
 # Copiar código fuente
 COPY backend-bff/src ./src
 
-# Compilar y empaquetar (skip tests para build rápido, se testea en CI)
-RUN mvn clean package -DskipTests -B && \
-    mkdir -p target/dependency && \
-    cd target/dependency && \
-    jar -xf ../*.jar
+# Compilar, ejecutar tests y empaquetar JAR
+RUN mvn clean package -B
 
 # -----------------------------------------------------------------------------
 # STAGE 2: Runtime
@@ -51,10 +48,8 @@ RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 # Directorio de trabajo
 WORKDIR /app
 
-# Copiar JAR descomprimido desde el stage de build (mejor rendimiento de startup)
-COPY --from=builder /app/target/dependency/BOOT-INF/lib /app/lib
-COPY --from=builder /app/target/dependency/META-INF /app/META-INF
-COPY --from=builder /app/target/dependency/BOOT-INF/classes /app
+# Copiar JAR ejecutable de Spring Boot
+COPY --from=builder /app/target/*.jar app.jar
 
 # Cambiar propietario a usuario no-root
 RUN chown -R appuser:appgroup /app
@@ -73,4 +68,4 @@ USER appuser
 ENTRYPOINT ["dumb-init", "--"]
 
 # Comando de inicio
-CMD ["java", "-cp", "/app:/app/lib/*", "com.backend.backend_bff.BackendBffApplication"]
+CMD ["java", "-jar", "app.jar"]
