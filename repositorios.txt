@@ -1,0 +1,25 @@
+Repositorio principal: https://github.com/franciscodiazu/colegio-ohiggins-platform
+Descripción: Monorepo del proyecto "Colegio O'Higgins Platform" que contiene frontend, BFF, microservicios, paquetes y archivos de infraestructura.
+
+Componentes (subdirectorios en el repositorio principal):
+
+- Frontend: https://github.com/franciscodiazu/colegio-ohiggins-platform/tree/main/frontend
+  Descripción: Aplicación cliente en React + Vite; incluye `package.json`, `src/`, `public/` y README con instrucciones de instalación/ejecución.
+
+- Paquete UI (shared UI): https://github.com/franciscodiazu/colegio-ohiggins-platform/tree/main/packages/ui
+  Descripción: Biblioteca de componentes compartidos (`@colegio-ohiggins/ui`) empaquetada con Vite; contiene `package.json`, `src/` y README.
+
+- Backend BFF: https://github.com/franciscodiazu/colegio-ohiggins-platform/tree/main/backend-bff
+  Descripción: BFF en Spring Boot (Maven). Contiene `pom.xml`, `src/`, `mvnw` y README con comandos de ejecución.
+
+- Microservicio Asistencia: https://github.com/franciscodiazu/colegio-ohiggins-platform/tree/main/ms-attendance
+  Descripción: Microservicio Spring Boot para gestión de asistencia; incluye `pom.xml`, `src/`, `run-tests.ps1` y README.
+
+- Microservicio Estudiantes: https://github.com/franciscodiazu/colegio-ohiggins-platform/tree/main/ms-students
+  Descripción: Microservicio Spring Boot para gestión de estudiantes; incluye `pom.xml`, `src/`, `run-tests.ps1` y README.
+
+- Arquetipo Maven (plantilla): https://github.com/franciscodiazu/colegio-ohiggins-platform/tree/main/packages/maven-archetype-basic
+  Descripción: Arquetipo Maven minimal para generar proyectos Java. Incluye `archetype-resources`, `pom.xml` y README con ejemplo de uso.
+
+- Infra / Docker: https://github.com/franciscodiazu/colegio-ohiggins-platform/tree/main/Infra
+  Descripción: Archivos de infraestructura y Docker (docker-compose, Dockerfiles, init.sql para MySQL).

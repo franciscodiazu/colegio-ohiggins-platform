@@ -1,0 +1,250 @@
+# =============================================================================
+# Docker Compose - Colegio Ohiggins Platform
+# Ubicación: /Infra/docker-compose.yml
+# Descripción: Orquestación de 5 servicios (4 aplicaciones + MySQL)
+# Seguridad: Redes internas, healthchecks, usuarios no-root, least privilege
+# =============================================================================
+
+version: '3.9'
+
+# -----------------------------------------------------------------------------
+# SERVICIOS
+# -----------------------------------------------------------------------------
+services:
+  # ===========================================================================
+  # MySQL - Base de Datos
+  # ===========================================================================
+  mysql:
+    image: mysql:8.0
+    container_name: colegio-mysql
+    hostname: mysql
+    restart: unless-stopped
+    
+    # Variables de entorno
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-ChangeThisRootPassword123!}
+      MYSQL_DATABASE: ${DB_NAME_STUDENTS:-db_academic}
+      MYSQL_USER: ${DB_USERNAME:-app_colegio}
+      MYSQL_PASSWORD: ${DB_PASSWORD:-Ohiggins_Secur3_2026!}
+    
+    # Volúmenes persistentes
+    volumes:
+      # Datos persistentes
+      - mysql_data:/var/lib/mysql
+      # Script de inicialización (crea db_record y permisos)
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    
+    # Puertos (solo expuesto en desarrollo)
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    
+    # Red interna
+    networks:
+      - colegio-network
+    
+    # Healthcheck para dependencias
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
+      interval: 5s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+
+    # Seguridad: No ejecutar como root
+    security_opt:
+      - no-new-privileges:true
+    
+    # Limites de recursos (para entornos compartidos)
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.5'
+          memory: 256M
+
+  # ===========================================================================
+  # Microservicio: ms-students
+  # ===========================================================================
+  ms-students:
+    build:
+      context: ../
+      dockerfile: Infra/docker/students.Dockerfile
+    container_name: colegio-ms-students
+    hostname: ms-students
+    restart: unless-stopped
+
+    environment:
+      # Puerto del servicio
+      SERVER_PORT: ${MS_STUDENTS_PORT:-8081}
+      
+      # Configuración de base de datos
+      DB_HOST: ${DB_HOST:-mysql}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME: ${DB_NAME_STUDENTS:-db_academic}
+      DB_USERNAME: ${DB_USERNAME:-app_colegio}
+      DB_PASSWORD: ${DB_PASSWORD:-Ohiggins_Secur3_2026!}
+      
+      # Configuración de JPA
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "false"
+      
+      # Logging
+      LOGGING_LEVEL_ROOT: ${LOGGING_LEVEL_ROOT:-INFO}
+    
+    # Service port intentionally NOT published to the host to enforce access via BFF.
+    # In development you can publish by setting MS_STUDENTS_PORT if needed.
+
+    networks:
+      - colegio-network
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+
+  # ===========================================================================
+  # Microservicio: ms-attendance
+  # ===========================================================================
+  ms-attendance:
+    build:
+      context: ../
+      dockerfile: Infra/docker/attendance.Dockerfile
+    container_name: colegio-ms-attendance
+    hostname: ms-attendance
+    restart: on-failure
+
+    environment:
+      SERVER_PORT: ${MS_ATTENDANCE_PORT:-8082}
+
+      DB_HOST: ${DB_HOST:-mysql}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME: ${DB_NAME_ATTENDANCE:-db_record}
+      DB_USERNAME: ${DB_USERNAME:-app_colegio}
+      DB_PASSWORD: ${DB_PASSWORD:-Ohiggins_Secur3_2026!}
+
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+      SPRING_JPA_SHOW_SQL: "false"
+
+      LOGGING_LEVEL_ROOT: ${LOGGING_LEVEL_ROOT:-INFO}
+
+    # Service port intentionally NOT published to the host to enforce access via BFF.
+    # In development you can publish by setting MS_ATTENDANCE_PORT if needed.
+
+    networks:
+      - colegio-network
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+
+    # ===========================================================================
+    # Gateway BFF (Backend for Frontend)
+  # ===========================================================================
+  backend-bff:
+    build:
+      context: ../
+      dockerfile: Infra/docker/bff.Dockerfile
+    container_name: colegio-bff
+    hostname: backend-bff
+    restart: on-failure
+
+    environment:
+      SERVER_PORT: ${BFF_PORT:-8080}
+
+      # URLs de los microservicios (service discovery via Docker DNS)
+      MS_STUDENTS_URL: ${MS_STUDENTS_URL:-http://ms-students:8081}
+      MS_ATTENDANCE_URL: ${MS_ATTENDANCE_URL:-http://ms-attendance:8082}
+
+      # CORS
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://frontend:8080}
+
+      # Logging
+      LOGGING_LEVEL_ROOT: ${LOGGING_LEVEL_ROOT:-INFO}
+
+    ports:
+      - "${BFF_PORT:-8080}:8080"
+
+    networks:
+      - colegio-network
+
+    depends_on:
+      mysql:
+        condition: service_healthy
+      ms-students:
+        condition: service_started
+      ms-attendance:
+        condition: service_started
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 6
+      start_period: 120s
+
+  # ===========================================================================
+  # Frontend (React + Vite)
+  # ===========================================================================
+  frontend:
+    build:
+      context: ../
+      dockerfile: Infra/docker/frontend.Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-http://backend-bff:8080}
+    container_name: colegio-frontend
+    hostname: frontend
+    restart: unless-stopped
+
+    environment:
+      # Variable para build time (Vite la usa durante el build)
+      VITE_API_URL: ${VITE_API_URL:-http://backend-bff:8080}
+
+    ports:
+      - "${FRONTEND_PORT:-5173}:8080"
+
+    networks:
+      - colegio-network
+
+    depends_on:
+      backend-bff:
+        condition: service_started
+
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+# -----------------------------------------------------------------------------
+# VOLÚMENES
+# -----------------------------------------------------------------------------
+volumes:
+  mysql_data:
+    driver: local
+# -----------------------------------------------------------------------------
+# REDES
+# -----------------------------------------------------------------------------
+networks:
+  colegio-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+    # Comunicación interna segura entre contenedores
+    internal: false  # Cambiar a true para bloquear acceso externo directo a DB"

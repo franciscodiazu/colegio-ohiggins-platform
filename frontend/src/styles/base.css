@@ -1,0 +1,44 @@
+/* Global base styles */
+body {
+  margin: 0;
+  font-family: 'Manrope', 'Segoe UI', sans-serif;
+  background:
+    radial-gradient(circle at 85% 15%, rgba(59, 130, 246, 0.16), transparent 30%),
+    radial-gradient(circle at 15% 20%, rgba(30, 58, 138, 0.12), transparent 28%),
+    linear-gradient(180deg, #f4f8ff 0%, var(--bg-color) 100%);
+  color: var(--text-main);
+  min-height: 100vh;
+}
+
+/* Shared element defaults */
+input,
+select {
+  border: 1px solid var(--border) !important;
+  border-radius: 10px !important;
+  transition: border-color 0.2s !important;
+  font-family: inherit;
+  box-sizing: border-box !important;
+  background: #ffffff;
+}
+
+input:focus,
+select:focus {
+  outline: none !important;
+  border-color: var(--secondary) !important;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+}
+
+table {
+  background: var(--card-bg);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: var(--shadow-soft);
+  border: none !important;
+}
+
+th {
+  background-color: var(--primary) !important;
+  color: white !important;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}

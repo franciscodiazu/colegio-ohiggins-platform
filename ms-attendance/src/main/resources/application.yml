@@ -1,0 +1,47 @@
+spring:
+  application:
+    name: ms-attendance
+
+  datasource:
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:db_record}?createDatabaseIfNotExist=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+
+server:
+  port: ${MS_ATTENDANCE_PORT:8082}
+
+# Configuración de Servicios Inter-Microservicio
+services:
+  students:
+    url: ${STUDENTS_SERVICE_URL:http://ms-students:8081}
+
+# Logging para CloudWatch
+logging:
+  level:
+    com.backend.ms_attendance: DEBUG
+    org.springframework.web: INFO
+    org.springframework.boot: INFO
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      studentsValidation:
+        slidingWindowType: COUNT_BASED
+        slidingWindowSize: 10
+        minimumNumberOfCalls: 5
+        failureRateThreshold: 50
+        waitDurationInOpenState: 20s
+        permittedNumberOfCallsInHalfOpenState: 3
+        automaticTransitionFromOpenToHalfOpenEnabled: true
+        ignoreExceptions:
+          - com.backend.ms_attendance.exception.EntidadNoEncontradaException
+
