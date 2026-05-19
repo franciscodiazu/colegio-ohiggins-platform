@@ -23,6 +23,3 @@ Componentes (subdirectorios en el repositorio principal):
 
 - Infra / Docker: https://github.com/franciscodiazu/colegio-ohiggins-platform/tree/main/Infra
   Descripción: Archivos de infraestructura y Docker (docker-compose, Dockerfiles, init.sql para MySQL).
-
-Notas:
-- Si prefieres, puedo generar un PDF con este contenido y/o crear un branch y commitear estos cambios.
