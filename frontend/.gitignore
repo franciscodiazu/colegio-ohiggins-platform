@@ -18,7 +18,7 @@ npm-debug.log*
 # Editor y Entorno local
 .idea/
 .vscode/
-!.vscode/extensions.json
+.vscode/extensions.json
 .env
 .env.*
 

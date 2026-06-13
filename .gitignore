@@ -1,23 +1,28 @@
-# IDEs
+# IDEs y Editores
 .idea/
 .vscode/
 *.iml
+*.iws
+*.ipr
 
-# Dependencias accidentales en raíz
+# Dependencias accidentales en raíz y subcarpetas
 node_modules/
 **/node_modules/
 
-# OS y Temporales
+# Bloqueo total de carpetas de compilación Java
+target/
+**/target/
+build/
+**/build/
+
+# Archivos del Sistema Operativo
 .DS_Store
 Thumbs.db
-.*-lock.json
+Desktop.ini
 
-# Entorno
+# Archivos de entorno (Seguridad)
 .env
 .env.*
 
-# Maven logs
+# Logs
 *.log
-mvn-test.log
-mvw-debug.log
-target/

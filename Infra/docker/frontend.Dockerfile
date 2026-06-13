@@ -23,7 +23,7 @@ COPY frontend/package*.json ./
 COPY frontend/vite.config.js ./
 
 # Instalar dependencias con npm ci (más rápido y determinista)
-RUN npm ci --only=production=false
+RUN npm ci --include=dev
 
 # Copiar código fuente desde la carpeta frontend
 COPY frontend/. .
