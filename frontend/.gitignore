@@ -25,3 +25,15 @@ npm-debug.log*
 # Temporales Vite/Turbo
 .vite-temp/
 .turbo/
+
+# Testing y Cobertura (Vitest / Playwright / Jest)
+coverage/
+test-results/
+playwright-report/
+.vitest-cache/
+.nyc_output/
+
+# Caché del Sistema Operativo y Herramientas HP
+Thumbs.db
+Desktop.ini
+.DS_Store
