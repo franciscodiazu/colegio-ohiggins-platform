@@ -1,3 +1,5 @@
+import React from 'react';
+
 const joinClassNames = (...values) => values.filter(Boolean).join(' ');
 
 export function LayoutContainer({ children }) {

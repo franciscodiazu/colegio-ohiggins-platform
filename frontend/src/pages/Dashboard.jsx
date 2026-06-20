@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import React from 'react';
 import { LayoutSection } from '../components/layout/BaseLayout';
 import { studentsService } from '../services/bffClient';
 import { attendanceService } from '../services/attendanceService';

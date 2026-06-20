@@ -1,4 +1,5 @@
 // ─── Componente: celda skeleton individual ────────────────────────────────────
+import React from 'react';
 
 function SkeletonCell({ width = '80%' }) {
   return (

@@ -1,102 +1,91 @@
 # Colegio O'Higgins Platform
 
-Repositorio monorepo del proyecto de gestión académica para el Colegio Bernardo O'Higgins.
+Repositorio monorepo del proyecto de gestión académica para el Colegio Bernardo O'Higgins. Este sistema centraliza la gestión de estudiantes, asistencia y comunicación entre componentes mediante una arquitectura de microservicios.
 
-## Estructura general
+## Estructura del Proyecto
 
-- `frontend/`: aplicación web desarrollada con React y Vite.
-- `backend-bff/`: capa BFF para centralizar la comunicación con servicios internos.
-- `ms-attendance/`: microservicio de asistencia.
-- `ms-students/`: microservicio de estudiantes.
-- `Infra/`: archivos de infraestructura y despliegue local con Docker.
-- `packages/ui/`: paquete compartido de interfaz.
+- frontend/: Aplicación web desarrollada con React, Vite y Vitest para pruebas.
+- backend-bff/: Capa Backend for Frontend que centraliza la comunicación.
+- ms-attendance/: Microservicio encargado de la gestión de asistencia (Spring Boot).
+- ms-students/: Microservicio encargado de la gestión de estudiantes (Spring Boot).
+- Infra/: Archivos de configuración de Docker y despliegue.
+- packages/ui/: Librería de componentes compartidos.
 
 ## Prerrequisitos
 
-- Node.js (v18+ recomendado) y npm (o pnpm/yarn) para frontend/packages
-- Java 21 y Maven (o usar `mvnw` incluido) para backend y microservicios
-- Docker y Docker Compose para ejecución en contenedores
+- Node.js (v18+) y npm.
+- Java 21 y Maven.
+- Docker y Docker Compose.
 
-## Ejecución rápida (setup)
+## Instalación y Ejecución
 
-1. Instalar dependencias del frontend y del paquete UI:
+### Configuración Local
 
+1. Instalar dependencias:
 ```bash
 npm run install:frontend
 npm run install:ui
 ```
 
-2. Levantar frontend en desarrollo:
-
+2. Ejecutar frontend:
 ```bash
 npm run dev:frontend
 ```
 
-3. Ejecutar backend y microservicios (desde sus carpetas) con wrapper Maven:
-
-Linux/macOS:
+3. Ejecutar servicios backend (desde cada carpeta):
 ```bash
 ./mvnw spring-boot:run
 ```
 
-Windows (PowerShell/CMD):
-```powershell
-.\mvnw.cmd spring-boot:run
-```
+### Ejecución con Docker
 
-También hay scripts de test para los microservicios: ejecutar `./mvnw test` o `./run-tests.ps1` en Windows.
-
-## Comandos útiles
-
-- Ejecutar la UI compartida (packages/ui): `npm --prefix packages/ui run build`
-- Construir frontend para producción: `npm run build:frontend`
-- Tests backend: `./mvnw test` o `.\run-tests.ps1` (según plataforma)
-
-## Docker / Infra
-
-Hay una carpeta `Infra/` con `docker-compose.yml` y Dockerfiles para los servicios locales. Ejemplo para levantar todo (desde la raíz):
+Para levantar toda la infraestructura (Base de datos, Microservicios, BFF y Frontend):
 
 ```bash
-docker compose -f Infra/docker-compose.yml up --build
+docker-compose -f Infra/docker-compose.yml up --build
 ```
 
-Si usas los Dockerfiles individuales, en `Infra/docker/` están `attendance.Dockerfile`, `students.Dockerfile`, `bff.Dockerfile` y `frontend.Dockerfile`.
+Nota: Si el build del frontend falla por archivos temporales de cobertura, ejecute `Remove-Item -Recurse -Force frontend/coverage` (PowerShell) o `rm -rf frontend/coverage` (Linux/Bash) antes de levantar Docker.
 
-## Endpoints y puertos (por defecto)
+## Puertos y Endpoints
 
-- Frontend: `http://localhost:5173`
-- Backend BFF: `http://localhost:8080` (configurable)
-- ms-attendance: `http://localhost:8081`
-- ms-students: `http://localhost:8082`
+- Frontend: http://localhost:5173
+- Backend BFF: http://localhost:8080
+- ms-students: http://localhost:8081
+- ms-attendance: http://localhost:8082
 
-Las rutas exactas y health endpoints dependen de la configuración en `src/main/resources` de cada servicio.
+## Documentación de API (Swagger)
 
-## Enlaces y documentación adicional
+Una vez levantados los servicios, la documentación OpenAPI está disponible en:
+- ms-students: http://localhost:8081/swagger-ui/index.html
+- ms-attendance: http://localhost:8082/swagger-ui/index.html
 
-- Lista de repositorios/componentes: `repositorios.txt` (en la raíz).
-- README individuales: `frontend/README.md`, `backend-bff/README.md`, `ms-attendance/README.md`, `ms-students/README.md`, `packages/maven-archetype-basic/README.md`.
+## Calidad y Pruebas Unitarias
 
-## Contribuir
+El proyecto cuenta con una suite de pruebas automatizadas utilizando JaCoCo para Java y Vitest para React.
 
-- Fork → branch feature → PR. Añade instrucciones de pruebas y cualquier migración necesaria.
+### Métricas de Cobertura Actuales
+- Total Tests Ejecutados: 287
+- Estado General: Exitoso (Pass)
+- Cobertura Global: ~68%
+- ms-attendance: 84.86%
+- ms-students: >60%
+- backend-bff: >60%
+- frontend: 28.04% (en proceso de mejora)
+
+### Ejecución de Pruebas
+- Backend: `./mvnw clean test`
+- Frontend: `npm run test:coverage` (dentro de la carpeta frontend)
+
+## Documentación del Proyecto
+
+Los siguientes documentos se encuentran disponibles en la raíz o en la carpeta docs/:
+- ARQUITECTURA_MICROSERVICIOS.png: Diagrama de la arquitectura del sistema.
+- DIAGRAMA_ER.png: Modelo de entidad-relación de la base de datos.
+- PERSISTENCIA_DATOS.pdf: Detalle técnico sobre la implementación de JPA y Hibernate.
+- INFORME_PRUEBAS_UNITARIAS.pdf: Reporte detallado de cobertura y calidad de código.
+- repositorios.txt: Listado de accesos a los repositorios de los componentes.
 
 ## Licencia
 
-Indica aquí la licencia del proyecto si aplica (p.ej. MIT). Actualmente no hay archivo `LICENSE` en el repo.
-
-## Ejecución rápida
-
-Los comandos principales se exponen desde `package.json` en la raíz:
-
-- `npm run dev:frontend`
-- `npm run build:frontend`
-- `npm run build:ui`
-
-Para instalar dependencias por subproyecto:
-
-- `npm run install:frontend`
-- `npm run install:ui`
-
-## Propósito
-
-El proyecto centraliza la gestión académica en módulos de estudiantes, asistencia, evaluaciones y autenticación, con una arquitectura pensada para evolucionar desde servicios mock hacia integración con backend real.
+Este proyecto es de uso académico para la asignatura DSY1106.

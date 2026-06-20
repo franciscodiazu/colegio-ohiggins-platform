@@ -3,6 +3,7 @@ import { registerUser } from '../services/authMockService';
 import { useFieldValidation, rules } from '../hooks/useFieldValidation';
 import FormField from '../components/FormField';
 import { useState } from 'react';
+import React from 'react';
 
 export default function Register({ onGoToLogin }) {
   const [submitFeedback, setSubmitFeedback] = useState({ error: '', success: '' });

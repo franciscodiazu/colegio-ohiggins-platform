@@ -1,4 +1,5 @@
 // ─── Componente: página no encontrada ────────────────────────────────────────
+import React from 'react';
 
 /**
  * NotFound — se muestra cuando la vista solicitada no existe.

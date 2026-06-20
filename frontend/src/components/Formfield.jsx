@@ -1,4 +1,5 @@
 // ─── Componente: campo de formulario con validación visual ────────────────────
+import React from 'react';
 
 /**
  * FormField — envuelve un input con label, error y estado visual.
