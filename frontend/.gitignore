@@ -25,3 +25,8 @@ npm-debug.log*
 # Temporales Vite/Turbo
 .vite-temp/
 .turbo/
+
+# Reportes de Cobertura de Tests
+coverage/
+*.lcov
+.nyc_output/
