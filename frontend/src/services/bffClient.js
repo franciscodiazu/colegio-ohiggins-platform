@@ -1,8 +1,7 @@
 import axios from 'axios';
 
-// Configuración de URL con soporte para variables de entorno (Docker/local)
-// VITE_API_URL se define en .env para Docker, o defaults a localhost para desarrollo local
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const TOKEN_KEY = 'coh_platform_token';
 
 export const bffClient = axios.create({
     baseURL: API_URL,
@@ -10,6 +9,14 @@ export const bffClient = axios.create({
         'Content-Type': 'application/json',
     },
 });
+
+bffClient.interceptors.request.use((config) => {
+    const token = localStorage.getItem(TOKEN_KEY);
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+}, (error) => Promise.reject(error));
 
 // Mapeo de campos: Frontend (nombre, curso) -> Backend (name, grade, rut)
 const mapFrontendToBackend = (frontendData) => ({

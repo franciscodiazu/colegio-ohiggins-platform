@@ -23,7 +23,7 @@ export default function Login({ onLogin, onGoToRegister, onGoToForgot }) {
 
   // ── Handler de envío ───────────────────────────────────────────────────────────
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setSubmitError('');
 
@@ -36,7 +36,7 @@ export default function Login({ onLogin, onGoToRegister, onGoToForgot }) {
 
     setIsSubmitting(true);
 
-    const result = loginUser({ email: email.value, password: password.value });
+    const result = await loginUser({ email: email.value, password: password.value });
 
     if (!result.ok) {
       setSubmitError(result.error);
