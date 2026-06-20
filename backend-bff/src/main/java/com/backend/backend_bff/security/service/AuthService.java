@@ -26,12 +26,6 @@ public class AuthService {
         "ADMIN", "admin"
     );
 
-    private static final Map<String, String> EMAIL_ROLE_MAP = Map.of(
-        "profesor.cl", "DOCENTE",
-        "alum.cl", "ESTUDIANTE",
-        "apod.cl", "APODERADO"
-    );
-
     public AuthService(UsuarioRepository usuarioRepository,
                        PasswordEncoder passwordEncoder,
                        JwtTokenProvider jwtTokenProvider) {
@@ -63,7 +57,10 @@ public class AuthService {
             throw new RuntimeException("El usuario ya existe");
         }
 
-        String role = inferRoleFromEmail(username);
+        // TODO: La creación de ADMIN y DOCENTE se delegará a un endpoint administrativo
+        //       restringido y protegido por @PreAuthorize en el futuro. Por ahora todo
+        //       usuario nuevo se registra con el rol de menor privilegio (ESTUDIANTE).
+        String role = "ESTUDIANTE";
 
         Usuario usuario = new Usuario();
         usuario.setUsername(username);
@@ -77,14 +74,5 @@ public class AuthService {
         String frontendRole = ROLE_MAP.getOrDefault(usuario.getRole(), usuario.getRole().toLowerCase());
 
         return new LoginResponse(token, usuario.getUsername(), usuario.getNombre(), frontendRole);
-    }
-
-    private String inferRoleFromEmail(String email) {
-        for (Map.Entry<String, String> entry : EMAIL_ROLE_MAP.entrySet()) {
-            if (email.endsWith("@" + entry.getKey())) {
-                return entry.getValue();
-            }
-        }
-        return "ESTUDIANTE";
     }
 }
