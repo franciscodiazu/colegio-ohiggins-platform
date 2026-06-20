@@ -1,32 +1,40 @@
-// src/__tests__/integration/Register.test.jsx
-// ─────────────────────────────────────────────────────────────────────────────
-// PRUEBAS DE INTEGRACIÓN — Componente: Register
-// ─────────────────────────────────────────────────────────────────────────────
-
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Register from '../../pages/Register';
-import { registerUser } from '../../services/authMockService';
+
+const { mockRegisterUser } = vi.hoisted(() => ({
+  mockRegisterUser: vi.fn(),
+}));
+
+vi.mock('../../services/authMockService', () => ({
+  registerUser: mockRegisterUser,
+  loginUser: vi.fn(),
+  resetUserPassword: vi.fn(),
+  normalizeEmail: (e) => e.trim().toLowerCase(),
+  isProfesorEmail: (e) => /@profesor\.cl$/i.test(e),
+  isEstudianteEmail: (e) => /@alum\.cl$/i.test(e),
+  isApoderadoEmail: (e) => /@apod\.cl$/i.test(e),
+  USER_ROLES: { APODERADO: 'apoderado', ESTUDIANTE: 'estudiante', PROFESOR: 'profesor' },
+}));
 
 const mockOnGoToLogin = vi.fn();
 
 const renderRegister = () =>
   render(<Register onGoToLogin={mockOnGoToLogin} />);
 
-// Limpiar DOM y storage antes Y después de cada test
 beforeEach(() => {
   localStorage.clear();
   vi.clearAllMocks();
   cleanup();
+  mockRegisterUser.mockResolvedValue({ ok: true, user: { email: 'ana@profesor.cl', name: 'Ana López', role: 'profesor' } });
 });
 
 afterEach(() => {
   cleanup();
 });
 
-// ─── Helper: rellenar el formulario ──────────────────────────────────────────
 const completarFormulario = async ({
   nombre = 'Ana López',
   email = 'ana@profesor.cl',
@@ -40,10 +48,6 @@ const completarFormulario = async ({
   if (password) await userEvent.type(passInputs[0], password);
   if (confirmacion) await userEvent.type(passInputs[1], confirmacion);
 };
-
-// =============================================================================
-// 1. RENDERIZADO
-// =============================================================================
 
 describe('Register — renderizado inicial', () => {
   it('muestra el campo de nombre completo', () => {
@@ -68,10 +72,6 @@ describe('Register — renderizado inicial', () => {
     expect(btn).not.toBeDisabled();
   });
 });
-
-// =============================================================================
-// 2. VALIDACIONES EN UI
-// =============================================================================
 
 describe('Register — validaciones al enviar', () => {
   it('muestra errores cuando todos los campos están vacíos', async () => {
@@ -114,10 +114,6 @@ describe('Register — validaciones al enviar', () => {
   });
 });
 
-// =============================================================================
-// 3. FLUJO EXITOSO
-// =============================================================================
-
 describe('Register — flujo exitoso', () => {
   it('muestra mensaje de éxito al registrarse correctamente', async () => {
     renderRegister();
@@ -137,33 +133,12 @@ describe('Register — flujo exitoso', () => {
     expect(screen.getByLabelText(/nombre completo/i)).toHaveValue('');
     expect(screen.getByLabelText(/correo institucional/i)).toHaveValue('');
   });
-
-  it('guarda el usuario en localStorage tras el registro', async () => {
-    renderRegister();
-    await completarFormulario();
-    fireEvent.click(screen.getByRole('button', { name: /crear cuenta/i }));
-    await waitFor(() => screen.getByText(/cuenta creada correctamente/i));
-
-    const stored = JSON.parse(localStorage.getItem('coh_platform_users'));
-    expect(stored).toHaveLength(1);
-    expect(stored[0].email).toBe('ana@profesor.cl');
-  });
 });
-
-// =============================================================================
-// 4. ERRORES DEL SERVICIO
-// =============================================================================
 
 describe('Register — errores del servicio', () => {
   it('muestra error si el correo ya está registrado', async () => {
-    // Registrar directamente en el servicio (sin UI previa)
-    registerUser({
-      name: 'Ana López',
-      email: 'ana@profesor.cl',
-      password: 'clave123',
-    });
+    mockRegisterUser.mockResolvedValueOnce({ ok: false, error: 'Ya tienes una cuenta registrada. Puedes iniciar sesion o recuperar tu contrasena.' });
 
-    // Renderizar formulario limpio e intentar registrar el mismo correo
     renderRegister();
     await completarFormulario();
     fireEvent.click(screen.getByRole('button', { name: /crear cuenta/i }));
@@ -173,10 +148,6 @@ describe('Register — errores del servicio', () => {
     });
   });
 });
-
-// =============================================================================
-// 5. NAVEGACIÓN
-// =============================================================================
 
 describe('Register — navegación', () => {
   it('llama a onGoToLogin al hacer clic en "Volver a iniciar sesión"', () => {

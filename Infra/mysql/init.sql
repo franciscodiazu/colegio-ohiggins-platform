@@ -15,6 +15,10 @@ CREATE DATABASE IF NOT EXISTS db_record
     CHARACTER SET utf8mb4 
     COLLATE utf8mb4_unicode_ci;
 
+CREATE DATABASE IF NOT EXISTS colegio_auth_db 
+    CHARACTER SET utf8mb4 
+    COLLATE utf8mb4_unicode_ci;
+
 -- -----------------------------------------------------------------------------
 -- 2. Crear Usuario de Aplicación (Principio de Mínimo Privilegio)
 -- -----------------------------------------------------------------------------
@@ -39,6 +43,12 @@ GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, INDEX,
 GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, INDEX,
     CREATE TEMPORARY TABLES, LOCK TABLES, EXECUTE, CREATE VIEW, SHOW VIEW
     ON db_record.* 
+    TO 'app_colegio'@'%';
+
+-- Permisos sobre colegio_auth_db (backend-bff - autenticación)
+GRANT SELECT, INSERT, UPDATE, DELETE, CREATE, ALTER, INDEX,
+    CREATE TEMPORARY TABLES, LOCK TABLES
+    ON colegio_auth_db.* 
     TO 'app_colegio'@'%';
 
 -- -----------------------------------------------------------------------------

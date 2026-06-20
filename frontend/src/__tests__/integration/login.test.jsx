@@ -1,18 +1,25 @@
-// ─────────────────────────────────────────────────────────────────────────────
-// PRUEBAS DE INTEGRACIÓN — Componente: Login
-// Verifica que el formulario de Login interactúa correctamente con
-// useFieldValidation y authMockService: renderizado, validaciones en UI,
-// flujo exitoso y manejo de errores reales del servicio.
-// ─────────────────────────────────────────────────────────────────────────────
-
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Login from '../../pages/Login';
-import { registerUser } from '../../services/authMockService';
 
-// Mocks de props requeridos por el componente
+const { mockRegisterUser, mockLoginUser } = vi.hoisted(() => ({
+  mockRegisterUser: vi.fn(),
+  mockLoginUser: vi.fn(),
+}));
+
+vi.mock('../../services/authMockService', () => ({
+  registerUser: mockRegisterUser,
+  loginUser: mockLoginUser,
+  resetUserPassword: vi.fn(),
+  normalizeEmail: (e) => e.trim().toLowerCase(),
+  isProfesorEmail: (e) => /@profesor\.cl$/i.test(e),
+  isEstudianteEmail: (e) => /@alum\.cl$/i.test(e),
+  isApoderadoEmail: (e) => /@apod\.cl$/i.test(e),
+  USER_ROLES: { APODERADO: 'apoderado', ESTUDIANTE: 'estudiante', PROFESOR: 'profesor' },
+}));
+
 const mockOnLogin = vi.fn();
 const mockOnGoToRegister = vi.fn();
 const mockOnGoToForgot = vi.fn();
@@ -26,23 +33,12 @@ const renderLogin = () =>
     />
   );
 
-// Limpiar entre pruebas
 beforeEach(() => {
   localStorage.clear();
   vi.clearAllMocks();
+  mockLoginUser.mockResolvedValue({ ok: true, user: { email: 'ana@profesor.cl', name: 'Ana López', role: 'profesor' } });
+  mockRegisterUser.mockResolvedValue({ ok: true, user: { email: 'ana@profesor.cl', name: 'Ana López', role: 'profesor' } });
 });
-
-// ─── Helper: registrar un usuario de prueba en el mock storage ────────────────
-const crearUsuarioPrueba = () =>
-  registerUser({
-    name: 'Ana López',
-    email: 'ana@profesor.cl',
-    password: 'clave123',
-  });
-
-// =============================================================================
-// 1. RENDERIZADO
-// =============================================================================
 
 describe('Login — renderizado inicial', () => {
   it('muestra el campo de correo institucional', () => {
@@ -79,10 +75,6 @@ describe('Login — renderizado inicial', () => {
   });
 });
 
-// =============================================================================
-// 2. VALIDACIONES EN UI (integración hook + formulario)
-// =============================================================================
-
 describe('Login — validación de campos al enviar', () => {
   it('muestra error de correo obligatorio si se envía vacío', async () => {
     renderLogin();
@@ -113,10 +105,8 @@ describe('Login — validación de campos al enviar', () => {
   it('limpia el error de correo al ingresar un valor válido', async () => {
     renderLogin();
     const emailInput = screen.getByLabelText(/correo institucional/i);
-    // Activar error
     fireEvent.blur(emailInput);
     await waitFor(() => expect(screen.getByText(/correo.*obligatorio/i)).toBeInTheDocument());
-    // Corregir
     await userEvent.type(emailInput, 'ana@profesor.cl');
     await waitFor(() => expect(screen.queryByText(/correo.*obligatorio/i)).not.toBeInTheDocument());
   });
@@ -142,13 +132,8 @@ describe('Login — validación al perder foco (onBlur)', () => {
   });
 });
 
-// =============================================================================
-// 3. FLUJO DE LOGIN EXITOSO
-// =============================================================================
-
 describe('Login — flujo exitoso', () => {
   it('llama a onLogin con los datos del usuario al autenticar correctamente', async () => {
-    crearUsuarioPrueba();
     renderLogin();
 
     await userEvent.type(screen.getByLabelText(/correo institucional/i), 'ana@profesor.cl');
@@ -172,12 +157,9 @@ describe('Login — flujo exitoso', () => {
   });
 });
 
-// =============================================================================
-// 4. FLUJO DE LOGIN FALLIDO (errores del servicio)
-// =============================================================================
-
 describe('Login — errores del servicio', () => {
   it('muestra error cuando el correo no está registrado', async () => {
+    mockLoginUser.mockResolvedValueOnce({ ok: false, error: 'No encontramos una cuenta asociada a ese correo.' });
     renderLogin();
     await userEvent.type(screen.getByLabelText(/correo institucional/i), 'noexiste@profesor.cl');
     await userEvent.type(screen.getByLabelText(/contraseña/i), 'clave123');
@@ -189,7 +171,7 @@ describe('Login — errores del servicio', () => {
   });
 
   it('muestra error cuando la contraseña es incorrecta', async () => {
-    crearUsuarioPrueba();
+    mockLoginUser.mockResolvedValueOnce({ ok: false, error: 'Correo o contrasena incorrectos.' });
     renderLogin();
     await userEvent.type(screen.getByLabelText(/correo institucional/i), 'ana@profesor.cl');
     await userEvent.type(screen.getByLabelText(/contraseña/i), 'incorrecta');
@@ -207,17 +189,11 @@ describe('Login — errores del servicio', () => {
     fireEvent.click(screen.getByRole('button', { name: /ingresar/i }));
 
     await waitFor(() => {
-      // El error de formato de UI debe estar presente
       expect(screen.getByText(/correo electrónico válido/i)).toBeInTheDocument();
-      // El servicio NO debería haber sido invocado, así que no hay error de "no encontramos cuenta"
       expect(screen.queryByText(/no encontramos una cuenta/i)).not.toBeInTheDocument();
     });
   });
 });
-
-// =============================================================================
-// 5. NAVEGACIÓN DESDE LOGIN
-// =============================================================================
 
 describe('Login — navegación', () => {
   it('llama a onGoToRegister al hacer clic en "Crear cuenta"', () => {
