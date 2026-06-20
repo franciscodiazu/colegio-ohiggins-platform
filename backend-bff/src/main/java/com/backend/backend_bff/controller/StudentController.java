@@ -6,6 +6,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
@@ -28,6 +29,7 @@ public class StudentController {
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE', 'ESTUDIANTE')")
     public ResponseEntity<List<StudentDto>> listarTodos() {
         String url = studentsServiceUrl + "/api/v1/estudiantes";
         log.info("BFF GET all students from: {}", url);
@@ -45,6 +47,7 @@ public class StudentController {
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE', 'ESTUDIANTE')")
     public ResponseEntity<StudentDto> obtenerPorId(@PathVariable Long id) {
         String url = studentsServiceUrl + "/api/v1/estudiantes/" + id;
         log.info("BFF GET student {} from: {}", id, url);
@@ -61,6 +64,7 @@ public class StudentController {
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE')")
     public ResponseEntity<?> crear(@RequestBody StudentRequestDto dto) {
         String url = studentsServiceUrl + "/api/v1/estudiantes";
         log.info("BFF POST create student to: {}", url);
@@ -78,6 +82,7 @@ public class StudentController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'DOCENTE')")
     public ResponseEntity<?> actualizar(@PathVariable Long id, @RequestBody StudentDto dto) {
         String url = studentsServiceUrl + "/api/v1/estudiantes/" + id;
         log.info("BFF PUT update student {} to: {}", id, url);
