@@ -18,11 +18,11 @@ class BackendBffApplicationTests {
     }
 
     @Test
-    @DisplayName("La exclusión de DataSource está declarada en la anotación")
-    void applicationClass_excludesDataSourceAutoConfiguration() {
+    @DisplayName("DataSourceAutoConfiguration ya no está excluido (BFF usa JPA)")
+    void applicationClass_noLongerExcludesDataSourceAutoConfiguration() {
         SpringBootApplication annotation =
             BackendBffApplication.class.getAnnotation(SpringBootApplication.class);
         assertThat(annotation.exclude())
-            .contains(DataSourceAutoConfiguration.class);
+            .doesNotContain(DataSourceAutoConfiguration.class);
     }
 }
