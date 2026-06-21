@@ -1,0 +1,104 @@
+### ===========================================================================
+### SUITE DE PRUEBAS INTEGRADAS — Fase 1 (Conectividad/Contratos) + Fase 2 (Seguridad/Hardening)
+### Ejecutar desde IntelliJ IDEA Ultimate (HTTP Client nativo)
+### Host: http://localhost:8080 (backend-bff)
+### ===========================================================================
+
+### ---------------------------------------------------------------------------
+### PRUEBA 1 — Bloqueo Anónimo (Fase 2)
+### GET /api/students sin token → debe responder 401 Unauthorized
+### ---------------------------------------------------------------------------
+GET http://localhost:8080/api/students
+
+> {%
+    client.test("PRUEBA 1 — Anónimo recibe 401 Unauthorized", function () {
+        client.assert(response.status === 401,
+            "Status esperado 401, recibió " + response.status);
+    });
+%}
+
+### ---------------------------------------------------------------------------
+### PRUEBA 2 — Registro de Estudiante (Fase 2 Hardening)
+### POST /api/v1/auth/register → debe responder 201 y role == "estudiante"
+### ---------------------------------------------------------------------------
+POST http://localhost:8080/api/v1/auth/register
+Content-Type: application/json
+
+{
+  "nombre": "Test Alumno",
+  "username": "test@alum.cl",
+  "password": "Test123456"
+}
+
+> {%
+    client.test("PRUEBA 2 — Registro exitoso retorna 201", function () {
+        client.assert(response.status === 201,
+            "Status esperado 201, recibió " + response.status);
+    });
+
+    client.test("PRUEBA 2 — Rol asignado es 'estudiante' (mínimo privilegio)", function () {
+        client.assert(response.body.role === "estudiante",
+            "Rol esperado 'estudiante', recibió '" + response.body.role + "'");
+    });
+%}
+
+### ---------------------------------------------------------------------------
+### PRUEBA 3 — Login y Captura Dinámica de JWT (Fase 2)
+### POST /api/v1/auth/login → almacena JWT en variable global del IDE
+### ---------------------------------------------------------------------------
+POST http://localhost:8080/api/v1/auth/login
+Content-Type: application/json
+
+{
+  "username": "test@alum.cl",
+  "password": "Test123456"
+}
+
+> {%
+    client.test("PRUEBA 3 — Login exitoso retorna 200", function () {
+        client.assert(response.status === 200,
+            "Status esperado 200, recibió " + response.status);
+    });
+
+    client.test("PRUEBA 3 — Token JWT presente en la respuesta", function () {
+        client.assert(response.body.token !== undefined && response.body.token !== "",
+            "El campo 'token' debe existir y no estar vacío");
+    });
+
+    client.global.set("auth_jwt_token", response.body.token);
+%}
+
+### ---------------------------------------------------------------------------
+### PRUEBA 4 — Consumo Autenticado con JWT (Fase 1 + Fase 2)
+### GET /api/students con token → valida filtro JWT + orquestación BFF
+### ---------------------------------------------------------------------------
+GET http://localhost:8080/api/students
+Authorization: Bearer {{auth_jwt_token}}
+
+> {%
+    client.test("PRUEBA 4 — GET students autenticado retorna 200 OK", function () {
+        client.assert(response.status === 200,
+            "Status esperado 200, recibió " + response.status);
+    });
+%}
+
+### ---------------------------------------------------------------------------
+### PRUEBA 5 — Validación de Mínimo Privilegio (Fase 2 Hardening)
+### POST /api/students con token de estudiante → debe responder 403 Forbidden
+### ---------------------------------------------------------------------------
+POST http://localhost:8080/api/students
+Content-Type: application/json
+Authorization: Bearer {{auth_jwt_token}}
+
+{
+  "rut": "11111111-1",
+  "name": "Test Bloqueo",
+  "grade": "1°A"
+}
+
+> {%
+    client.test("PRUEBA 5 — Estudiante recibe 403 Forbidden al crear (mínimo privilegio)", function () {
+        client.assert(response.status === 403,
+            "Status esperado 403, recibió " + response.status);
+    });
+%}
