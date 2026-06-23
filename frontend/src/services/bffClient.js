@@ -1,7 +1,8 @@
 import axios from 'axios';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+const API_URL = import.meta.env.VITE_API_URL || '';
 const TOKEN_KEY = 'coh_platform_token';
+const REFRESH_TOKEN_KEY = 'coh_platform_refresh';
 
 export const bffClient = axios.create({
     baseURL: API_URL,
@@ -17,6 +18,68 @@ bffClient.interceptors.request.use((config) => {
     }
     return config;
 }, (error) => Promise.reject(error));
+
+let isRefreshing = false;
+let failedQueue = [];
+
+const processQueue = (error, token = null) => {
+    failedQueue.forEach(prom => {
+        if (error) {
+            prom.reject(error);
+        } else {
+            prom.resolve(token);
+        }
+    });
+    failedQueue = [];
+};
+
+bffClient.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        const originalRequest = error.config;
+
+        if (error.response?.status === 401 && !originalRequest._retry && !originalRequest.url?.includes('/auth/refresh')) {
+            if (isRefreshing) {
+                return new Promise((resolve, reject) => {
+                    failedQueue.push({ resolve, reject });
+                }).then(token => {
+                    originalRequest.headers.Authorization = `Bearer ${token}`;
+                    return bffClient(originalRequest);
+                });
+            }
+
+            originalRequest._retry = true;
+            isRefreshing = true;
+
+            try {
+                const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+                if (!refreshToken) {
+                    throw new Error('No refresh token disponible');
+                }
+
+                const response = await bffClient.post('/api/v1/auth/refresh', { refreshToken });
+                const { token: newToken, refreshToken: newRefreshToken } = response.data;
+
+                localStorage.setItem(TOKEN_KEY, newToken);
+                localStorage.setItem(REFRESH_TOKEN_KEY, newRefreshToken);
+
+                processQueue(null, newToken);
+                originalRequest.headers.Authorization = `Bearer ${newToken}`;
+                return bffClient(originalRequest);
+            } catch (refreshError) {
+                processQueue(refreshError, null);
+                localStorage.removeItem(TOKEN_KEY);
+                localStorage.removeItem(REFRESH_TOKEN_KEY);
+                window.location.href = '/login';
+                return Promise.reject(refreshError);
+            } finally {
+                isRefreshing = false;
+            }
+        }
+
+        return Promise.reject(error);
+    }
+);
 
 // Mapeo de campos: Frontend (nombre, curso) -> Backend (name, grade, rut)
 const mapFrontendToBackend = (frontendData) => ({
