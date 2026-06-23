@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/v1/estudiantes")
+@RequestMapping({"/api/v1/estudiantes", "/api/v1/estudiantes/"})
 @Tag(name = "Estudiantes", description = "Gestión del alumnado - Colegio Bernardo O'Higgins")
 public class StudentController {
 

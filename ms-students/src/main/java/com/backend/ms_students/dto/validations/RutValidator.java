@@ -7,7 +7,8 @@ public class RutValidator implements ConstraintValidator<ValidRut, String> {
 
     @Override
     public boolean isValid(String rut, ConstraintValidatorContext context) {
-        if (rut == null || !rut.matches("^[0-9]{7,8}-[0-9Kk]$")) {
+        if (rut == null || rut.isBlank()) return true;
+        if (!rut.matches("^[0-9]{7,8}-[0-9Kk]$")) {
             return false;
         }
 

@@ -1,7 +1,11 @@
 package com.backend.ms_students.service;
 
+import com.backend.ms_students.dto.StudentRequestDto;
+import com.backend.ms_students.exception.EntidadNoEncontradaException;
+import com.backend.ms_students.factory.StudentFactory;
 import com.backend.ms_students.model.Student;
 import com.backend.ms_students.repository.StudentRepository;
+import java.util.Map;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,6 +26,12 @@ class StudentServiceTest {
 
     @Mock
     private StudentRepository studentRepository;
+
+    @Mock
+    private Map<String, StudentFactory> factories;
+
+    @Mock
+    private StudentFactory studentFactory;
 
     @InjectMocks
     private StudentService studentService;
@@ -179,5 +189,53 @@ class StudentServiceTest {
         assertFalse(resultado.isPresent());
         verify(studentRepository, times(1)).findById(99L);
         verify(studentRepository, never()).save(any(Student.class));
+    }
+
+    // ── registrar ──────────────────────────────────────────
+
+    @Test
+    void registrar_debeCrearYGuardarEstudiante() {
+        StudentRequestDto dto = new StudentRequestDto();
+        dto.setRut("12345678-9");
+        dto.setName("Juan Pérez");
+        dto.setGrade("5°A");
+
+        when(factories.get("REGULAR")).thenReturn(studentFactory);
+        when(studentFactory.crearEstudiante(dto)).thenReturn(student);
+        when(studentRepository.save(student)).thenReturn(student);
+
+        Student resultado = studentService.registrar(dto);
+
+        assertNotNull(resultado);
+        assertEquals("12345678-9", resultado.getRut());
+        assertEquals("Juan Pérez", resultado.getName());
+        assertEquals("5°A", resultado.getGrade());
+        verify(factories, times(1)).get("REGULAR");
+        verify(studentFactory, times(1)).crearEstudiante(dto);
+        verify(studentRepository, times(1)).save(student);
+    }
+
+    // ── obtenerPorId ───────────────────────────────────────
+
+    @Test
+    void obtenerPorId_cuandoExiste_debeRetornarEstudiante() {
+        when(studentRepository.findById(1L)).thenReturn(Optional.of(student));
+
+        Student resultado = studentService.obtenerPorId(1L);
+
+        assertNotNull(resultado);
+        assertEquals("Juan Pérez", resultado.getName());
+        verify(studentRepository, times(1)).findById(1L);
+    }
+
+    @Test
+    void obtenerPorId_cuandoNoExiste_debeLanzarExcepcion() {
+        when(studentRepository.findById(99L)).thenReturn(Optional.empty());
+
+        EntidadNoEncontradaException ex = assertThrows(EntidadNoEncontradaException.class,
+            () -> studentService.obtenerPorId(99L));
+
+        assertTrue(ex.getMessage().contains("no encontrado"));
+        verify(studentRepository, times(1)).findById(99L);
     }
 }
