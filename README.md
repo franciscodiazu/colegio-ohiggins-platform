@@ -13,48 +13,60 @@ y Docker Compose para orquestación local.
 ```mermaid
 graph TD
     subgraph Cliente
-        Browser[Navegador]
+        Browser[Navegador<br/>http://localhost:5173]
     end
 
     subgraph "Docker Compose — colegio-network (172.20.0.0/16)"
         subgraph Frontend
-            FE["frontend:5173<br/>React + Vite + nginx"]
-            NG["nginx (interno)<br/>proxy_pass /api/ → backend-bff:8083"]
+            FE["frontend (nginx :8080)<br/>Host port :5173"]
         end
 
-        subgraph "API Layer"
+        subgraph "API Gateway"
             GW["api-gateway:8080<br/>Spring Cloud Gateway MVC<br/>JWT auth + routing"]
-            BFF["backend-bff:8083<br/>Health aggregator<br/>consulta /actuator/health"]
+        end
+
+        subgraph "BFF"
+            BFF["backend-bff:8083<br/>Health aggregator"]
         end
 
         subgraph "Microservicios"
-            MS1["ms-students:8081<br/>Gestión de estudiantes<br/>CRUD + validación RUT"]
-            MS2["ms-attendance:8082<br/>Gestión de asistencia<br/>Strategy Pattern + validaciones"]
+            MS1["ms-students:8081<br/>CRUD estudiantes"]
+            MS2["ms-attendance:8082<br/>Gestión asistencia"]
+        end
+
+        subgraph "Service Discovery"
+            DS["discovery-server:8761<br/>Eureka Service Registry"]
         end
 
         subgraph "Base de Datos"
-            MySQL[("MySQL 8.0 :3306<br/>db_academic / db_record / colegio_auth_db<br/>(sin exposición al host)")]
+            MySQL[("MySQL 8.0 :3306")]
         end
     end
 
     subgraph "CI/CD — GitHub Actions"
-        CI["5 jobs paralelos<br/>Java 21 Temurin + Node 22<br/>mvn clean test + npm run build"]
-        CD["K8s manifests en infra/k8s/<br/>AWS EKS (despliegue manual)"]
+        CI["5 jobs paralelos<br/>Java 21 + Node 22"]
+        CD["K8s manifests en infra/k8s/"]
     end
 
-    Browser --> FE
-    FE --> NG
-    NG -->|"/api/ → proxy_pass"| BFF
-    BFF -->|"GET /actuator/health"| MS1
-    BFF -->|"GET /actuator/health"| MS2
+    Browser -->|"SPA estáticos"| FE
+    FE -->|"fetch() /api/* → VITE_API_URL"| GW
+    FE -.->|"nginx proxy_pass /api/<br/>(solo Docker)"| GW
 
-    FE -->|"fetch() → VITE_API_URL"| GW
     GW -->|"/api/students/**"| MS1
     GW -->|"/api/asistencia/**"| MS2
+    GW -->|"/api/v1/auth/*"| GW
+
+    BFF -->|"actuator/health"| MS1
+    BFF -->|"actuator/health"| MS2
 
     MS1 --> MySQL
     MS2 --> MySQL
     GW --> MySQL
+
+    MS1 -.->|"registro Eureka"| DS
+    MS2 -.->|"registro Eureka"| DS
+    GW -.->|"registro Eureka"| DS
+    BFF -.->|"registro Eureka"| DS
 
     style Browser fill:#e1f5fe
     style CI fill:#e8f5e9
@@ -76,15 +88,16 @@ colegio-ohiggins-platform/
 │   ├── ui/                   # Componentes UI compartidos (@colegio-ohiggins/ui)
 │   └── maven-archetype-basic/# Arquetipo Maven para generar proyectos Java
 ├── Infra/
-│   ├── docker/               # 6 Dockerfiles + nginx.conf
+│   ├── docker/               # 7 Dockerfiles + nginx.conf
 │   ├── mysql/init.sql        # Inicialización de bases de datos con least privilege
 │   ├── docker-compose.yml    # Orquestación completa del stack
 │   ├── .env                  # Variables de entorno reales (no versionado)
 │   └── .env.example          # Template versionable con valores placeholder
-├── infra/k8s/                # 15 manifests K8s para AWS EKS (ejemplo de CD)
+├── infra/k8s/                # 17 manifests K8s para AWS EKS (ejemplo de CD)
 │   ├── namespace.yaml
 │   ├── configmap.yaml
 │   ├── secret.yaml
+│   ├── discovery-server/{deployment,service}.yaml
 │   ├── mysql/{deployment,service}.yaml
 │   ├── ms-students/{deployment,service}.yaml
 │   ├── ms-attendance/{deployment,service}.yaml
@@ -93,18 +106,19 @@ colegio-ohiggins-platform/
 │   └── frontend/{deployment,service}.yaml
 ├── .github/workflows/
 │   └── ci.yml                # CI pipeline — 5 jobs en paralelo
-├── discovery-server/         # 🗑️ Placeholder — se excluyó por tiempo
+├── discovery-server/         # Eureka Service Registry (Netflix Eureka)
 ├── docs/                     # Documentación académica
 │   └── api-specifications/   # Especificaciones de API
 ├── repositorios.txt          # Accesos a los componentes del proyecto
 └── package.json              # Scripts raíz (install:frontend, dev:frontend)
 ```
 
-> **Nota sobre discovery-server/**: Contiene únicamente un directorio `src/` vacío.
-> Se planeaba implementar un Service Registry con Eureka, pero se descartó
-> por tiempo de desarrollo. Los microservicios se comunican por nombres
-> DNS directos (Docker network) en lugar de descubrimiento dinámico.
-> El directorio se conserva como referencia de la intención inicial.
+> **Nota sobre discovery-server/**: Servicio de descubrimiento implementado con
+> Netflix Eureka (Spring Cloud 2025.0.1). Corre en el puerto 8761. Todos los
+> microservicios se registran automáticamente al iniciar. La comunicación entre
+> servicios sigue usando nombres DNS directos (Docker network) por simplicidad;
+> el registro en Eureka permite monitorear la salud de la malla desde
+> `http://localhost:8761/` (dashboard Eureka).
 
 ---
 
@@ -160,9 +174,10 @@ Docker + build de Maven + npm install).
 docker-compose -f Infra/docker-compose.yml ps
 ```
 
-Seis servicios deben aparecer como `Up` o `healthy`:
+Siete servicios deben aparecer como `Up` o `healthy`:
 
 ```
+discovery-server      Up (healthy)
 colegio-mysql         Up (healthy)
 colegio-ms-students   Up (healthy)
 colegio-ms-attendance Up (healthy)
@@ -184,6 +199,7 @@ http://localhost:5173
 | Componente | Puerto Local | URL | Propósito |
 |---|---|---|---|
 | Frontend | 5173 | `http://localhost:5173` | Aplicación React (via nginx) |
+| Discovery Server | 8761 | `http://localhost:8761/` | Eureka Service Registry Dashboard |
 | API Gateway | 8080 | `http://localhost:8080` | Proxy + autenticación JWT |
 | ms-students | 8081 | `http://localhost:8081` | CRUD de estudiantes |
 | ms-attendance | 8082 | `http://localhost:8082` | Gestión de asistencia |
@@ -229,7 +245,7 @@ curl -H "Authorization: Bearer $TOKEN" \
 
 ## Documentación de API (Swagger / OpenAPI)
 
-Tres de los cuatro servicios Java incluyen `springdoc-openapi-starter-webmvc-ui 2.8.8`
+Tres de los cinco servicios Java incluyen `springdoc-openapi-starter-webmvc-ui 2.8.8`
 con Swagger UI precargada. El API Gateway no incluye springdoc.
 
 ### Endpoints por puerto directo
@@ -257,11 +273,11 @@ Generado con `mvn clean verify` el 22/06/2026:
 | Módulo | Tests | Cobertura Instrucciones | Cobertura Ramas | Clases Analizadas |
 |---|---|---|---|---|
 | ms-students | 22 | 80% | 66% | 10 |
-| ms-attendance | 101 | 84% | 75% | 20 |
-| backend-bff | 9 | 83% | 100% | 4 |
+| ms-attendance | 66 | 84% | 75% | 20 |
+| backend-bff | 10 | 83% | 100% | 4 |
 | api-gateway | 9 | Sin JaCoCo | Sin JaCoCo | — |
-| frontend (src/) | ~30 | ~28% (Vitest) | — | — |
-| **Total** | **~171** | — | — | — |
+| frontend (src/) | 349 | ~28% (Vitest) | — | — |
+| **Total** | **~456** | — | — | — |
 
 ### Generar reportes localmente
 
@@ -356,7 +372,8 @@ kubectl apply -f infra/k8s/
 Esto crea en el namespace `colegio-ohiggins`:
 
 | Recurso | Réplicas | Puerto | Health Check |
-|---|---|---|---|
+|---|---|---|---|---|
+| discovery-server | 1 | 8761 (ClusterIP) | `/actuator/health` |
 | mysql | 1 (StatefulSet-like) | 3306 (ClusterIP) | `mysqladmin ping` |
 | ms-students | 2 | 8081 (ClusterIP) | `/actuator/health` |
 | ms-attendance | 2 | 8082 (ClusterIP) | `/actuator/health` |
@@ -403,7 +420,7 @@ El proyecto se configura mediante variables de entorno definidas en
 | `MS_ATTENDANCE_URL` | `http://ms-attendance:8082` | URL interna de ms-attendance |
 | `BFF_PORT` | `8083` | Puerto del backend-bff |
 | `GATEWAY_PORT` | `8080` | Puerto del api-gateway |
-| `VITE_API_URL` | `http://api-gateway:8080` | URL base para peticiones del frontend |
+| `VITE_API_URL` | `http://localhost:8080` | URL base para peticiones del frontend (Docker: `http://api-gateway:8080`) |
 | `CORS_ALLOWED_ORIGINS` | `http://localhost:5173,...` | Orígenes permitidos para CORS |
 
 ### Roles de prueba
@@ -411,21 +428,19 @@ El proyecto se configura mediante variables de entorno definidas en
 Basados en las validaciones de las pruebas unitarias de correo:
 
 | Rol | Email |
-|---|---|
-| Alumno | `alumno@colegioohiggins.com` |
-| Profesor | `profesor@colegioohiggins.com` |
-| Apoderado | `apoderado@colegioohiggins.com` |
+|---|---|---|
+| Alumno | `usuario@alum.cl` |
+| Profesor | `usuario@profesor.cl` |
+| Apoderado | `usuario@apod.cl` |
 
 ---
 
 ## Documentación del Proyecto
 
 Los siguientes documentos se encuentran disponibles en la raíz o en la carpeta `docs/`:
-- `ARQUITECTURA_MICROSERVICIOS.png`: Diagrama de la arquitectura del sistema.
-- `DIAGRAMA_ER.png`: Modelo de entidad-relación de la base de datos.
-- `PERSISTENCIA_DATOS.pdf`: Detalle técnico sobre la implementación de JPA y Hibernate.
-- `INFORME_PRUEBAS_UNITARIAS.pdf`: Reporte detallado de cobertura y calidad de código.
 - `repositorios.txt`: Listado de accesos a los repositorios de los componentes.
+- `docs/api-specifications/`: Especificaciones OpenAPI en formato JSON.
+- `docs/INFORME_INTEGRACION_EUREKA.md`: Documentación de la integración de Eureka.
 
 ---
 
@@ -434,8 +449,8 @@ Los siguientes documentos se encuentran disponibles en la raíz o en la carpeta 
 Cada módulo tiene su propio README con información específica:
 
 | Módulo | README |
-|---|---|
-| api-gateway | [api-gateway/README.md](./api-gateway/README.md) |
+|---|---|---|
+| discovery-server | (incluido en este README) |
 | backend-bff | [backend-bff/README.md](./backend-bff/README.md) |
 | ms-students | [ms-students/README.md](./ms-students/README.md) |
 | ms-attendance | [ms-attendance/README.md](./ms-attendance/README.md) |
