@@ -23,3 +23,6 @@ Thumbs.db
 mvn-test.log
 mvw-debug.log
 target/
+Entrega_EV3.zip
+docs/coverage-report/
+*.bak
