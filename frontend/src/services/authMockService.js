@@ -1,6 +1,7 @@
 import { bffClient } from './bffClient';
 
 const TOKEN_KEY = 'coh_platform_token';
+const REFRESH_TOKEN_KEY = 'coh_platform_refresh';
 const USERS_STORAGE_KEY = 'coh_platform_users';
 
 const PROFESOR_DOMAIN_REGEX = /^[^\s@]+@profesor\.cl$/i;
@@ -52,9 +53,10 @@ export const loginUser = async ({ email, password }) => {
       password,
     });
 
-    const { token, username, nombre, role } = response.data;
+    const { token, refreshToken, username, nombre, role } = response.data;
 
     localStorage.setItem(TOKEN_KEY, token);
+    if (refreshToken) localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
 
     return {
       ok: true,
@@ -84,9 +86,10 @@ export const registerUser = async ({ name, email, password }) => {
       password,
     });
 
-    const { token, username, nombre, role } = response.data;
+    const { token, refreshToken, username, nombre, role } = response.data;
 
     localStorage.setItem(TOKEN_KEY, token);
+    if (refreshToken) localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken);
 
     return {
       ok: true,
