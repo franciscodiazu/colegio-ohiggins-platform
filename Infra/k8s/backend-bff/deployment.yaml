@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-bff
+  namespace: colegio-ohiggins
+  labels:
+    app: backend-bff
+    tier: edge
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: backend-bff
+  template:
+    metadata:
+      labels:
+        app: backend-bff
+        tier: edge
+    spec:
+      containers:
+        - name: backend-bff
+          image: colegio-ohiggins-backend-bff:latest
+          ports:
+            - containerPort: 8083
+          envFrom:
+            - configMapRef:
+                name: colegio-ohiggins-config
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8083
+            initialDelaySeconds: 120
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8083
+            initialDelaySeconds: 60
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 5
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"

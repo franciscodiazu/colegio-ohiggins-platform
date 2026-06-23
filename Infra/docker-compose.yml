@@ -14,8 +14,10 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./mysql/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
-    ports:
-      - "${DB_PORT:-3306}:3306"
+    # ports:  # No exponer MySQL al host — comunicación interna por Docker network
+      # - "${DB_PORT:-3307}:3306"
+    expose:
+      - "3306"
     networks:
       - colegio-network
     healthcheck:
@@ -50,7 +52,7 @@ services:
       DB_USERNAME: ${DB_USERNAME:-app_colegio}
       DB_PASSWORD: ${DB_PASSWORD:-Ohiggins_Secur3_2026!}
       # Forzar Spring a usar la URL JDBC correcta
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:${DB_PORT:-3306}/${DB_NAME_STUDENTS:-db_academic}
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:${DB_PORT:-3306}/${DB_NAME_STUDENTS:-db_academic}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-app_colegio}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-Ohiggins_Secur3_2026!}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
@@ -83,10 +85,10 @@ services:
       DB_HOST: ${DB_HOST:-mysql}
       DB_PORT: ${DB_PORT:-3306}
       # Alineado con la DB creada por init.sql
-      DB_NAME: ${DB_NAME_ATTENDANCE:-db_academic}
+      DB_NAME: ${DB_NAME_ATTENDANCE:-db_record}
       DB_USERNAME: ${DB_USERNAME:-app_colegio}
       DB_PASSWORD: ${DB_PASSWORD:-Ohiggins_Secur3_2026!}
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:${DB_PORT:-3306}/${DB_NAME_ATTENDANCE:-db_academic}
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:${DB_PORT:-3306}/${DB_NAME_ATTENDANCE:-db_record}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
       SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-app_colegio}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-Ohiggins_Secur3_2026!}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
@@ -107,21 +109,28 @@ services:
       retries: 5
       start_period: 90s
 
-  backend-bff:
+  api-gateway:
     build:
       context: ../
-      dockerfile: Infra/docker/bff.Dockerfile
-    container_name: colegio-bff
-    hostname: backend-bff
+      dockerfile: Infra/docker/gateway.Dockerfile
+    container_name: colegio-gateway
+    hostname: api-gateway
     restart: on-failure
     environment:
-      SERVER_PORT: ${BFF_PORT:-8080}
+      SERVER_PORT: ${GATEWAY_PORT:-8080}
       MS_STUDENTS_URL: ${MS_STUDENTS_URL:-http://ms-students:8081}
       MS_ATTENDANCE_URL: ${MS_ATTENDANCE_URL:-http://ms-attendance:8082}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://frontend:8080}
+      DB_HOST: ${DB_HOST:-mysql}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME_AUTH: ${DB_NAME_AUTH:-colegio_auth_db}
+      DB_USERNAME: ${DB_USERNAME:-app_colegio}
+      DB_PASSWORD: ${DB_PASSWORD:-Ohiggins_Secur3_2026!}
+      JWT_SECRET: ${JWT_SECRET:-OgH1gG4sS3cUr3K3yF0rJWtT0k3nS1gn1nG1sV3ryL0nG4ndS3cur3}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-1800000}
       LOGGING_LEVEL_ROOT: ${LOGGING_LEVEL_ROOT:-INFO}
     ports:
-      - "${BFF_PORT:-8080}:8080"
+      - "${GATEWAY_PORT:-8080}:8080"
     networks:
       - colegio-network
     depends_on:
@@ -132,7 +141,30 @@ services:
       ms-attendance:
         condition: service_started
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${BFF_PORT:-8080}/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:${GATEWAY_PORT:-8080}/actuator/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 6
+      start_period: 120s
+
+  backend-bff:
+    build:
+      context: ../
+      dockerfile: Infra/docker/bff.Dockerfile
+    container_name: colegio-bff
+    hostname: backend-bff
+    restart: on-failure
+    environment:
+      SERVER_PORT: ${BFF_PORT:-8083}
+      MS_STUDENTS_URL: ${MS_STUDENTS_URL:-http://ms-students:8081}
+      MS_ATTENDANCE_URL: ${MS_ATTENDANCE_URL:-http://ms-attendance:8082}
+      LOGGING_LEVEL_ROOT: ${LOGGING_LEVEL_ROOT:-INFO}
+    ports:
+      - "${BFF_PORT:-8083}:8083"
+    networks:
+      - colegio-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${BFF_PORT:-8083}/actuator/health"]
       interval: 20s
       timeout: 10s
       retries: 6
@@ -143,18 +175,18 @@ services:
       context: ../
       dockerfile: Infra/docker/frontend.Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://backend-bff:8080}
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
     container_name: colegio-frontend
     hostname: frontend
     restart: unless-stopped
     environment:
-      VITE_API_URL: ${VITE_API_URL:-http://backend-bff:8080}
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
     ports:
       - "${FRONTEND_PORT:-5173}:8080"
     networks:
       - colegio-network
     depends_on:
-      backend-bff:
+      api-gateway:
         condition: service_started
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/"]

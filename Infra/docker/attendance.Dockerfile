@@ -22,7 +22,7 @@ RUN mvn dependency:go-offline -B
 # Copiar código fuente
 COPY ms-attendance/src ./src
 
-# Compilar, ejecutar los 36 tests y empaquetar el JAR ejecutable de producción
+# Compilar, ejecutar los 101 tests y empaquetar el JAR ejecutable de producción
 RUN mvn clean package -B
 
 # ----------------------------------------------------------------------------

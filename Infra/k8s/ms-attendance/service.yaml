@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: ms-attendance
+  namespace: colegio-ohiggins
+  labels:
+    app: ms-attendance
+    tier: backend
+spec:
+  selector:
+    app: ms-attendance
+  ports:
+    - port: 8082
+      targetPort: 8082
+  type: ClusterIP
