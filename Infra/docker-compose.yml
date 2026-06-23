@@ -1,6 +1,24 @@
 version: '3.9'
 
 services:
+  discovery-server:
+    build:
+      context: ../
+      dockerfile: Infra/docker/discovery.Dockerfile
+    container_name: discovery-server
+    hostname: discovery-server
+    restart: unless-stopped
+    ports:
+      - "${DISCOVERY_PORT:-8761}:8761"
+    networks:
+      - colegio-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
   mysql:
     image: mysql:8.0
     container_name: colegio-mysql
@@ -46,6 +64,7 @@ services:
     restart: unless-stopped
     environment:
       SERVER_PORT: ${MS_STUDENTS_PORT:-8081}
+      EUREKA_URL: http://discovery-server:8761/eureka/
       DB_HOST: ${DB_HOST:-mysql}
       DB_PORT: ${DB_PORT:-3306}
       DB_NAME: ${DB_NAME_STUDENTS:-db_academic}
@@ -64,6 +83,8 @@ services:
     networks:
       - colegio-network
     depends_on:
+      discovery-server:
+        condition: service_healthy
       mysql:
         condition: service_healthy
     healthcheck:
@@ -82,6 +103,7 @@ services:
     restart: on-failure
     environment:
       SERVER_PORT: ${MS_ATTENDANCE_PORT:-8082}
+      EUREKA_URL: http://discovery-server:8761/eureka/
       DB_HOST: ${DB_HOST:-mysql}
       DB_PORT: ${DB_PORT:-3306}
       # Alineado con la DB creada por init.sql
@@ -100,6 +122,8 @@ services:
     networks:
       - colegio-network
     depends_on:
+      discovery-server:
+        condition: service_healthy
       mysql:
         condition: service_healthy
     healthcheck:
@@ -118,6 +142,7 @@ services:
     restart: on-failure
     environment:
       SERVER_PORT: ${GATEWAY_PORT:-8080}
+      EUREKA_URL: http://discovery-server:8761/eureka/
       MS_STUDENTS_URL: ${MS_STUDENTS_URL:-http://ms-students:8081}
       MS_ATTENDANCE_URL: ${MS_ATTENDANCE_URL:-http://ms-attendance:8082}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://frontend:8080}
@@ -134,6 +159,8 @@ services:
     networks:
       - colegio-network
     depends_on:
+      discovery-server:
+        condition: service_healthy
       mysql:
         condition: service_healthy
       ms-students:
@@ -156,6 +183,7 @@ services:
     restart: on-failure
     environment:
       SERVER_PORT: ${BFF_PORT:-8083}
+      EUREKA_URL: http://discovery-server:8761/eureka/
       MS_STUDENTS_URL: ${MS_STUDENTS_URL:-http://ms-students:8081}
       MS_ATTENDANCE_URL: ${MS_ATTENDANCE_URL:-http://ms-attendance:8082}
       LOGGING_LEVEL_ROOT: ${LOGGING_LEVEL_ROOT:-INFO}
@@ -163,6 +191,9 @@ services:
       - "${BFF_PORT:-8083}:8083"
     networks:
       - colegio-network
+    depends_on:
+      discovery-server:
+        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:${BFF_PORT:-8083}/actuator/health"]
       interval: 20s

@@ -33,5 +33,8 @@ data:
   STUDENTS_SERVER_PORT: "8081"
   ATTENDANCE_SERVER_PORT: "8082"
 
+  # Eureka Discovery
+  EUREKA_URL: "http://discovery-server:8761/eureka/"
+
   # Frontend
   VITE_API_URL: "http://api-gateway:8080"

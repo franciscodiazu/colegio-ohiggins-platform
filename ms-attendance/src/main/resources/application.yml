@@ -2,6 +2,11 @@ spring:
   application:
     name: ms-attendance
 
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_URL:http://discovery-server:8761/eureka/}
+
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:db_record}?createDatabaseIfNotExist=true
     username: ${DB_USERNAME:root}
