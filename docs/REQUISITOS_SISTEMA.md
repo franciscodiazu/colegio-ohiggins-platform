@@ -26,11 +26,13 @@
 |--------|----------|-----------|
 | 3306 | MySQL | Base de datos relacional |
 | 5173 | Frontend (Vite dev) | Interfaz de usuario en desarrollo |
-| 8080 | Frontend (Nginx) / API Gateway | Interfaz producción / Punto de entrada API |
+| 8080 | API Gateway | Punto de entrada API, autenticación JWT |
 | 8081 | ms-students | Microservicio estudiantes |
 | 8082 | ms-attendance | Microservicio asistencia |
-| 8083 | backend-bff | Backend for Frontend |
+| 8083 | backend-bff | Backend for Frontend (Docker) |
 | 8761 | discovery-server | Eureka Service Discovery |
+| 9090 | Prometheus | Métricas de servicios (Docker) |
+| 3000 | Grafana | Dashboards de monitoreo (Docker) |
 
 ## Instalación
 
@@ -60,9 +62,11 @@ Todos los contenedores deben mostrar `(healthy)`.
 
 | Componente | URL |
 |------------|-----|
-| Frontend | http://localhost:5173 (dev) / http://localhost:8080 (prod) |
+| Frontend | http://localhost:5173 |
 | API Gateway | http://localhost:8080 |
 | Eureka Dashboard | http://localhost:8761 |
+| Prometheus Targets | http://localhost:9090/targets |
+| Grafana Dashboards | http://localhost:3000 (admin/admin) |
 | Swagger ms-students | http://localhost:8081/swagger-ui/index.html |
 | Swagger ms-attendance | http://localhost:8082/swagger-ui/index.html |
 

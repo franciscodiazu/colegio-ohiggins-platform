@@ -26,7 +26,7 @@ La plataforma permite a profesores gestionar informacion academica de forma cent
 | Tecnologia | Version | Uso |
 |---|---|---|
 | React | 19.2.4 | Libreria de interfaz de usuario |
-| Vite | 5+ | Bundler y servidor de desarrollo |
+| Vite | 8.x | Bundler y servidor de desarrollo |
 | JavaScript (ES2022) | -- | Lenguaje principal |
 | CSS3 | -- | Estilos y diseño visual |
 | localStorage | -- | Persistencia de datos mock |
@@ -110,7 +110,7 @@ npx playwright test
 
 ### Resultados obtenidos (Vitest)
 
-- Tests Pasados: 87
+- Tests Pasados: 349 (Vitest)
 - Tests Fallidos: 0
 - Cobertura de Lineas: 28.04%
 - Cobertura de Funciones: 79.24%

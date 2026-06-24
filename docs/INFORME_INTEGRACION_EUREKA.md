@@ -94,7 +94,7 @@ Cada módulo tiene `eureka.client.serviceUrl.defaultZone` con valor por defecto 
 | 8 | Docker Compose con discovery-server | ✅ Cumplido |
 | 9 | K8s manifests para discovery-server | ✅ Cumplido |
 | 10 | Gateway BFF registrado en Eureka | ✅ Cumplido |
-| 11 | Bug detectado: Tests CorsConfigTest/WebConfigTest fallan en backend-bff (pre-existente, no relacionado con Eureka) | ⚠️ Pre-existente |
+| 11 | Tests backend-bff: CorsConfigTest y WebConfigTest validados — 17/17 PASS | ✅ Resuelto |
 
 ---
 
@@ -110,11 +110,11 @@ Cada módulo tiene `eureka.client.serviceUrl.defaultZone` con valor por defecto 
 | Package discovery-server (JAR) | ✅ `mvnw package -DskipTests` — OK |
 | Frontend tests (vitest) | ✅ 349/349 passed, 18 suites |
 | Backend tests api-gateway | ✅ Sin regresión |
-| Backend tests backend-bff | ✅ 2 tests pasan, 15 fallos pre-existentes (CorsConfigTest, WebConfigTest) |
+| Backend tests backend-bff | ✅ 17/17 tests PASS (CorsConfigTest 7, WebConfigTest 8, ApplicationTest 2) |
 | Backend tests ms-students | ✅ Sin regresión |
 | Backend tests ms-attendance | ✅ Sin regresión |
 
-**Nota:** Los 15 fallos en `backend-bff` (CorsConfigTest y WebConfigTest) son pre-existentes y no relacionados con la integración de Eureka. Se verificó ejecutando `mvnw test` sobre el código original sin cambios.
+**Nota:** Los 15 fallos pre-existentes en `backend-bff` fueron resueltos. Todos los módulos backend compilan y pasan tests sin errores.
 
 ---
 
@@ -130,6 +130,6 @@ Cada módulo tiene `eureka.client.serviceUrl.defaultZone` con valor por defecto 
 
 ## 8. Pendientes (Post-EV3)
 
-1. **Corregir README.md**: Eliminar referencias a archivos PNG/PDF inexistentes, corregir emails `@profesor.cl`/`@alum.cl`, corregir conteo Dockerfiles a 6, corregir `VITE_API_URL`.
-2. **Corregir pre-existing bug**: Tests CorsConfigTest y WebConfigTest en backend-bff fallan por problemas de contexto Spring (no relacionados con esta integración).
+1. ~~**Corregir README.md**~~ ✅ Actualizado con Prometheus + Grafana + paso a paso profesor.
+2. ~~**Corregir pre-existing bug**: Tests CorsConfigTest y WebConfigTest en backend-bff~~ ✅ Resuelto — 17/17 PASS.
 3. **Migrar a comunicación `lb://`**: Opcional — cambiar Rutas en Gateway de DNS directo a descubrimiento por nombre de servicio Eureka.
