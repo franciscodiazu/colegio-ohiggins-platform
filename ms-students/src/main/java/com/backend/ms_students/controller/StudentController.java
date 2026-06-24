@@ -24,7 +24,7 @@ public class StudentController {
     @Autowired
     private StudentService service;
 
-    @PostMapping
+    @PostMapping({"", "/"})
     @Operation(summary = "Crear estudiante", description = "Registra un nuevo alumno con validación de DTO")
     public ResponseEntity<?> crear(@Valid @RequestBody StudentRequestDto dto) {
         try {
@@ -34,7 +34,7 @@ public class StudentController {
         }
     }
 
-    @GetMapping
+    @GetMapping({"", "/"})
     public ResponseEntity<List<Student>> listarTodos() {
         return ResponseEntity.ok(service.getAllStudents());
     }
@@ -49,6 +49,13 @@ public class StudentController {
         Student actualizado = service.updateStudent(id, details)
             .orElseThrow(() -> new com.backend.ms_students.exception.EntidadNoEncontradaException("Estudiante no encontrado: " + id));
         return ResponseEntity.ok(actualizado);
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Eliminar estudiante", description = "Elimina un alumno por su ID (solo ADMIN)")
+    public ResponseEntity<Void> eliminar(@PathVariable Long id) {
+        service.deleteStudent(id);
+        return ResponseEntity.noContent().build();
     }
 
     public static record RespuestaError(String mensaje) {}
