@@ -26,3 +26,5 @@ target/
 Entrega_EV3.zip
 docs/coverage-report/
 *.bak
+mvn_err.txt
+mvn_out.txt
