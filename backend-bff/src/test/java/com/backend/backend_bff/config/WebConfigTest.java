@@ -3,16 +3,23 @@ package com.backend.backend_bff.config;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(excludeAutoConfiguration = DataSourceAutoConfiguration.class)
-@Import(CorsConfig.class)
+@SpringBootTest(properties = {
+    "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1",
+    "spring.datasource.driver-class-name=org.h2.Driver",
+    "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
+    "spring.jpa.hibernate.ddl-auto=create-drop",
+    "eureka.client.enabled=false",
+    "spring.cloud.discovery.enabled=false",
+    "cors.allowed.origins=http://localhost:5173,http://127.0.0.1:5173,http://frontend:80"
+})
+@AutoConfigureMockMvc
 class WebConfigTest {
 
     @Autowired
@@ -74,7 +81,7 @@ class WebConfigTest {
     }
 
     @Test
-    @DisplayName("Allow-Credentials es true en WebConfig")
+    @DisplayName("Allow-Credentials es true")
     void allowCredentials_isTrue() throws Exception {
         mockMvc.perform(options("/api/students/")
                 .header("Origin", "http://localhost:5173")

@@ -3,21 +3,22 @@ package com.backend.backend_bff.config;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.TestPropertySource;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.servlet.MockMvc;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.options;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-@WebMvcTest(excludeAutoConfiguration = DataSourceAutoConfiguration.class)
-@Import(CorsConfig.class)
-@TestPropertySource(properties = {
-    "cors.allowed.origins=http://localhost:5173,http://localhost:8080"
+@SpringBootTest(properties = {
+    "spring.datasource.url=jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1",
+    "spring.datasource.driver-class-name=org.h2.Driver",
+    "spring.jpa.database-platform=org.hibernate.dialect.H2Dialect",
+    "spring.jpa.hibernate.ddl-auto=create-drop",
+    "eureka.client.enabled=false",
+    "spring.cloud.discovery.enabled=false"
 })
+@AutoConfigureMockMvc
 class CorsConfigTest {
 
     @Autowired
