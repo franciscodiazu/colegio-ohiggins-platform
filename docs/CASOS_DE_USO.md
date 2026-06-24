@@ -16,7 +16,7 @@
 | Precondición | Usuario autenticado con rol Profesor |
 | Flujo principal | 1. Profesor accede al módulo de estudiantes<br>2. Visualiza listado completo de alumnos<br>3. Puede crear: ingresa RUT, nombre, apellido, curso<br>4. Puede editar: modifica datos de estudiante existente<br>5. Puede eliminar: confirma eliminación vía modal<br>6. Sistema valida datos y persiste en db_academic |
 | Postcondición | Datos del estudiante creados/actualizados/eliminados en BD |
-| Códigos HTTP | 200 OK, 201 Created, 400 Bad Request, 404 Not Found |
+| Códigos HTTP | 200 OK, 201 Created, 204 No Content (DELETE), 400 Bad Request, 404 Not Found |
 
 ## CU-03: Registro de Asistencia
 

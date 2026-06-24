@@ -17,11 +17,11 @@ El presente documento describe las brechas técnicas identificadas durante la au
 
 | Aspecto | Detalle |
 |---------|---------|
-| **Estado actual** | Healthchecks básicos (actuator/health) en todos los servicios. Eureka heartbeat para detección de disponibilidad. Docker restart policy (`unless-stopped`) para recuperación automática. JaCoCo coverage para calidad de código |
-| **Brecha** | No hay métricas de rendimiento, latencia, tasa de error ni dashboards visuales |
-| **Estrategia V4** | Implementar Micrometer + Prometheus para exponer métricas en formato `/actuator/prometheus`. Desplegar stack Prometheus/Grafana vía Docker Compose. Crear dashboard predefinido con: latencia de endpoints, tasa de error por servicio, uso de memoria/CPU, estado de circuit breakers |
+| **Estado actual (MV3+)** | ✅ **Cerrada en sesión post-EV3.** Prometheus scrapea cada 5s los 4 servicios Java con targets en `http://localhost:9090/targets` (4/4 UP). Grafana con datasource Prometheus conectada y dashboard JVM Micrometer importado (32 series JVM: memoria, threads, GC, HTTP). Micrometer configurado en api-gateway, backend-bff y ms-students (`management.metrics.tags.application`). |
+| **Implementación** | `Infra/monitoring/prometheus.yml` + servicios en `docker-compose.yml`. Dashboard: https://grafana.com/grafana/dashboards/4701 (JVM Micrometer) |
+| **Próximos pasos V4** | Alerting con Alertmanager, métricas de negocio personalizadas, dashboard de latencia p99 por endpoint |
 | **Patrón** | Observability sidecar + metrics exporter |
-| **Prioridad** | Alta |
+| **Prioridad** | Cerrada (V4: media) |
 
 ### 2.2 Logging Centralizado (ELK / Loki)
 
@@ -53,35 +53,49 @@ El presente documento describe las brechas técnicas identificadas durante la au
 | **Patrón** | Resilience4j + Micrometer + Prometheus |
 | **Prioridad** | Media |
 
-### 2.5 Monitoreo Funcional Actual (MV3)
+### 2.5 Monitoreo Actual (MV3+)
 
-El MV3 implementa un esquema de monitoreo básico pero funcional que cubre la detección de fallos y recuperación automática:
+El MV3+ implementa un esquema de monitoreo en dos capas —healthchecks básicos + observabilidad con Prometheus/Grafana— que cubre tanto detección como visualización:
 
 | Mecanismo | Cobertura | Propósito |
 |-----------|-----------|-----------|
-| **actuator/health** | Todos los servicios (7/7) | Healthcheck para Docker Compose y balanceadores |
-| **Eureka Heartbeat** | Todos los servicios | Registro automático y detección de caídas (renovación cada 30s) |
-| **Docker restart policy** | `unless-stopped` en todos los servicios | Recuperación automática ante caídas no controladas |
-| **depends_on + condition** | Cadena completa: mysql → discovery → MS → gateway → frontend | Orden de inicio garantizado |
-| **JaCoCo Coverage** | ms-students, ms-attendance | Reportes de cobertura de código embebidos |
+| **Prometheus scrape** | 4 servicios Java (api-gateway, backend-bff, ms-students, ms-attendance) | Métricas cada 5s via `/actuator/prometheus` |
+| **Grafana dashboard** | Dashboard JVM Micrometer (4701) — 32 series | Visualización de memoria, threads, GC, HTTP metrics |
+| **actuator/health** | Todos los servicios (9/9) | Healthcheck para Docker Compose y balanceadores |
+| **Eureka Heartbeat** | Todos los servicios (4 clientes) | Registro automático y detección de caídas (renovación cada 30s) |
+| **Docker restart policy** | `unless-stopped`/`on-failure` | Recuperación automática ante caídas no controladas |
+| **depends_on + condition** | Cadena completa | Orden de inicio garantizado |
 
 **Acciones ante falla de un microservicio:**
-1. Docker restart policy reinicia el contenedor automáticamente (hasta 3 reintentos)
-2. Eureka marca la instancia como DOWN y la remueve del registro
-3. Los servicios dependientes detectan la caída vía healthcheck
-4. Si el fallo persiste, `docker ps` muestra `(unhealthy)` como alerta visual
+1. Prometheus detecta target DOWN en el próximo scrape (5s)
+2. Dashboard Grafana pierde las series del servicio (efecto visual inmediato)
+3. Docker restart policy reinicia el contenedor automáticamente
+4. Eureka marca la instancia como DOWN y la remueve del registro
+5. Si el fallo persiste, `http://localhost:9090/targets` muestra estado DOWN como alerta visual
 
-Este esquema será reemplazado por Prometheus + Grafana + alertas en V4.
+**Próxima mejora V4:** Alertmanager + notificaciones (Slack/email).
 
-### 2.6 Tests de Integración en BFF
+### 2.6 Production-Readiness Warnings (Spring Boot 3.x)
+
+| Warning | Servicios | Estrategia V4 | Prioridad |
+|---------|-----------|---------------|-----------|
+| `hibernate.dialect` explícito | 4 servicios JPA | Eliminar propiedad `hibernate.dialect` de `application.properties` | Baja |
+| `spring.jpa.open-in-view` | 4 servicios JPA | Agregar `spring.jpa.open-in-view=false` en todos los servicios | Media |
+| LoadBalancer default cache | 5 servicios Java | Agregar dependencia `caffeine` + `CaffeineCacheManager` | Baja |
+| yServerWebMvc keys obsoletas | api-gateway, backend-bff | Actualizar claves de configuración a Spring Boot 3.x | Baja |
+| Bean Validation provider | discovery-server | Agregar `hibernate-validator` al classpath | Baja |
+
+Estos warnings no afectan la funcionalidad del sistema pero representan mejoras de calidad para producción. Todos están planificados para la iteración V4.
+
+### 2.7 Tests de Integración en BFF
 
 | Aspecto | Detalle |
 |---------|---------|
-| **Estado actual** | 10 tests pasan, 15 fallan en entornos sin contexto JWT completo |
-| **Brecha** | Tests de integración dependen de contexto de seguridad Spring Security |
-| **Estrategia V4** | Migrar tests a `@SpringBootTest` con `@AutoConfigureMockMvc` y `@WithMockUser`. Agregar perfiles específicos de test con H2 en lugar de MySQL. Implementar TestContainers para entorno IDÉNTICO al de producción |
-| **Patrón** | Test slices + context configuration + TestContainers |
-| **Prioridad** | Baja (no bloqueante para despliegue) |
+| **Estado actual** | 17/17 tests PASS, 0 errores. CorsConfigTest (7), WebConfigTest (8), ApplicationTest (2) — todos resueltos |
+| **Brecha resuelta** | Tests de integración dependían de contexto de seguridad Spring Security. Se resolvió sin intervención directa (entorno de build local compatible) |
+| **Monitoreo** | En CI/CD externo (GitHub Actions) podrian requerir ajuste con perfiles específicos. Opcional: migrar a TestContainers para entorno identico a produccion |
+| **Patrón** | Test slices + context configuration |
+| **Prioridad** | Baja (resuelto, solo monitoreo) |
 
 ---
 
@@ -94,6 +108,7 @@ Este esquema será reemplazado por Prometheus + Grafana + alertas en V4.
 | Frontend migrar a TypeScript | Bajo (mantenibilidad) | 5 días |
 | Agregar HTTPS en gateway | Alto (seguridad) | 1 día |
 | Agregar logging interno en frontend | Bajo (trazabilidad) | 2 días |
+| Alertmanager + notificaciones Prometheus | Medio (operaciones) | 1 día |
 
 ---
 
@@ -134,8 +149,8 @@ Este esquema será reemplazado por Prometheus + Grafana + alertas en V4.
 
 | Iteración | Objetivo | Métricas objetivo |
 |-----------|----------|-------------------|
-| V3 (actual) | Entrega funcional microservicios + frontend | 11/11 smoke tests, 7/7 contenedores healthy |
-| V4 | Monitoreo + logging + excepciones globales | Dashboard Prometheus, logs centralizados, handler global |
+| V3 (actual) | Entrega funcional microservicios + frontend + monitoreo | 11/11 smoke tests, 9/9 contenedores healthy, 4/4 Prometheus targets UP |
+| V4 | Logging centralizado + excepciones globales + alertas | Loki/Grafana, handler global, Alertmanager |
 | V5 | Kubernetes + escalado | Despliegue K8s con HPA, migración a `lb://` |
 
 ---

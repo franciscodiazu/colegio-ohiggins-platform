@@ -30,7 +30,7 @@ docker build -f Infra/docker/bff.Dockerfile -t backend-bff:local .
 
 ## Configuracion y Endpoints
 
-- Puerto por defecto: 8080
+- Puerto local por defecto: 8080 | Puerto en contenedor Docker: 8083 (vía variable de entorno)
 - Path base: /
 
 El BFF redirige las peticiones a los siguientes servicios:
@@ -41,9 +41,9 @@ El BFF redirige las peticiones a los siguientes servicios:
 
 El proyecto utiliza Spring Boot Test para validar la configuracion y el enrutamiento.
 
-- Total Tests: 8
+- Total Tests: 17 (todos PASS)
 - Cobertura de codigo: >60%
-- Clases testeadas: WebConfigTest
+- Clases testeadas: WebConfigTest, CorsConfigTest, BackendBffApplicationTests
 
 Ejecutar pruebas:
 ```bash

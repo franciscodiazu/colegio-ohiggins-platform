@@ -57,4 +57,11 @@ public class StudentService {
             return repository.save(existing);
         });
     }
+
+    public void deleteStudent(Long id) {
+        Student student = repository.findById(id)
+            .orElseThrow(() -> new EntidadNoEncontradaException("Estudiante no encontrado: " + id));
+        repository.delete(student);
+        log.info("Estudiante eliminado ID: {}", id);
+    }
 }

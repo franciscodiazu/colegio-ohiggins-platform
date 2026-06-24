@@ -1,4 +1,5 @@
 import axios from 'axios';
+import logger from './logger';
 
 const API_URL = import.meta.env.VITE_API_URL || '';
 const TOKEN_KEY = 'coh_platform_token';
@@ -70,12 +71,18 @@ bffClient.interceptors.response.use(
                 processQueue(refreshError, null);
                 localStorage.removeItem(TOKEN_KEY);
                 localStorage.removeItem(REFRESH_TOKEN_KEY);
+                logger.error('Refresh token fallido — redirigiendo a login', refreshError.message);
                 window.location.href = '/login';
                 return Promise.reject(refreshError);
             } finally {
                 isRefreshing = false;
             }
         }
+
+        const status = error.response ? error.response.status : 'NETWORK_ERROR';
+        const method = originalRequest?.method?.toUpperCase() || 'UNKNOWN';
+        const url = originalRequest?.url || 'UNKNOWN';
+        logger.error(`Fallo en comunicación BFF [Status ${status}] | ${method} -> ${url}`, error.message);
 
         return Promise.reject(error);
     }

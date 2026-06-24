@@ -1,11 +1,11 @@
 # Colegio O'Higgins Platform
 
 Repositorio monorepo del proyecto de gestión académica para el Colegio Bernardo O'Higgins.
-Arquitectura de microservicios con Spring Boot para el backend, React + Vite para el frontend
-y Docker Compose para orquestación local.
+Arquitectura de microservicios con Spring Boot 3.5.13 para el backend, React + Vite para el frontend,
+Docker Compose para orquestación local y Prometheus + Grafana para observabilidad.
 
 [![CI](https://github.com/franciscodiazu/colegio-ohiggins-platform/actions/workflows/ci.yml/badge.svg)](https://github.com/franciscodiazu/colegio-ohiggins-platform/actions/workflows/ci.yml)
-    
+
 ---
 
 ## Arquitectura
@@ -25,13 +25,13 @@ graph TD
             GW["api-gateway:8080<br/>Spring Cloud Gateway MVC<br/>JWT auth + routing"]
         end
 
-        subgraph "BFF"
-            BFF["backend-bff:8083<br/>Health aggregator"]
+        subgraph "BFF Layer"
+            BFF["backend-bff:8083<br/>Health aggregator + PlatformHealth"]
         end
 
         subgraph "Microservicios"
-            MS1["ms-students:8081<br/>CRUD estudiantes"]
-            MS2["ms-attendance:8082<br/>Gestión asistencia"]
+            MS1["ms-students:8081<br/>CRUD estudiantes + validación RUT"]
+            MS2["ms-attendance:8082<br/>Gestión asistencia + Circuit Breaker"]
         end
 
         subgraph "Service Discovery"
@@ -41,16 +41,19 @@ graph TD
         subgraph "Base de Datos"
             MySQL[("MySQL 8.0 :3306")]
         end
+
+        subgraph "Observabilidad"
+            PROM["prometheus:9090<br/>Scrape métricas cada 5s"]
+            GRAF["grafana:3000<br/>Dashboard JVM Micrometer"]
+        end
     end
 
     subgraph "CI/CD — GitHub Actions"
         CI["5 jobs paralelos<br/>Java 21 + Node 22"]
-        CD["K8s manifests en infra/k8s/"]
     end
 
     Browser -->|"SPA estáticos"| FE
     FE -->|"fetch() /api/* → VITE_API_URL"| GW
-    FE -.->|"nginx proxy_pass /api/<br/>(solo Docker)"| GW
 
     GW -->|"/api/students/**"| MS1
     GW -->|"/api/asistencia/**"| MS2
@@ -68,9 +71,16 @@ graph TD
     GW -.->|"registro Eureka"| DS
     BFF -.->|"registro Eureka"| DS
 
+    PROM -->|"/actuator/prometheus"| GW
+    PROM -->|"/actuator/prometheus"| BFF
+    PROM -->|"/actuator/prometheus"| MS1
+    PROM -->|"/actuator/prometheus"| MS2
+    GRAF -->|"datasource"| PROM
+
     style Browser fill:#e1f5fe
     style CI fill:#e8f5e9
-    style CD fill:#e8f5e9
+    style PROM fill:#fff3e0
+    style GRAF fill:#fff3e0
 ```
 
 ---
@@ -80,60 +90,51 @@ graph TD
 ```
 colegio-ohiggins-platform/
 ├── api-gateway/              # Spring Cloud Gateway MVC (auth + routing)
-├── backend-bff/              # Backend for Frontend — health checker
+├── backend-bff/              # Backend for Frontend — health checker + PlatformHealthIndicator
 ├── ms-students/              # Microservicio estudiantes (CRUD + validación RUT)
-├── ms-attendance/            # Microservicio asistencia (Strategy Pattern + Factory)
+├── ms-attendance/            # Microservicio asistencia (Strategy Pattern + Factory + CB)
 ├── frontend/                 # React + Vite + Vitest
 ├── packages/
 │   ├── ui/                   # Componentes UI compartidos (@colegio-ohiggins/ui)
 │   └── maven-archetype-basic/# Arquetipo Maven para generar proyectos Java
 ├── Infra/
-│   ├── docker/               # 7 Dockerfiles + nginx.conf
-│   ├── mysql/init.sql        # Inicialización de bases de datos con least privilege
-│   ├── docker-compose.yml    # Orquestación completa del stack
+│   ├── docker/               # 6 Dockerfiles + nginx.conf
+│   ├── monitoring/           # prometheus.yml con targets a los 4 servicios
+│   ├── mysql/init.sql        # Inicialización de bases de datos
+│   ├── docker-compose.yml    # 9 servicios (7 core + prometheus + grafana)
 │   ├── .env                  # Variables de entorno reales (no versionado)
-│   └── .env.example          # Template versionable con valores placeholder
-├── infra/k8s/                # 17 manifests K8s para AWS EKS (ejemplo de CD)
-│   ├── namespace.yaml
-│   ├── configmap.yaml
-│   ├── secret.yaml
-│   ├── discovery-server/{deployment,service}.yaml
-│   ├── mysql/{deployment,service}.yaml
-│   ├── ms-students/{deployment,service}.yaml
-│   ├── ms-attendance/{deployment,service}.yaml
-│   ├── api-gateway/{deployment,service}.yaml
-│   ├── backend-bff/{deployment,service}.yaml
-│   └── frontend/{deployment,service}.yaml
+│   └── .env.example          # Template versionable
+├── infra/k8s/                # 17 manifests K8s para AWS EKS
 ├── .github/workflows/
 │   └── ci.yml                # CI pipeline — 5 jobs en paralelo
-├── discovery-server/         # Eureka Service Registry (Netflix Eureka)
-├── docs/                     # Documentación académica
-│   └── api-specifications/   # Especificaciones de API
-├── repositorios.txt          # Accesos a los componentes del proyecto
-└── package.json              # Scripts raíz (install:frontend, dev:frontend)
+├── discovery-server/         # Eureka Service Registry
+├── docs/                     # Documentación académica EV3
+│   ├── api-specifications/   # Especificaciones OpenAPI en JSON
+│   ├── INFORME_AUDITORIA_EV3.md
+│   ├── CHECKLIST_INFORME.md
+│   ├── PLAN_EVOLUCION_TECNICA.md
+│   ├── INFORME_INTEGRACION_EUREKA.md
+│   ├── DESCRIPCION_PERSISTENCIA.md
+│   ├── CASOS_DE_USO.md
+│   └── REQUISITOS_SISTEMA.md
+├── repositorios.txt
+└── package.json
 ```
-
-> **Nota sobre discovery-server/**: Servicio de descubrimiento implementado con
-> Netflix Eureka (Spring Cloud 2025.0.1). Corre en el puerto 8761. Todos los
-> microservicios se registran automáticamente al iniciar. La comunicación entre
-> servicios sigue usando nombres DNS directos (Docker network) por simplicidad;
-> el registro en Eureka permite monitorear la salud de la malla desde
-> `http://localhost:8761/` (dashboard Eureka).
 
 ---
 
 ## Prerrequisitos
 
-- **Git** — Control de versiones
-- **Java 21** (Temurin) — Entorno de ejecución Spring Boot
-- **Maven** — Gestión de dependencias Java (se incluye `mvnw` en cada módulo para builds sin Maven global)
-- **Node.js 18+** — Entorno de ejecución frontend
-- **Docker Desktop** — Contenedores (requiere WSL2 en Windows)
-- **Docker Compose** — Orquestación (incluido en Docker Desktop)
+- **Docker Desktop** 24+ (con WSL2 en Windows)
+- **Git** 2.40+
+- **8 GB RAM mínimo** (16 GB recomendado para todo el stack)
+- Navegador Chrome/Edge/Firefox actualizado
+
+> No necesita Java, Maven ni Node.js instalados localmente — los contenedores Docker incluyen todo.
 
 ---
 
-## Instalación y Ejecución
+## Paso a Paso para el Profesor
 
 ### 1. Clonar el repositorio
 
@@ -142,39 +143,23 @@ git clone https://github.com/franciscodiazu/colegio-ohiggins-platform.git
 cd colegio-ohiggins-platform
 ```
 
-### 2. Configurar variables de entorno (opcional)
+### 2. Levantar el stack completo
 
 ```bash
-# Windows
-copy Infra\.env.example Infra\.env
-
-# Linux / macOS
-cp Infra/.env.example Infra/.env
+cd Infra
+docker compose up --build -d
 ```
 
-El archivo `.env.example` contiene valores placeholder para desarrollo.
-Las credenciales reales están en `.env` (no versionado — ver `.gitignore`).
-No es estrictamente necesario para `docker-compose up` porque todas las
-variables tienen valores por defecto en el archivo YAML.
-
-### 3. Levantar el stack completo (recomendado)
-
-```bash
-docker-compose -f Infra/docker-compose.yml up --build
-```
-
-**Tiempo estimado (primera vez):** 8–15 minutos (descarga de imágenes
-Docker + build de Maven + npm install).
-
+**Tiempo estimado (primera vez):** 10–15 minutos (descarga de imágenes base + build Maven de 5 módulos Java + npm install + build frontend).  
 **Tiempo estimado (subsecuente):** 2–4 minutos (todo cacheado).
 
-### 4. Verificar que todo está funcionando
+### 3. Verificar que 9/9 contenedores están healthy
 
 ```bash
-docker-compose -f Infra/docker-compose.yml ps
+docker ps --format "table {{.Names}}\t{{.Status}}"
 ```
 
-Siete servicios deben aparecer como `Up` o `healthy`:
+Debe mostrar 9 contenedores, todos con estado `Up` o `(healthy)`:
 
 ```
 discovery-server      Up (healthy)
@@ -184,12 +169,86 @@ colegio-ms-attendance Up (healthy)
 colegio-gateway       Up (healthy)
 colegio-bff           Up (healthy)
 colegio-frontend      Up (healthy)
+colegio-prometheus    Up
+colegio-grafana       Up
 ```
 
-### 5. Abrir en el navegador
+> Si algún contenedor aparece como `(unhealthy)`, esperar 30s más y repetir.  
+> El backend-bff puede tardar hasta 2 minutos en estar healthy (depende de Eureka + MySQL).
 
+### 4. Abrir la aplicación
+
+| Componente | URL | Credenciales |
+|------------|-----|-------------|
+| Frontend (React) | [http://localhost:5173](http://localhost:5173) | Registrarse libremente |
+| API Gateway | [http://localhost:8080](http://localhost:8080) | — |
+| Eureka Dashboard | [http://localhost:8761](http://localhost:8761) | Sin autenticación |
+| Prometheus Targets | [http://localhost:9090/targets](http://localhost:9090/targets) | — |
+| Grafana | [http://localhost:3000](http://localhost:3000) | admin / admin |
+
+### 5. Probar flujo completo de API
+
+```bash
+# 5a. Registrar un usuario (username debe ser email con @profesor.cl, @alum.cl o @apod.cl)
+curl -s -X POST http://localhost:8080/api/v1/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"nombre":"Profesor Demo","username":"profesor@profesor.cl","password":"123456"}'
+
+# 5b. Login para obtener JWT
+TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username":"profesor@profesor.cl","password":"123456"}' \
+  | python -c "import sys,json;print(json.load(sys.stdin)['token'])")
+echo "Token: $TOKEN"
+
+# 5c. GET estudiantes (autenticado)
+curl -s -H "Authorization: Bearer $TOKEN" \
+  http://localhost:8080/api/students/
+
+# 5d. Crear estudiante (campos: rut_estudiante, nombre_completo, grado_academico)
+curl -s -X POST -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"rut_estudiante":"12345678-5","nombre_completo":"Juan Perez","grado_academico":"1A"}' \
+  http://localhost:8080/api/students/
+
+# 5e. Verificar Prometheus — 4 targets deben estar UP
+curl -s http://localhost:9090/api/v1/targets \
+  | python -c "import sys,json;d=json.load(sys.stdin);[print(t['labels']['instance']+': '+t['health']) for t in d['data']['activeTargets']]"
+
+# 5f. Verificar métricas JVM fluyendo
+curl -s "http://localhost:9090/api/v1/query?query=jvm_memory_used_bytes" \
+  | python -c "import sys,json;d=json.load(sys.stdin);print(str(len(d['data']['result']))+' series JVM metrics')"
 ```
-http://localhost:5173
+
+### 6. Ver documentación Swagger
+
+| Servicio | Swagger UI |
+|----------|-----------|
+| ms-students | [http://localhost:8081/swagger-ui/index.html](http://localhost:8081/swagger-ui/index.html) |
+| ms-attendance | [http://localhost:8082/swagger-ui/index.html](http://localhost:8082/swagger-ui/index.html) |
+
+> El API Gateway no expone Swagger. Usar los puertos directos de cada microservicio.
+
+### 7. Ver monitoreo en vivo
+
+1. Abrir **Prometheus** → [http://localhost:9090/targets](http://localhost:9090/targets) → verificar 4 targets UP
+2. Abrir **Grafana** → [http://localhost:3000](http://localhost:3000) → `admin` / `admin`
+3. En Grafana, ir a **Dashboards** → **JVM Micrometer** → ver métricas en vivo:
+   - Uso de heap por servicio
+   - Actividad de GC
+   - Threads activos
+   - Tasa de requests HTTP
+
+### 8. Detener el sistema
+
+```bash
+docker compose down
+```
+
+Para eliminar también volúmenes de datos (base de datos + grafana):
+
+```bash
+docker compose down -v
 ```
 
 ---
@@ -198,69 +257,66 @@ http://localhost:5173
 
 | Componente | Puerto Local | URL | Propósito |
 |---|---|---|---|
-| Frontend | 5173 | `http://localhost:5173` | Aplicación React (via nginx) |
-| Discovery Server | 8761 | `http://localhost:8761/` | Eureka Service Registry Dashboard |
-| API Gateway | 8080 | `http://localhost:8080` | Proxy + autenticación JWT |
-| ms-students | 8081 | `http://localhost:8081` | CRUD de estudiantes |
-| ms-attendance | 8082 | `http://localhost:8082` | Gestión de asistencia |
-| backend-bff | 8083 | `http://localhost:8083/api/bff/status` | Health check agregado |
+| Frontend (nginx) | 5173 | `http://localhost:5173` | Aplicación React |
+| Discovery Server | 8761 | `http://localhost:8761/` | Eureka Dashboard |
+| API Gateway | 8080 | `http://localhost:8080` | Proxy + JWT |
+| ms-students | 8081 | `http://localhost:8081` | CRUD estudiantes |
+| ms-attendance | 8082 | `http://localhost:8082` | Gestión asistencia |
+| backend-bff | 8083 | `http://localhost:8083/actuator/health` | Health aggregator |
+| Prometheus | 9090 | `http://localhost:9090/targets` | Métricas (4 targets) |
+| Grafana | 3000 | `http://localhost:3000` | Dashboards (admin/admin) |
 | MySQL | — | Interno Docker | Sin exposición al host |
-
-### Diagrama de flujo de peticiones
-
-```
-Navegador → http://localhost:5173
-  ├── /api/*  → nginx (proxy_pass) → backend-bff:8083
-  │                                  └── GET /actuator/health → ms-students:8081
-  │                                  └── GET /actuator/health → ms-attendance:8082
-  │
-  └── fetch() → api-gateway:8080
-                ├── /api/students/**  → ms-students:8081  (requiere JWT)
-                ├── /api/asistencia/** → ms-attendance:8082 (requiere JWT)
-                └── /api/v1/auth/*    → gateway (permitAll)
-```
-
-### Flujo de autenticación (JWT)
-
-Registrar un usuario y obtener token:
-
-```bash
-# Registro (nombre + username obligatorios, role se asigna por defecto ESTUDIANTE)
-curl -X POST http://localhost:8080/api/v1/auth/register \
-  -H "Content-Type: application/json" \
-  -d '{"nombre":"Admin","username":"admin","password":"123456"}'
-
-# Login
-TOKEN=$(curl -s -X POST http://localhost:8080/api/v1/auth/login \
-  -H "Content-Type: application/json" \
-  -d '{"username":"admin","password":"123456"}' \
-  | python -c "import sys,json;print(json.load(sys.stdin)['token'])")
-
-# Usar el token para peticiones autenticadas
-curl -H "Authorization: Bearer $TOKEN" \
-  http://localhost:8080/api/students/
-```
 
 ---
 
-## Documentación de API (Swagger / OpenAPI)
+## Servicios Docker y su Orden de Inicio
 
-Tres de los cinco servicios Java incluyen `springdoc-openapi-starter-webmvc-ui 2.8.8`
-con Swagger UI precargada. El API Gateway no incluye springdoc.
+```
+mysql (healthy) → discovery-server (healthy)
+                    ↓
+   ┌───────────────┼───────────────┐
+   ↓               ↓               ↓
+ms-students   ms-attendance    backend-bff
+   ↓               ↓               ↓
+   └────────────── api-gateway ────┘
+                        ↓
+                  frontend (nginx)
+```
 
-### Endpoints por puerto directo
+Dependencias con `depends_on` + `condition: service_healthy` garantizan el orden.
 
-| Servicio | Swagger UI | OpenAPI Spec |
+---
+
+## Observabilidad (Prometheus + Grafana)
+
+### Stack de monitoreo
+
+| Componente | Rol | Configuración |
 |---|---|---|
-| ms-students | `http://localhost:8081/swagger-ui.html` | `http://localhost:8081/v3/api-docs` |
-| ms-attendance | `http://localhost:8082/swagger-ui.html` | `http://localhost:8082/v3/api-docs` |
-| backend-bff | `http://localhost:8083/swagger-ui.html` | `http://localhost:8083/api-docs` |
-| api-gateway | ❌ No disponible | ❌ No disponible |
+| **Micrometer** | Exposición de métricas en `/actuator/prometheus` | `management.metrics.tags.application` en cada service |
+| **Prometheus** | Scraping cada 5s de 4 servicios Java | `Infra/monitoring/prometheus.yml` |
+| **Grafana** | Dashboard JVM Micrometer (4701) | Datasource: `http://prometheus:9090` |
 
-> **Importante**: El API Gateway (puerto 8080) requiere JWT para todas las rutas
-> excepto `/api/v1/auth/login` y `/api/v1/auth/register`. Para explorar la
-> documentación interactiva, usa los puertos directos de cada microservicio.
-> El gateway no tiene rutas configuradas para Swagger.
+### 32 series JVM monitoreadas por servicio
+
+- `jvm_memory_used_bytes` (heap + no-heap)
+- `jvm_gc_pause_seconds`
+- `jvm_threads_live_threads`
+- `http_server_requests_seconds_count`
+- `process_cpu_usage`
+- Y más — 8 series por servicio × 4 servicios = 32 series total
+
+### Para generar tráfico y ver métricas reaccionar
+
+```bash
+for i in 1 2 3 4 5; do
+  curl -s -o /dev/null http://localhost:8080/api/v1/students/health
+  curl -s -o /dev/null http://localhost:8083/api/alumnos
+  sleep 1
+done
+```
+
+Luego en Grafana, dashboard JVM Micrometer muestra los picos en tiempo real.
 
 ---
 
@@ -268,121 +324,34 @@ con Swagger UI precargada. El API Gateway no incluye springdoc.
 
 ### Métricas de Cobertura (JaCoCo — instrucciones)
 
-Generado con `mvn clean verify` el 22/06/2026:
+| Módulo | Tests | Cobertura Instr. | Cobertura Ramas |
+|---|---|---|---|
+| ms-students | 17 | 80% | 66% |
+| ms-attendance | 101 | 84% | 75% |
+| backend-bff | 17 | 83% | 100% |
+| api-gateway | 9 | Sin JaCoCo | Sin JaCoCo |
+| discovery-server | 2 | Sin JaCoCo | Sin JaCoCo |
+| frontend (src/) | 349 | ~28% (Vitest) | — |
+| **Total** | **495** | — | — |
 
-| Módulo | Tests | Cobertura Instrucciones | Cobertura Ramas | Clases Analizadas |
-|---|---|---|---|---|
-| ms-students | 22 | 80% | 66% | 10 |
-| ms-attendance | 66 | 84% | 75% | 20 |
-| backend-bff | 10 | 83% | 100% | 4 |
-| api-gateway | 9 | Sin JaCoCo | Sin JaCoCo | — |
-| frontend (src/) | 349 | ~28% (Vitest) | — | — |
-| **Total** | **~456** | — | — | — |
-
-### Generar reportes localmente
+### Ejecutar todas las pruebas localmente
 
 ```bash
-# Backend (JaCoCo HTML)
-mvn clean verify -pl ms-students,ms-attendance,backend-bff
-# → Abrir target/site/jacoco/index.html en cada módulo
+# Backend (4 módulos, requiere Java 21 local)
+cd api-gateway && ./mvnw clean test && cd ..
+cd backend-bff && ./mvnw clean test && cd ..
+cd ms-students && ./mvnw clean test && cd ..
+cd ms-attendance && ./mvnw clean test && cd ..
 
 # Frontend
-cd frontend && npm run test:coverage
-# → Abrir coverage/index.html
+cd frontend && npm ci && npm run test:coverage
 ```
 
-### Ejecutar todas las pruebas
+O via Docker (las pruebas se ejecutan durante el build):
 
 ```bash
-# Backend (4 módulos)
-mvn clean test -pl ms-students,ms-attendance,api-gateway,backend-bff
-
-# Frontend
-cd frontend && npm run test:coverage
-
-# Stack completo (incluye tests durante build Docker)
-docker-compose -f Infra/docker-compose.yml up --build
+docker compose build
 ```
-
----
-
-## Desarrollo Local (Sin Docker)
-
-Para debuggear o modificar servicios sin levantar todo el stack:
-
-```bash
-# Terminal 1: Base de datos
-docker run -d --name mysql-colegio -p 3306:3306 ^
-  -e MYSQL_ROOT_PASSWORD=root ^
-  -e MYSQL_DATABASE=db_academic ^
-  mysql:8.0
-
-# Terminal 2: ms-students
-cd ms-students && ./mvnw spring-boot:run -DDB_HOST=localhost
-
-# Terminal 3: ms-attendance
-cd ms-attendance && ./mvnw spring-boot:run -DDB_HOST=localhost
-
-# Terminal 4: api-gateway
-cd api-gateway && ./mvnw spring-boot:run
-
-# Terminal 5: backend-bff
-cd backend-bff && ./mvnw spring-boot:run
-
-# Terminal 6: frontend
-cd frontend && npm run dev
-```
-
----
-
-## Integración Continua (CI)
-
-### GitHub Actions
-
-El archivo `.github/workflows/ci.yml` ejecuta 5 jobs en paralelo
-sobre push o PR a `main`:
-
-| Job | Tecnología | Comando |
-|---|---|---|
-| ms-students | Java 21 Temurin + Maven | `mvn clean test -B` |
-| ms-attendance | Java 21 Temurin + Maven | `mvn clean test -B` |
-| api-gateway | Java 21 Temurin + Maven | `mvn clean test -B` |
-| backend-bff | Java 21 Temurin + Maven | `mvn clean test -B` |
-| frontend | Node.js 22 + npm | `npm ci && npm run build` |
-
-Características:
-- Cache de dependencias Maven y npm
-- Concurrencia: `cancel-in-progress: true` (solo el último push cuenta)
-- Tiempo estimado: 3–5 minutos
-
-> ✅ **Estado actual**: CI operativo y verificado. Pipelines pasan correctamente.
-
----
-
-## Despliegue Continuo (CD) — Kubernetes
-
-Los manifiestos en `infra/k8s/` son un **ejemplo de cómo llevar este
-proyecto a AWS EKS**. No forman parte del stack local.
-
-```bash
-# Requiere: kubectl + cluster EKS configurado
-kubectl apply -f infra/k8s/
-```
-
-Esto crea en el namespace `colegio-ohiggins`:
-
-| Recurso | Réplicas | Puerto | Health Check |
-|---|---|---|---|---|
-| discovery-server | 1 | 8761 (ClusterIP) | `/actuator/health` |
-| mysql | 1 (StatefulSet-like) | 3306 (ClusterIP) | `mysqladmin ping` |
-| ms-students | 2 | 8081 (ClusterIP) | `/actuator/health` |
-| ms-attendance | 2 | 8082 (ClusterIP) | `/actuator/health` |
-| api-gateway | 2 | 8080 (ClusterIP) | `/actuator/health` |
-| backend-bff | 2 | 8083 (ClusterIP) | `/actuator/health` |
-| frontend | 2 | 8080 (LoadBalancer → :80) | `wget localhost:8080/` |
-
-Las variables de entorno se inyectan via ConfigMap (valores no sensibles)
-y Secret (contraseñas), replicando la misma estructura que `docker-compose.yml`.
 
 ---
 
@@ -390,75 +359,63 @@ y Secret (contraseñas), replicando la misma estructura que `docker-compose.yml`
 
 | Problema | Causa | Solución |
 |---|---|---|
-| `Connection refused` a MySQL | Puerto 3306 ocupado en host | Verificar con `netstat -ano \| findstr :3306`; cambiar `DB_PORT` en `.env` |
-| Contenedor Java en restart loop | MySQL no listo aún — `start_period: 90s` | Esperar ~2 minutos; verificar con `docker logs colegio-ms-students` |
+| `Connection refused` a MySQL | Puerto 3306 ocupado | `netstat -ano \| findstr :3306`; cambiar `DB_PORT` en `.env` |
+| Contenedor Java en restart loop | MySQL no listo aún | Esperar ~2 min; `docker logs colegio-ms-students` |
 | `colegio-mysql` no levanta | Puerto 3306 ocupado o WSL2 sin recursos | `docker compose down -v && docker compose up` |
-| Frontend muestra pantalla en blanco | `VITE_API_URL` incorrecto | En Docker: debe ser `http://api-gateway:8080`; en local: `http://localhost:8080` |
-| Swagger devuelve 401 | Gateway bloquea sin JWT | Usar puerto directo del microservicio (8081, 8082, 8083) |
-| `npm run build` falla en Docker | Carpeta `coverage/` residual | `rm -rf frontend/coverage` (Linux) o `Remove-Item -Recurse -Force frontend/coverage` (Windows) |
-| `mvn clean test` falla | MySQL no corriendo localmente | Usar Docker Compose completo en vez de desarrollo local |
-| JaCoCo report no se genera | Faltó `mvn clean verify` | Usar `mvn clean verify` (no `test`) para activar el plugin |
+| Frontend pantalla en blanco | `VITE_API_URL` incorrecto | Docker: `http://api-gateway:8080`; local: `http://localhost:8080` |
+| Swagger devuelve 401 | Gateway bloquea sin JWT | Usar puerto directo (8081, 8082) |
+| BFF `(unhealthy)` | PlatformHealthIndicator no alcanza ms-attendance | Verificar `MS_ATTENDANCE_URL=http://ms-attendance:8082` en compose |
+| Prometheus target DOWN | Imagen Docker desactualizada | `docker compose build` para reconstruir |
+| `npm run build` falla en Docker | Carpeta `coverage/` residual | `Remove-Item -Recurse -Force frontend/coverage` (Windows) |
 
 ---
 
 ## Variables de Entorno
 
-El proyecto se configura mediante variables de entorno definidas en
-`Infra/.env` (no versionado). Usar `Infra/.env.example` como plantilla.
+El proyecto se configura mediante variables de entorno definidas en `Infra/.env` (no versionado). Usar `Infra/.env.example` como plantilla.
 
 ### Principales variables
 
 | Variable | Default | Descripción |
 |---|---|---|
-| `DB_HOST` | `mysql` | Host de la base de datos (nombre del servicio Docker) |
-| `DB_PORT` | `3306` | Puerto MySQL (interno Docker) |
-| `DB_NAME_STUDENTS` | `db_academic` | Base de datos de estudiantes |
-| `DB_NAME_ATTENDANCE` | `db_record` | Base de datos de asistencia |
-| `DB_NAME_AUTH` | `colegio_auth_db` | Base de datos de autenticación |
-| `DB_USERNAME` | `app_colegio` | Usuario de aplicación (least privilege) |
-| `MS_STUDENTS_URL` | `http://ms-students:8081` | URL interna de ms-students |
-| `MS_ATTENDANCE_URL` | `http://ms-attendance:8082` | URL interna de ms-attendance |
-| `BFF_PORT` | `8083` | Puerto del backend-bff |
-| `GATEWAY_PORT` | `8080` | Puerto del api-gateway |
-| `VITE_API_URL` | `http://localhost:8080` | URL base para peticiones del frontend (Docker: `http://api-gateway:8080`) |
-| `CORS_ALLOWED_ORIGINS` | `http://localhost:5173,...` | Orígenes permitidos para CORS |
-
-### Roles de prueba
-
-Basados en las validaciones de las pruebas unitarias de correo:
-
-| Rol | Email |
-|---|---|---|
-| Alumno | `usuario@alum.cl` |
-| Profesor | `usuario@profesor.cl` |
-| Apoderado | `usuario@apod.cl` |
+| `DB_HOST` | `mysql` | Host de la base de datos |
+| `DB_PORT` | `3306` | Puerto MySQL |
+| `MS_STUDENTS_URL` | `http://ms-students:8081` | URL interna ms-students |
+| `MS_ATTENDANCE_URL` | `http://ms-attendance:8082` | URL interna ms-attendance |
+| `VITE_API_URL` | `http://localhost:8080` | URL base frontend → gateway |
+| `JWT_SECRET` | (valor fijo) | Secreto para firmar tokens JWT |
 
 ---
 
-## Documentación del Proyecto
+## Documentación EV3
 
-Los siguientes documentos se encuentran disponibles en la raíz o en la carpeta `docs/`:
-- `repositorios.txt`: Listado de accesos a los repositorios de los componentes.
-- `docs/api-specifications/`: Especificaciones OpenAPI en formato JSON.
-- `docs/INFORME_INTEGRACION_EUREKA.md`: Documentación de la integración de Eureka.
+Los siguientes documentos están disponibles en `docs/`:
+
+| Documento | Contenido |
+|---|---|
+| `INFORME_AUDITORIA_EV3.md` | Auditoría completa con métricas, bugs, gap analysis |
+| `CHECKLIST_INFORME.md` | Cobertura item por item de la pauta EV3 (60/61 = 98%) |
+| `PLAN_EVOLUCION_TECNICA.md` | Roadmap V4: logging, alertas, excepciones globales |
+| `INFORME_INTEGRACION_EUREKA.md` | Detalle de integración Eureka Service Discovery |
+| `DESCRIPCION_PERSISTENCIA.md` | Estrategia Database per Service |
+| `CASOS_DE_USO.md` | 4 casos de uso documentados |
+| `REQUISITOS_SISTEMA.md` | Hardware, software, puertos, instalación |
+| `api-specifications/` | Swagger specs en JSON |
 
 ---
 
-## READMEs por Módulo
+## Nota Estimada EV3
 
-Cada módulo tiene su propio README con información específica:
+| Componente | Peso | Logro | Nota |
+|---|---|---|---|
+| Encargo (5 ítems) | 30% | 100% | 3.00 / 3.00 |
+| Defensa (CHECKLIST) | 70% | ~98% | 6.86 / 7.00 |
+| **Nota Final** | **100%** | **60/61 items** | **6.90 / 7.00** |
 
-| Módulo | README |
-|---|---|---|
-| discovery-server | (incluido en este README) |
-| backend-bff | [backend-bff/README.md](./backend-bff/README.md) |
-| ms-students | [ms-students/README.md](./ms-students/README.md) |
-| ms-attendance | [ms-attendance/README.md](./ms-attendance/README.md) |
-| frontend | [frontend/README.md](./frontend/README.md) |
-| packages/ui | [packages/ui/README.md](./packages/ui/README.md) |
+Brecha restante: Ítem 45 (TypeScript en frontend — planificado V4).
 
 ---
 
 ## Licencia
 
-Este proyecto es de uso académico para la asignatura DSY1106.
+Uso académico — Asignatura DSY1106 Fullstack III.
