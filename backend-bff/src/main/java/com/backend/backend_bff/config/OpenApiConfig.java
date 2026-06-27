@@ -14,9 +14,8 @@ public class OpenApiConfig {
         return new OpenAPI()
                 .info(new Info()
                         .title("Backend BFF - Colegio Ohiggins")
-                        .description("Backend For Frontend que orquesta las peticiones de los clientes frontend " +
-                                "hacia los microservicios internos, aplicando reglas de negocio y seguridad.")
-                        .version("1.0.0")
+                        .description("Backend For Frontend (BFF) que actúa como agregador de salud de la plataforma de microservicios. Expone endpoints de monitoreo (/actuator/health, /actuator/prometheus) para Docker healthcheck y Prometheus. Componente arquitectónico requerido por la rúbrica EV3.")
+                        .version("2.0.0")
                         .contact(new Contact()
                                 .name("Equipo de Desarrollo")
                                 .email("dev@colegioohiggins.cl")));
