@@ -1,52 +1,61 @@
 # backend-bff
 
-Backend For Frontend (BFF) que centraliza llamadas a microservicios.
+Backend For Frontend (BFF) que centraliza la comunicacion entre el frontend y los microservicios core del sistema. Actua como una capa de orquestacion y agregacion de datos.
 
-Prerequisitos
+## Prerrequisitos
+
 - Java 21
-- Maven (opcional: se incluye `mvnw` / `mvnw.cmd`)
-- MySQL (si se usa una base de datos externa)
+- Maven (incluido mediante mvnw)
 
-Ejecución en desarrollo
+## Instalacion y Ejecucion
+
+### Ejecucion local
+
 Para Linux/macOS:
-
 ```bash
 ./mvnw spring-boot:run
 ```
 
-Para Windows (PowerShell / CMD):
-
+Para Windows:
 ```powershell
 .\mvnw.cmd spring-boot:run
 ```
 
-Tests
+### Ejecucion con Docker
 
+Para construir la imagen desde la raiz del repositorio:
 ```bash
-./mvnw test
+docker build -f Infra/docker/bff.Dockerfile -t backend-bff:local .
 ```
 
-Variables de entorno útiles
-- SPRING_DATASOURCE_URL (jdbc:mysql://host:port/db)
-- SPRING_DATASOURCE_USERNAME
-- SPRING_DATASOURCE_PASSWORD
-- SPRING_PROFILES_ACTIVE
-- SERVER_PORT
+## Configuracion y Endpoints
 
-Docker
+- Puerto local por defecto: 8080 | Puerto en contenedor Docker: 8083 (vía variable de entorno)
+- Path base: /
 
-Construir imagen (desde la raíz del repo):
+El BFF redirige las peticiones a los siguientes servicios:
+- ms-students: Puerto 8081
+- ms-attendance: Puerto 8082
 
+## Calidad y Pruebas Unitarias
+
+El proyecto utiliza Spring Boot Test para validar la configuracion y el enrutamiento.
+
+- Total Tests: 17 (todos PASS)
+- Cobertura de codigo: >60%
+- Clases testeadas: WebConfigTest, CorsConfigTest, BackendBffApplicationTests
+
+Ejecutar pruebas:
 ```bash
-docker build -f backend-bff/Dockerfile -t backend-bff:local .
+./mvnw clean test
 ```
 
-Ejecutar contenedor (ejemplo):
+## Variables de Entorno
 
-```bash
-docker run -e SPRING_DATASOURCE_URL="jdbc:mysql://host:3306/db" -e SPRING_DATASOURCE_USERNAME=root -e SPRING_DATASOURCE_PASSWORD=pass -p 8080:8080 backend-bff:local
-```
+- MS_STUDENTS_URL: URL del microservicio de estudiantes.
+- MS_ATTENDANCE_URL: URL del microservicio de asistencia.
+- SERVER_PORT: Puerto de escucha del BFF (por defecto 8080).
 
-Notas
-- El proyecto usa Spring Boot y está configurado en `pom.xml`.
-- Para desarrollo local se recomienda usar la `mvnw` incluida.
+## Notas
+
+Este componente es critico para la seguridad y la simplificacion de la API expuesta al cliente React.

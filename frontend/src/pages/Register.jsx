@@ -3,6 +3,7 @@ import { registerUser } from '../services/authMockService';
 import { useFieldValidation, rules } from '../hooks/useFieldValidation';
 import FormField from '../components/FormField';
 import { useState } from 'react';
+import React from 'react';
 
 export default function Register({ onGoToLogin }) {
   const [submitFeedback, setSubmitFeedback] = useState({ error: '', success: '' });
@@ -31,11 +32,10 @@ export default function Register({ onGoToLogin }) {
 
   // ── Handler de envío ───────────────────────────────────────────────────────────
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setSubmitFeedback({ error: '', success: '' });
 
-    // Validar todos los campos antes de enviar
     const isValid = [
       nombre.validate(),
       email.validate(),
@@ -47,7 +47,7 @@ export default function Register({ onGoToLogin }) {
 
     setIsSubmitting(true);
 
-    const result = registerUser({
+    const result = await registerUser({
       name: nombre.value,
       email: email.value,
       password: password.value,

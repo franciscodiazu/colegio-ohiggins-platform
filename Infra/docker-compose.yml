@@ -1,60 +1,49 @@
-# =============================================================================
-# Docker Compose - Colegio Ohiggins Platform
-# Ubicación: /Infra/docker-compose.yml
-# Descripción: Orquestación de 5 servicios (4 aplicaciones + MySQL)
-# Seguridad: Redes internas, healthchecks, usuarios no-root, least privilege
-# =============================================================================
-
-version: '3.9'
-
-# -----------------------------------------------------------------------------
-# SERVICIOS
-# -----------------------------------------------------------------------------
 services:
-  # ===========================================================================
-  # MySQL - Base de Datos
-  # ===========================================================================
+  discovery-server:
+    build:
+      context: ../
+      dockerfile: Infra/docker/discovery.Dockerfile
+    container_name: discovery-server
+    hostname: discovery-server
+    restart: unless-stopped
+    ports:
+      - "${DISCOVERY_PORT:-8761}:8761"
+    networks:
+      - colegio-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 40s
+
   mysql:
     image: mysql:8.0
     container_name: colegio-mysql
     hostname: mysql
     restart: unless-stopped
-    
-    # Variables de entorno
     environment:
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASSWORD:-ChangeThisRootPassword123!}
       MYSQL_DATABASE: ${DB_NAME_STUDENTS:-db_academic}
       MYSQL_USER: ${DB_USERNAME:-app_colegio}
       MYSQL_PASSWORD: ${DB_PASSWORD:-Ohiggins_Secur3_2026!}
-    
-    # Volúmenes persistentes
     volumes:
-      # Datos persistentes
       - mysql_data:/var/lib/mysql
-      # Script de inicialización (crea db_record y permisos)
       - ./mysql/init.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
-    
-    # Puertos (solo expuesto en desarrollo)
-    ports:
-      - "${DB_PORT:-3306}:3306"
-    
-    # Red interna
+    # ports:  # No exponer MySQL al host — comunicación interna por Docker network
+      # - "${DB_PORT:-3307}:3306"
+    expose:
+      - "3306"
     networks:
       - colegio-network
-    
-    # Healthcheck para dependencias
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "--silent"]
       interval: 5s
       timeout: 10s
       retries: 10
       start_period: 40s
-
-    # Seguridad: No ejecutar como root
     security_opt:
       - no-new-privileges:true
-    
-    # Limites de recursos (para entornos compartidos)
     deploy:
       resources:
         limits:
@@ -64,9 +53,6 @@ services:
           cpus: '0.5'
           memory: 256M
 
-  # ===========================================================================
-  # Microservicio: ms-students
-  # ===========================================================================
   ms-students:
     build:
       context: ../
@@ -74,45 +60,38 @@ services:
     container_name: colegio-ms-students
     hostname: ms-students
     restart: unless-stopped
-
     environment:
-      # Puerto del servicio
       SERVER_PORT: ${MS_STUDENTS_PORT:-8081}
-      
-      # Configuración de base de datos
+      EUREKA_URL: http://discovery-server:8761/eureka/
       DB_HOST: ${DB_HOST:-mysql}
       DB_PORT: ${DB_PORT:-3306}
       DB_NAME: ${DB_NAME_STUDENTS:-db_academic}
       DB_USERNAME: ${DB_USERNAME:-app_colegio}
       DB_PASSWORD: ${DB_PASSWORD:-Ohiggins_Secur3_2026!}
-      
-      # Configuración de JPA
+      # Forzar Spring a usar la URL JDBC correcta
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:${DB_PORT:-3306}/${DB_NAME_STUDENTS:-db_academic}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-app_colegio}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-Ohiggins_Secur3_2026!}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "false"
-      
-      # Logging
       LOGGING_LEVEL_ROOT: ${LOGGING_LEVEL_ROOT:-INFO}
-    
-    # Service port intentionally NOT published to the host to enforce access via BFF.
-    # In development you can publish by setting MS_STUDENTS_PORT if needed.
 
+    ports:
+      - "${MS_STUDENTS_PORT:-8081}:8081"
     networks:
       - colegio-network
-
     depends_on:
+      discovery-server:
+        condition: service_healthy
       mysql:
         condition: service_healthy
-
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8081/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:${MS_STUDENTS_PORT:-8081}/actuator/health"]
       interval: 15s
       timeout: 5s
       retries: 5
       start_period: 90s
 
-  # ===========================================================================
-  # Microservicio: ms-attendance
-  # ===========================================================================
   ms-attendance:
     build:
       context: ../
@@ -120,41 +99,80 @@ services:
     container_name: colegio-ms-attendance
     hostname: ms-attendance
     restart: on-failure
-
     environment:
       SERVER_PORT: ${MS_ATTENDANCE_PORT:-8082}
-
+      EUREKA_URL: http://discovery-server:8761/eureka/
       DB_HOST: ${DB_HOST:-mysql}
       DB_PORT: ${DB_PORT:-3306}
+      # Alineado con la DB creada por init.sql
       DB_NAME: ${DB_NAME_ATTENDANCE:-db_record}
       DB_USERNAME: ${DB_USERNAME:-app_colegio}
       DB_PASSWORD: ${DB_PASSWORD:-Ohiggins_Secur3_2026!}
-
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:${DB_PORT:-3306}/${DB_NAME_ATTENDANCE:-db_record}?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC&createDatabaseIfNotExist=true
+      SPRING_DATASOURCE_USERNAME: ${DB_USERNAME:-app_colegio}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-Ohiggins_Secur3_2026!}
       SPRING_JPA_HIBERNATE_DDL_AUTO: update
       SPRING_JPA_SHOW_SQL: "false"
-
       LOGGING_LEVEL_ROOT: ${LOGGING_LEVEL_ROOT:-INFO}
-
-    # Service port intentionally NOT published to the host to enforce access via BFF.
-    # In development you can publish by setting MS_ATTENDANCE_PORT if needed.
-
+    # En desarrollo exponemos el puerto para acceder a Swagger desde host
+    ports:
+      - "${MS_ATTENDANCE_PORT:-8082}:8082"
     networks:
       - colegio-network
-
     depends_on:
+      discovery-server:
+        condition: service_healthy
       mysql:
         condition: service_healthy
-
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8082/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:${MS_ATTENDANCE_PORT:-8082}/actuator/health"]
       interval: 15s
       timeout: 5s
       retries: 5
       start_period: 90s
 
-    # ===========================================================================
-    # Gateway BFF (Backend for Frontend)
-  # ===========================================================================
+  api-gateway:
+    build:
+      context: ../
+      dockerfile: Infra/docker/gateway.Dockerfile
+    container_name: colegio-gateway
+    hostname: api-gateway
+    restart: on-failure
+    environment:
+      SERVER_PORT: ${GATEWAY_PORT:-8080}
+      EUREKA_URL: http://discovery-server:8761/eureka/
+      MS_STUDENTS_URL: ${MS_STUDENTS_URL:-http://ms-students:8081}
+      MS_ATTENDANCE_URL: ${MS_ATTENDANCE_URL:-http://ms-attendance:8082}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://frontend:8080}
+      DB_HOST: ${DB_HOST:-mysql}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME_AUTH: ${DB_NAME_AUTH:-colegio_auth_db}
+      DB_USERNAME: ${DB_USERNAME:-app_colegio}
+      DB_PASSWORD: ${DB_PASSWORD:-Ohiggins_Secur3_2026!}
+      JWT_SECRET: ${JWT_SECRET:-OgH1gG4sS3cUr3K3yF0rJWtT0k3nS1gn1nG1sV3ryL0nG4ndS3cur3}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-1800000}
+      LOGGING_LEVEL_ROOT: ${LOGGING_LEVEL_ROOT:-INFO}
+      LOGGING_LEVEL_ORG_SPRINGFRAMEWORK_SECURITY: ${LOGGING_LEVEL_SECURITY:-DEBUG}
+    ports:
+      - "${GATEWAY_PORT:-8080}:8080"
+    networks:
+      - colegio-network
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      mysql:
+        condition: service_healthy
+      ms-students:
+        condition: service_started
+      ms-attendance:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${GATEWAY_PORT:-8080}/actuator/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 6
+      start_period: 120s
+
   backend-bff:
     build:
       context: ../
@@ -162,68 +180,53 @@ services:
     container_name: colegio-bff
     hostname: backend-bff
     restart: on-failure
-
     environment:
-      SERVER_PORT: ${BFF_PORT:-8080}
-
-      # URLs de los microservicios (service discovery via Docker DNS)
+      SERVER_PORT: ${BFF_PORT:-8083}
+      EUREKA_URL: http://discovery-server:8761/eureka/
       MS_STUDENTS_URL: ${MS_STUDENTS_URL:-http://ms-students:8081}
       MS_ATTENDANCE_URL: ${MS_ATTENDANCE_URL:-http://ms-attendance:8082}
-
-      # CORS
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://frontend:8080}
-
-      # Logging
+      DB_HOST: ${DB_HOST:-mysql}
+      DB_PORT: ${DB_PORT:-3306}
+      DB_NAME_AUTH: ${DB_NAME_AUTH:-colegio_auth_db}
+      DB_USERNAME: ${DB_USERNAME:-app_colegio}
+      DB_PASSWORD: ${DB_PASSWORD:-Ohiggins_Secur3_2026!}
       LOGGING_LEVEL_ROOT: ${LOGGING_LEVEL_ROOT:-INFO}
-
     ports:
-      - "${BFF_PORT:-8080}:8080"
-
+      - "${BFF_PORT:-8083}:8083"
     networks:
       - colegio-network
-
     depends_on:
-      mysql:
+      discovery-server:
         condition: service_healthy
       ms-students:
-        condition: service_started
+        condition: service_healthy
       ms-attendance:
-        condition: service_started
-
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:${BFF_PORT:-8083}/actuator/health"]
       interval: 20s
       timeout: 10s
       retries: 6
       start_period: 120s
 
-  # ===========================================================================
-  # Frontend (React + Vite)
-  # ===========================================================================
   frontend:
     build:
       context: ../
       dockerfile: Infra/docker/frontend.Dockerfile
       args:
-        VITE_API_URL: ${VITE_API_URL:-http://backend-bff:8080}
+        VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
     container_name: colegio-frontend
     hostname: frontend
     restart: unless-stopped
-
     environment:
-      # Variable para build time (Vite la usa durante el build)
-      VITE_API_URL: ${VITE_API_URL:-http://backend-bff:8080}
-
+      VITE_API_URL: ${VITE_API_URL:-http://localhost:8080}
     ports:
       - "${FRONTEND_PORT:-5173}:8080"
-
     networks:
       - colegio-network
-
     depends_on:
-      backend-bff:
+      api-gateway:
         condition: service_started
-
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/"]
       interval: 15s
@@ -231,20 +234,60 @@ services:
       retries: 5
       start_period: 30s
 
-# -----------------------------------------------------------------------------
-# VOLÚMENES
-# -----------------------------------------------------------------------------
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: colegio-prometheus
+    hostname: prometheus
+    restart: unless-stopped
+    ports:
+      - "${PROMETHEUS_PORT:-9090}:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - colegio-network
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      api-gateway:
+        condition: service_healthy
+      backend-bff:
+        condition: service_healthy
+      ms-students:
+        condition: service_healthy
+      ms-attendance:
+        condition: service_healthy
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: colegio-grafana
+    hostname: grafana
+    restart: unless-stopped
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/datasources.yaml:/etc/grafana/provisioning/datasources/datasources.yaml:ro
+      - ./monitoring/grafana/dashboards.yaml:/etc/grafana/provisioning/dashboards/dashboards.yaml:ro
+      - ./monitoring/grafana/dashboards:/etc/grafana/dashboards:ro
+    networks:
+      - colegio-network
+    depends_on:
+      prometheus:
+        condition: service_started
+
 volumes:
   mysql_data:
     driver: local
-# -----------------------------------------------------------------------------
-# REDES
-# -----------------------------------------------------------------------------
+  grafana_data:
+    driver: local
+
 networks:
   colegio-network:
     driver: bridge
     ipam:
       config:
         - subnet: 172.20.0.0/16
-    # Comunicación interna segura entre contenedores
-    internal: false  # Cambiar a true para bloquear acceso externo directo a DB"
+    internal: false

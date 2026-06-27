@@ -2,6 +2,7 @@ spring:
   application:
     name: ms-attendance
 
+
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:db_record}?createDatabaseIfNotExist=true
     username: ${DB_USERNAME:root}
@@ -15,6 +16,11 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.MySQLDialect
+
+eureka:
+  client:
+    serviceUrl:
+      defaultZone: ${EUREKA_URL:http://discovery-server:8761/eureka/}
 
 server:
   port: ${MS_ATTENDANCE_PORT:8082}
@@ -31,6 +37,18 @@ logging:
     org.springframework.web: INFO
     org.springframework.boot: INFO
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
 resilience4j:
   circuitbreaker:
     instances:
@@ -44,4 +62,3 @@ resilience4j:
         automaticTransitionFromOpenToHalfOpenEnabled: true
         ignoreExceptions:
           - com.backend.ms_attendance.exception.EntidadNoEncontradaException
-

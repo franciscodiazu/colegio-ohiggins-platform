@@ -1,4 +1,5 @@
 // ─── Constantes ───────────────────────────────────────────────────────────────
+import React from 'react';
 
 const ROL_LABEL = {
   profesor: 'Profesor',

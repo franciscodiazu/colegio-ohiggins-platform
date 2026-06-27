@@ -56,10 +56,10 @@ RUN chown -R appuser:appgroup /app
 
 # Health check basado en Actuator para reflejar disponibilidad real
 HEALTHCHECK --interval=30s --timeout=3s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8080/actuator/health || exit 1
+    CMD curl -f http://localhost:8083/actuator/health || exit 1
 
 # Exponer puerto
-EXPOSE 8080
+EXPOSE 8083
 
 # Cambiar a usuario no-root
 USER appuser

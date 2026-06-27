@@ -1,2 +1,6 @@
 # Auto detect text files and perform LF normalization
 * text=auto
+
+# Shell scripts (mvnw, *.sh) must always use LF line endings for Linux compatibility
+mvnw text eol=lf
+*.sh text eol=lf

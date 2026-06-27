@@ -1,5 +1,7 @@
 package com.backend.ms_students.controller;
 
+import com.backend.ms_students.dto.StudentRequestDto;
+import com.backend.ms_students.exception.EntidadNoEncontradaException;
 import com.backend.ms_students.model.Student;
 import com.backend.ms_students.service.StudentService;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,6 +36,9 @@ class StudentControllerTest {
     private ObjectMapper objectMapper;
 
     private Student student;
+    private StudentRequestDto studentDto;
+
+    private static final String BASE_URL = "/api/v1/estudiantes";
 
     @BeforeEach
     void setUp() {
@@ -42,13 +47,17 @@ class StudentControllerTest {
         student.setRut("12345678-9");
         student.setName("Juan Pérez");
         student.setGrade("5°A");
+
+        studentDto = new StudentRequestDto();
+        studentDto.setRut("11111111-1");
+        studentDto.setName("Juan Pérez");
+        studentDto.setGrade("5°A");
     }
 
-    // ── GET /api/students ────────────────────────────────────
+    // ── GET /api/v1/estudiantes ──────────────────────────────
 
     @Test
     void getAllStudents_debeRetornar200ConListaDeEstudiantes() throws Exception {
-        // Arrange
         Student student2 = new Student();
         student2.setId(2L);
         student2.setRut("98765432-1");
@@ -58,8 +67,7 @@ class StudentControllerTest {
         List<Student> lista = Arrays.asList(student, student2);
         when(studentService.getAllStudents()).thenReturn(lista);
 
-        // Act & Assert
-        mockMvc.perform(get("/api/students"))
+        mockMvc.perform(get(BASE_URL))
                 .andExpect(status().isOk())
                 .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.length()").value(2))
@@ -72,83 +80,66 @@ class StudentControllerTest {
 
     @Test
     void getAllStudents_cuandoListaVacia_debeRetornar200ConArregloVacio() throws Exception {
-        // Arrange
         when(studentService.getAllStudents()).thenReturn(List.of());
 
-        // Act & Assert
-        mockMvc.perform(get("/api/students"))
+        mockMvc.perform(get(BASE_URL))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(0));
     }
 
-    // ── POST /api/students ───────────────────────────────────
-
     @Test
     void createStudent_debeRetornar201ConEstudianteCreado() throws Exception {
-        // Arrange
-        when(studentService.createStudent(any(Student.class))).thenReturn(student);
+        when(studentService.registrar(any(StudentRequestDto.class))).thenReturn(student);
 
-        // Act & Assert
-        mockMvc.perform(post("/api/students")
+        mockMvc.perform(post(BASE_URL)
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(student)))
+                        .content(objectMapper.writeValueAsString(studentDto)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.name").value("Juan Pérez"))
                 .andExpect(jsonPath("$.rut").value("12345678-9"))
                 .andExpect(jsonPath("$.grade").value("5°A"));
 
-        verify(studentService, times(1)).createStudent(any(Student.class));
+        verify(studentService, times(1)).registrar(any(StudentRequestDto.class));
     }
 
     @Test
     void createStudent_debeInvocarServiceUnaVez() throws Exception {
-        // Arrange
-        when(studentService.createStudent(any(Student.class))).thenReturn(student);
+        when(studentService.registrar(any(StudentRequestDto.class))).thenReturn(student);
 
-        // Act
-        mockMvc.perform(post("/api/students")
+        mockMvc.perform(post(BASE_URL)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(student)));
+                .content(objectMapper.writeValueAsString(studentDto)));
 
-        // Assert
-        verify(studentService, times(1)).createStudent(any(Student.class));
+        verify(studentService, times(1)).registrar(any(StudentRequestDto.class));
     }
-
-    // ── GET /api/students/{id} ───────────────────────────────
 
     @Test
     void getStudentById_cuandoExiste_debeRetornar200() throws Exception {
-        // Arrange
-        when(studentService.getStudentById(1L)).thenReturn(Optional.of(student));
+        when(studentService.obtenerPorId(1L)).thenReturn(student);
 
-        // Act & Assert
-        mockMvc.perform(get("/api/students/1"))
+        mockMvc.perform(get(BASE_URL + "/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.name").value("Juan Pérez"))
                 .andExpect(jsonPath("$.rut").value("12345678-9"));
 
-        verify(studentService, times(1)).getStudentById(1L);
+        verify(studentService, times(1)).obtenerPorId(1L);
     }
 
     @Test
     void getStudentById_cuandoNoExiste_debeRetornar404() throws Exception {
-        // Arrange
-        when(studentService.getStudentById(99L)).thenReturn(Optional.empty());
+        when(studentService.obtenerPorId(99L))
+                .thenThrow(new EntidadNoEncontradaException("Estudiante no encontrado: 99"));
 
-        // Act & Assert
-        mockMvc.perform(get("/api/students/99"))
+        mockMvc.perform(get(BASE_URL + "/99"))
                 .andExpect(status().isNotFound());
 
-        verify(studentService, times(1)).getStudentById(99L);
+        verify(studentService, times(1)).obtenerPorId(99L);
     }
-
-    // ── PUT /api/students/{id} ───────────────────────────────
 
     @Test
     void updateStudent_cuandoExiste_debeRetornar200ConDatosActualizados() throws Exception {
-        // Arrange
         Student actualizado = new Student();
         actualizado.setId(1L);
         actualizado.setRut("11111111-1");
@@ -158,8 +149,7 @@ class StudentControllerTest {
         when(studentService.updateStudent(eq(1L), any(Student.class)))
                 .thenReturn(Optional.of(actualizado));
 
-        // Act & Assert
-        mockMvc.perform(put("/api/students/1")
+        mockMvc.perform(put(BASE_URL + "/1")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(actualizado)))
                 .andExpect(status().isOk())
@@ -172,12 +162,10 @@ class StudentControllerTest {
 
     @Test
     void updateStudent_cuandoNoExiste_debeRetornar404() throws Exception {
-        // Arrange
         when(studentService.updateStudent(eq(99L), any(Student.class)))
                 .thenReturn(Optional.empty());
 
-        // Act & Assert
-        mockMvc.perform(put("/api/students/99")
+        mockMvc.perform(put(BASE_URL + "/99")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(student)))
                 .andExpect(status().isNotFound());

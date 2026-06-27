@@ -2,27 +2,27 @@
 .idea/
 .vscode/
 *.iml
-
 # Dependencias accidentales en raíz
 node_modules/
 **/node_modules/
-
 # OS y Temporales
 .DS_Store
 Thumbs.db
 .*-lock.json
-
 # Entorno
 .env
 .env.*
-
+# Excepcion: .env.example se versiona como template
+!.env.example
 # Maven logs
 *.log
 mvn-test.log
 mvw-debug.log
 target/
-
 # Artefactos generados localmente
 docs/coverage-report/
 frontend/coverage/
 Entrega_EV3.zip
+*.bak
+mvn_err.txt
+mvn_out.txt

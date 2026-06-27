@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import React from 'react';
 import './index.css';
 import Navbar from './components/Navbar';
 import { LayoutContainer } from './components/layout/BaseLayout';
@@ -77,10 +78,15 @@ function App() {
     localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(nextSession));
   };
 
+  const TOKEN_KEY = 'coh_platform_token';
+  const REFRESH_TOKEN_KEY = 'coh_platform_refresh';
+
   const handleLogout = () => {
     setSession(null);
     setVistaActual('dashboard');
     localStorage.removeItem(SESSION_STORAGE_KEY);
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(REFRESH_TOKEN_KEY);
   };
 
   // Navegación segura: solo permite vistas válidas

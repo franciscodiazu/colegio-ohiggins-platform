@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: colegio-ohiggins-config
+  namespace: colegio-ohiggins
+data:
+  # Database
+  DB_HOST: "mysql"
+  DB_PORT: "3306"
+  DB_NAME_STUDENTS: "db_academic"
+  DB_NAME_ATTENDANCE: "db_record"
+  DB_USERNAME: "app_colegio"
+
+  # Spring Datasource URLs
+  SPRING_DATASOURCE_URL_STUDENTS: "jdbc:mysql://mysql:3306/db_academic?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  SPRING_DATASOURCE_URL_ATTENDANCE: "jdbc:mysql://mysql:3306/db_record?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC"
+  SPRING_DATASOURCE_USERNAME: "app_colegio"
+
+  # JPA
+  SPRING_JPA_HIBERNATE_DDL_AUTO: "update"
+  SPRING_JPA_SHOW_SQL: "false"
+
+  # Service URLs (internal cluster)
+  MS_STUDENTS_URL: "http://ms-students:8081"
+  MS_ATTENDANCE_URL: "http://ms-attendance:8082"
+
+  # Gateway CORS
+  CORS_ALLOWED_ORIGINS: "http://localhost:5173,http://frontend:8080"
+
+  # Server ports
+  GATEWAY_SERVER_PORT: "8080"
+  BFF_SERVER_PORT: "8083"
+  STUDENTS_SERVER_PORT: "8081"
+  ATTENDANCE_SERVER_PORT: "8082"
+
+  # Eureka Discovery
+  EUREKA_URL: "http://discovery-server:8761/eureka/"
+
+  # Frontend
+  VITE_API_URL: "http://api-gateway:8080"

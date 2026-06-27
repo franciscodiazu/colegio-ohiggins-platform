@@ -1,19 +1,15 @@
-# Plataforma Integral de Gestión Académica
+# Plataforma Integral de Gestion Academica - Frontend
 ## Colegio Bernardo O'Higgins
 
-Sistema web de gestión académica desarrollado como proyecto semestral para la asignatura **Desarrollo Fullstack III (DSY1106)** en DUOC UC.
-
----
+Sistema web de gestion academica desarrollado como proyecto semestral para la asignatura Desarrollo Fullstack III (DSY1106) en DUOC UC.
 
 ## Equipo de desarrollo
 
 | Nombre | Rol |
 |---|---|
-| Francisco Díaz | Desarrollador Fullstack |
+| Francisco Diaz | Desarrollador Fullstack |
 | Genesis Flores | Desarrolladora Fullstack |
 | Emilio Hormazabal | Desarrollador Fullstack |
-
----
 
 ## Repositorio
 
@@ -21,135 +17,109 @@ Sistema web de gestión académica desarrollado como proyecto semestral para la 
 https://github.com/franciscodiazu/colegio-ohiggins-platform.git
 ```
 
----
+## Descripcion general
 
-## Descripción general
+La plataforma permite a profesores gestionar informacion academica de forma centralizada. Incluye modulos de gestion de estudiantes, registro de asistencia y control de evaluaciones y calificaciones.
 
-La plataforma permite a profesores gestionar información académica de forma centralizada. Incluye módulos de gestión de estudiantes, registro de asistencia y control de evaluaciones y calificaciones.
+## Tecnologias utilizadas
 
----
-
-## Tecnologías utilizadas
-
-| Tecnología | Versión | Uso |
+| Tecnologia | Version | Uso |
 |---|---|---|
-| React | 19.2.4 | Librería de interfaz de usuario |
-| Vite | 5+ | Bundler y servidor de desarrollo |
-| JavaScript (ES2022) | — | Lenguaje principal |
-| CSS3 | — | Estilos y diseño visual |
-| localStorage | — | Persistencia de datos mock |
-| Node.js | v22.20.0 | Entorno de ejecución |
-
----
+| React | 19.2.4 | Libreria de interfaz de usuario |
+| Vite | 8.x | Bundler y servidor de desarrollo |
+| JavaScript (ES2022) | -- | Lenguaje principal |
+| CSS3 | -- | Estilos y diseño visual |
+| localStorage | -- | Persistencia de datos mock |
+| Node.js | v22.20.0 | Entorno de ejecucion |
+| Vitest | -- | Suite de pruebas unitarias e integracion |
+| Playwright | -- | Pruebas End-to-End |
 
 ## Patrones de diseño implementados
 
 ### 1. Service Layer
-Los servicios mock (`attendanceMockService`, `studentsMockService`, `evaluationsMockService`, `authMockService`) encapsulan toda la lógica de acceso a datos. Los componentes nunca acceden directamente al localStorage, siempre lo hacen a través del servicio correspondiente. Esto facilita la sustitución por llamadas HTTP reales sin modificar los componentes.
+Los servicios mock (attendanceMockService, studentsMockService, evaluationsMockService, authMockService) encapsulan toda la logica de acceso a datos. Los componentes nunca acceden directamente al localStorage, siempre lo hacen a traves del servicio correspondiente. Esto facilita la sustitucion por llamadas HTTP reales sin modificar los componentes.
 
 ### 2. Container / Presenter
-Las páginas (`Estudiantes`, `Asistencia`, `Evaluaciones`) actúan como contenedores: manejan el estado y la lógica de negocio. Los componentes reutilizables (`TableSkeleton`, `ConfirmModal`, `FormField`, `Navbar`) actúan como presentadores: solo reciben props y renderizan UI, sin lógica propia.
+Las paginas (Estudiantes, Asistencia, Evaluaciones) actuan como contenedores: manejan el estado y la logica de negocio. Los componentes reutilizables (TableSkeleton, ConfirmModal, FormField, Navbar) actuan como presentadores: solo reciben props y renderizan UI, sin logica propia.
 
 ### 3. Custom Hook
-El hook `useFieldValidation` encapsula la lógica de validación de formularios en tiempo real. Gestiona el valor, el estado de error y el estado `touched` de cada campo de forma independiente, separando la lógica de validación de la capa de presentación.
-
----
+El hook useFieldValidation encapsula la logica de validacion de formularios en tiempo real. Gestiona el valor, el estado de error y el estado touched de cada campo de forma independiente, separando la logica de validacion de la capa de presentacion.
 
 ## Estructura del proyecto
 
 ```
 frontend/
-├── public/
-│   ├── favicon.svg          # Ícono de la pestaña del navegador
-│   ├── logo.svg             # Logo institucional (versión color)
-│   └── logo-white.svg       # Logo institucional (versión blanca)
 ├── src/
-│   ├── components/
-│   │   ├── layout/
-│   │   │   └── BaseLayout.jsx    # Componentes base de layout
-│   │   ├── ConfirmModal.jsx      # Modal de confirmación reutilizable
-│   │   ├── FormField.jsx         # Campo de formulario con validación visual
-│   │   ├── Navbar.jsx            # Barra de navegación con sesión
-│   │   └── TableSkeleton.jsx     # Skeleton de carga para tablas
-│   ├── hooks/
-│   │   └── useFieldValidation.js # Hook de validación en tiempo real
-│   ├── pages/
-│   │   ├── Asistencia.jsx        # Módulo de asistencia
-│   │   ├── Dashboard.jsx         # Panel principal con estadísticas
-│   │   ├── Estudiantes.jsx       # Módulo de estudiantes
-│   │   ├── Evaluaciones.jsx      # Módulo de evaluaciones y notas
-│   │   ├── ForgotPassword.jsx    # Recuperación de contraseña
-│   │   ├── Login.jsx             # Inicio de sesión
-│   │   ├── NotFound.jsx          # Página 404
-│   │   └── Register.jsx          # Registro de usuario
-│   ├── services/
-│   │   ├── attendanceMockService.js    # Servicio mock de asistencia
-│   │   ├── authMockService.js          # Servicio mock de autenticación
-│   │   ├── evaluationsMockService.js   # Servicio mock de evaluaciones
-│   │   └── studentsMockService.js      # Servicio mock de estudiantes
-│   ├── styles/
-│   │   ├── asistencia.css   # Estilos de módulos y componentes
-│   │   ├── auth.css         # Estilos de autenticación
-│   │   ├── base.css         # Estilos base globales
-│   │   ├── dashboard.css    # Estilos del dashboard
-│   │   ├── forms.css        # Estilos de formularios
-│   │   ├── layout.css       # Estilos de layout
-│   │   ├── responsive.css   # Reglas responsive
-│   │   └── tokens.css       # Variables CSS (design tokens)
-│   ├── App.jsx              # Componente raíz y manejo de sesión
-│   ├── index.css            # Punto de entrada de estilos
-│   └── main.jsx             # Punto de entrada de la aplicación
-├── index.html
-├── package.json
-└── vite.config.js
+│   ├── __tests__/           # Suite de pruebas unitarias e integracion
+│   ├── components/          # Componentes reutilizables
+│   ├── hooks/               # Custom hooks de logica
+│   ├── pages/               # Vistas principales
+│   ├── services/            # Capa de servicios y logica de datos
+│   └── styles/              # Archivos CSS y diseño
+├── e2e/                     # Pruebas End-to-End con Playwright
+├── public/                  # Recursos estaticos
+├── vitest.config.js         # Configuracion de Vitest
+└── playwright.config.js     # Configuracion de Playwright
 ```
 
----
+## Instalacion y ejecucion
 
-## Requisitos previos
-
-- **Vite** 8.0.1 
-- **npm** v9 o superior
-
----
-
-## Instalación y ejecución
-
-### 1. Clonar el repositorio
-
-```bash
-git clone https://github.com/franciscodiazu/colegio-ohiggins-platform.git
-cd colegio-ohiggins-platform
-```
-
-### 2. Instalar dependencias del frontend
+### 1. Instalacion de dependencias
 
 ```bash
 cd frontend
 npm install
+npx playwright install chromium
 ```
 
-### 3. Ejecutar en modo desarrollo
+### 2. Ejecutar en modo desarrollo
 
 ```bash
 npm run dev
 ```
 
-La aplicación estará disponible en `http://localhost:5173`
+La aplicacion estara disponible en http://localhost:5173
 
-### 4. Construir para producción
-
-```bash
-npm run build
-```
-
-### 5. Previsualizar la build de producción
+### 3. Ejecucion de pruebas (Vitest)
 
 ```bash
-npm run preview
+# Ejecutar una vez
+npm run test
+
+# Reporte de cobertura
+npm run test:coverage
 ```
 
----
+### 4. Ejecucion de pruebas E2E (Playwright)
+
+Requiere que la aplicacion este corriendo (npm run dev).
+
+```bash
+npx playwright test
+```
+
+## Calidad y Pruebas Unitarias
+
+### Cobertura de pruebas
+
+| Capa | Herramienta | Archivos cubiertos |
+|------|------------|----------------------|
+| Unitaria | Vitest | useFieldValidation.js, authMockService.js |
+| Integracion | Vitest + Testing Library | Login.jsx, Register.jsx |
+| E2E | Playwright | Flujo completo: registro -> login -> dashboard -> logout |
+
+### Resultados obtenidos (Vitest)
+
+- Tests Pasados: 349 (Vitest)
+- Tests Fallidos: 0
+- Cobertura de Lineas: 28.04%
+- Cobertura de Funciones: 79.24%
+- Cobertura de Ramas: 89.84%
+
+### Resultados obtenidos (Playwright)
+
+- Tests Pasados: 16
+- Tests Fallidos: 0
 
 ## Credenciales de prueba
 
@@ -157,75 +127,24 @@ El sistema infiere el rol del usuario a partir del dominio del correo:
 
 | Rol | Dominio | Ejemplo |
 |---|---|---|
-| Profesor | `@profesor.cl` | `ana.perez@profesor.cl` |
-| Estudiante | `@alum.cl` | `juan.garcia@alum.cl` |
-| Apoderado | `@apod.cl` | `maria.lopez@apod.cl` |
-
-> Solo los usuarios con rol **Profesor** tienen acceso completo a los módulos de la plataforma.
-
-Para crear una cuenta de prueba, usar el formulario de **Registro** con cualquier correo del dominio `@profesor.cl`.
-
----
+| Profesor | @profesor.cl | ana.perez@profesor.cl |
+| Estudiante | @alum.cl | juan.garcia@alum.cl |
+| Apoderado | @apod.cl | maria.lopez@apod.cl |
 
 ## Funcionalidades principales
 
-### Dashboard
-- Resumen general con métricas en tiempo real
-- Barras de progreso de asistencia y calificaciones
-- Desglose de estudiantes por curso
-- Últimas calificaciones registradas
-- Saludo dinámico según hora del día
-
-### Gestión de Estudiantes
-- Registro y actualización de estudiantes
-- Modal de confirmación antes de guardar cambios
-- Tabla con fila seleccionada resaltada
-- Consulta de cursos asociados por estudiante
-
-### Gestión de Asistencia
-- Registro de clases realizadas
-- Control de asistencia por clase con filtrado dinámico de estudiantes
-- Consulta de asistencia por estudiante o por curso
-- Detección de registros duplicados
-
-### Evaluaciones y Calificaciones
-- Creación y edición de evaluaciones por curso
-- Registro de notas con filtrado dinámico de estudiantes
-- Consulta de calificaciones por estudiante o por curso
-- Cálculo automático de promedio general
-
-### Autenticación
-- Registro, inicio de sesión y recuperación de contraseña
-- Validación visual en tiempo real campo por campo
-- Persistencia de sesión con localStorage
-- Roles diferenciados por dominio de correo
-
----
-
-## Componentes reutilizables
-
-| Componente | Descripción |
-|---|---|
-| `ConfirmModal` | Modal de confirmación con variantes (danger, warning, info), accesible con teclado |
-| `TableSkeleton` | Skeleton animado para tablas durante la carga de datos |
-| `FormField` | Campo de formulario con validación visual y mensaje de error |
-| `Navbar` | Barra de navegación con logo, menú y datos de sesión del usuario |
-| `useFieldValidation` | Hook de validación en tiempo real con soporte para múltiples reglas |
-
----
+- Dashboard: Resumen general con metricas en tiempo real.
+- Gestion de Estudiantes: Registro y actualizacion de alumnos.
+- Gestion de Asistencia: Control de asistencia por clase y curso.
+- Evaluaciones y Calificaciones: Creacion de evaluaciones y registro de notas.
+- Autenticacion: Registro, login y recuperacion de contraseña con roles.
 
 ## Notas para el evaluador
 
-- La capa de servicios mock simula tiempos de respuesta reales mediante `setTimeout` de 120ms, lo que permite apreciar los estados de carga (skeleton).
-- Los datos persisten entre sesiones gracias a localStorage. Para reiniciar el estado, abrir DevTools → Application → Local Storage → limpiar las claves con prefijo `coh_`.
-- El sistema está preparado para conectarse a un backend real: reemplazar el cuerpo de cada función en los archivos `*MockService.js` por llamadas HTTP sin modificar los componentes.
+- La capa de servicios mock simula tiempos de respuesta reales mediante setTimeout.
+- Los datos persisten entre sesiones gracias a localStorage.
+- El sistema esta preparado para conectarse a un backend real reemplazando la implementacion de los servicios.
 
----
+## Etica y responsabilidad
 
-## Ética y responsabilidad
-
-La solución fue diseñada para un contexto académico y de demostración, por lo que evita el uso de datos personales reales en los flujos de prueba. Los registros que se almacenan en `localStorage` deben entenderse como información simulada y no como una fuente autorizada para datos sensibles.
-
-Además, la interfaz favorece el uso responsable del sistema al mostrar validaciones, confirmaciones y estados de carga claros antes de ejecutar acciones críticas. Esto reduce errores operativos y ayuda a mantener la trazabilidad de las operaciones de gestión académica.
-
-Finalmente, el proyecto promueve la transparencia técnica al separar la lógica de negocio en servicios reutilizables, lo que facilita auditoría, mantenimiento y futura sustitución de los mocks por integraciones reales sin alterar la experiencia de uso.
+La solucion fue diseñada para un contexto academico y de demostracion. Los registros almacenados en localStorage son informacion simulada. La interfaz favorece el uso responsable mediante validaciones y confirmaciones.

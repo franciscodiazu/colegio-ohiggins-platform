@@ -1,45 +1,59 @@
 # ms-students
 
-Microservicio de Gestión de Estudiantes.
+Microservicio encargado de la gestion de estudiantes para la plataforma Colegio O'Higgins. Proporciona los endpoints necesarios para el mantenimiento y consulta de la informacion base de los alumnos.
 
-Prerequisitos
+## Prerrequisitos
+
 - Java 21
-- Maven (`mvnw` / `mvnw.cmd`)
+- Maven (mvnw / mvnw.cmd)
 
-Ejecución en desarrollo
+## Instalacion y Ejecucion
+
+### Ejecucion local
 
 Linux/macOS:
-
 ```bash
 ./mvnw spring-boot:run
 ```
 
-Windows (PowerShell / CMD):
-
+Windows:
 ```powershell
 .\mvnw.cmd spring-boot:run
 ```
 
-Tests
-
-```powershell
-.\run-tests.ps1
-```
-
-Variables de entorno recomendadas
-- SPRING_DATASOURCE_URL
-- SPRING_DATASOURCE_USERNAME
-- SPRING_DATASOURCE_PASSWORD
-- SPRING_PROFILES_ACTIVE
-
-Docker
-
-Construir usando el Dockerfile en `Infra/docker/students.Dockerfile`:
+### Ejecucion con Docker
 
 ```bash
-docker build -f Infra/docker/students.Dockerfile -t ms-students:local .
-docker run -p 8082:8082 ms-students:local
+docker build -f ../Infra/docker/students.Dockerfile -t ms-students:local .
+docker run -p 8081:8081 ms-students:local
 ```
 
-Notas
-- Configuraciones por defecto en `src/main/resources/application.properties`.
+## Configuracion y Endpoints
+
+- Puerto por defecto: 8081
+- Documentacion API (Swagger): http://localhost:8081/swagger-ui/index.html
+- Path base API: /api/students
+
+## Calidad y Pruebas Unitarias
+
+El microservicio utiliza JUnit 5 y Mockito para las pruebas unitarias.
+
+- Total Tests: 17
+- Cobertura de codigo: >60%
+- Clases testeadas: StudentServiceTest, StudentControllerTest, MsStudentsApplicationTests
+
+Ejecutar pruebas:
+```bash
+./mvnw clean test
+```
+
+## Variables de Entorno
+
+- SPRING_DATASOURCE_URL: URL de la base de datos MySQL.
+- SPRING_DATASOURCE_USERNAME: Usuario de la base de datos.
+- SPRING_DATASOURCE_PASSWORD: Password de la base de datos.
+- SPRING_PROFILES_ACTIVE: Perfil de ejecucion (default, dev, prod).
+
+## Notas
+
+Las configuraciones por defecto se encuentran en src/main/resources/application.properties.

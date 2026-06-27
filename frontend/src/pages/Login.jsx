@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import React from 'react';
 import { LayoutCard, LayoutSection } from '../components/layout/BaseLayout';
 import { loginUser } from '../services/authMockService';
 import { useFieldValidation, rules } from '../hooks/useFieldValidation';
@@ -22,7 +23,7 @@ export default function Login({ onLogin, onGoToRegister, onGoToForgot }) {
 
   // ── Handler de envío ───────────────────────────────────────────────────────────
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setSubmitError('');
 
@@ -35,7 +36,7 @@ export default function Login({ onLogin, onGoToRegister, onGoToForgot }) {
 
     setIsSubmitting(true);
 
-    const result = loginUser({ email: email.value, password: password.value });
+    const result = await loginUser({ email: email.value, password: password.value });
 
     if (!result.ok) {
       setSubmitError(result.error);

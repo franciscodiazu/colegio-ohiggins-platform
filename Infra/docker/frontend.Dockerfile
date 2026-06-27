@@ -21,15 +21,17 @@ WORKDIR /app
 # El contexto es la raíz del proyecto, por eso usamos frontend/
 COPY frontend/package*.json ./
 COPY frontend/vite.config.js ./
+COPY packages/ui/package.json ./packages/ui/package.json
 
 # Instalar dependencias con npm ci (más rápido y determinista)
 RUN npm ci --only=production=false
 
 # Copiar código fuente desde la carpeta frontend
 COPY frontend/. .
+COPY packages/ui/dist ./packages/ui/dist
 
 # Definir ARG para VITE_API_URL (build-time)
-ARG VITE_API_URL=http://backend-bff:8080
+ARG VITE_API_URL=http://localhost:8080
 ENV VITE_API_URL=${VITE_API_URL}
 
 # Build de la aplicación
@@ -62,10 +64,6 @@ RUN chown -R nginx-user:nginx-group /usr/share/nginx/html && \
     chown -R nginx-user:nginx-group /etc/nginx/conf.d && \
     touch /var/run/nginx.pid && \
     chown -R nginx-user:nginx-group /var/run/nginx.pid
-
-# Configurar nginx para escuchar en puerto no privilegiado
-RUN sed -i 's/listen       80;/listen       8080;/' /etc/nginx/conf.d/default.conf && \
-    sed -i 's/listen  \[::\]:80;/listen  [::]:8080;/' /etc/nginx/conf.d/default.conf
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
