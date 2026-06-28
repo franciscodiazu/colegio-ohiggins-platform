@@ -13,6 +13,18 @@ El presente documento describe las brechas técnicas identificadas durante la au
 
 ## 2. Brechas Técnicas y Roadmap V4
 
+### 2.0 Backend for Frontend (v1.19 Post-Cirugía)
+
+| Aspecto | Detalle |
+|---------|---------|
+| **Estado actual (v1.19)** | ✅ **Resuelto en sesión post-EV3.** Backend-bff contiene 6 clases vivas (CorsConfig, OpenApiConfig, PlatformHealthIndicator, RestTemplateConfig, SecurityConfig, BackendBffApplication) tras eliminación de auth controllers. Los 17 tests (CorsConfigTest 7 + WebConfigTest 8 + ApplicationTest 2) verifican configuración CORS y health aggregation, NO lógica de autenticación. |
+| **Rol real (NO auth proxy)** | El BFF es un **CORS proxy + health aggregator**. NO maneja autenticación JWT — esa es responsabilidad exclusiva del api-gateway. BFF solo: (a) Configura CORS permitiendo cross-origin desde frontend (localhost:5173), (b) Expone /actuator/health y /actuator/prometheus, (c) Verifica estado de ms-students y ms-attendance via PlatformHealthIndicator. |
+| **Cobertura JaCoCo real** | 77% instrucciones (195 total, 43 missed), branches n/a (CORS sin decisiones condicionales), 100% métodos (0 missed), 6 clases. Métrica real post-cirugía (anterior 83% era pre-cirugía sobre 16 clases inexistentes). |
+| **Arquitectura** | BFF en puerto 8083 (segregado de gateway:8080). Spring Security configurado solo para permitir /actuator/health y /actuator/prometheus públicamente; todo lo demás deniega. |
+| **Próximos pasos V4** | Evaluar si BFF requiere lógica de agregación más compleja (ej. composición de respuestas de múltiples MS) o si su rol se reduce únicamente a healthcheck. Actualmente es "too thin" pero funcional. |
+| **Patrón** | API Composition Pattern (actual: mínimo), Evolution: agregación de datos si la lógica de frontend lo requiere. |
+| **Prioridad** | Baja (resuelto funcional, mejora opcional) |
+
 ### 2.1 Sistema de Métricas y Monitoreo (Prometheus + Grafana)
 
 | Aspecto | Detalle |

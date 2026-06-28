@@ -26,7 +26,7 @@ graph TD
         end
 
         subgraph "BFF Layer"
-            BFF["backend-bff:8083<br/>Health aggregator + PlatformHealth"]
+            BFF["backend-bff:8083<br/>Health aggregator + CORS proxy<br/>PlatformHealthIndicator"]
         end
 
         subgraph "Microservicios"
@@ -90,7 +90,7 @@ graph TD
 ```
 colegio-ohiggins-platform/
 ├── api-gateway/              # Spring Cloud Gateway MVC (auth + routing)
-├── backend-bff/              # Backend for Frontend — health checker + PlatformHealthIndicator
+├── backend-bff/              # Backend for Frontend — CORS proxy + health aggregator (6 clases vivas post-v1.19)
 ├── ms-students/              # Microservicio estudiantes (CRUD + validación RUT)
 ├── ms-attendance/            # Microservicio asistencia (Strategy Pattern + Factory + CB)
 ├── frontend/                 # React + Vite + Vitest
@@ -311,7 +311,7 @@ Dependencias con `depends_on` + `condition: service_healthy` garantizan el orden
 ```bash
 for i in 1 2 3 4 5; do
   curl -s -o /dev/null http://localhost:8080/api/v1/students/health
-  curl -s -o /dev/null http://localhost:8083/api/alumnos
+  curl -s -o /dev/null http://localhost:8083/actuator/health
   sleep 1
 done
 ```
@@ -325,14 +325,14 @@ Luego en Grafana, dashboard JVM Micrometer muestra los picos en tiempo real.
 ### Métricas de Cobertura (JaCoCo — instrucciones)
 
 | Módulo | Tests | Cobertura Instr. | Cobertura Ramas |
-|---|---|---|---|
-| ms-students | 17 | 80% | 66% |
-| ms-attendance | 101 | 84% | 75% |
-| backend-bff | 17 | 83% | 100% |
-| api-gateway | 9 | Sin JaCoCo | Sin JaCoCo |
-| discovery-server | 2 | Sin JaCoCo | Sin JaCoCo |
-| frontend (src/) | 349 | ~28% (Vitest) | — |
-| **Total** | **495** | — | — |
+|---|---|------------------|---|
+| ms-students | 17 | 80%              | 66% |
+| ms-attendance | 101 | 84%              | 75% |
+| backend-bff | 17 | 77% | n/a |
+| api-gateway | 9 | Sin JaCoCo       | Sin JaCoCo |
+| discovery-server | 2 | Sin JaCoCo       | Sin JaCoCo |
+| frontend (src/) | 349 | ~28% (Vitest)    | — |
+| **Total** | **495** | —                | — |
 
 ### Ejecutar todas las pruebas localmente
 

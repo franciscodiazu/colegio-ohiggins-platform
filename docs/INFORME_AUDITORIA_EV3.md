@@ -91,9 +91,9 @@ colegio-ohiggins-platform/
 │   ├── src/main/java/         16 clases: JWT auth, routing, CORS
 │   └── src/test/              2 clases, 9 tests (7 CORS + 2 app)
 │
-├── backend-bff/               (35 archivos fuente)
+├── backend-bff/               (9 archivos fuente post-v1.19)
 │   ├── pom.xml                Spring Boot 3.5.13 + Cloud 2025.0.1 + eureka-client + JaCoCo
-│   ├── src/main/java/         16 clases: health aggregator, auth proxy
+│   ├── src/main/java/         6 clases: health aggregator, CORS proxy
 │   └── src/test/              3 clases, 17 tests (17 pass, 0 error)
 │
 ├── ms-students/               (31 archivos fuente)
@@ -267,7 +267,7 @@ api-gateway:8080 ──→ MySQL (colegio_auth_db)
 | Componente | Archivos fuente | Tests PASS | Tests ERROR | JaCoCo | Swagger | Eureka Client | Compila |
 |------------|----------------|------------|-------------|--------|---------|---------------|---------|
 | **api-gateway** | 23 | 9 | 0 | ❌ No | ❌ No | ✅ Sí | ✅ |
-| **backend-bff** | 35 | 17 | 0 | ✅ 0.8.12 | ❌ No | ✅ Sí | ✅ |
+| **backend-bff** | 9 (post-v1.19) | 17 | 0 | ✅ 0.8.12 | ❌ No | ✅ Sí | ✅ |
 | **ms-students** | 31 | 17 | 0 | ✅ 0.8.12 | ✅ 2.8.8 | ✅ Sí | ✅ |
 | **ms-attendance** | 55 | 101 | 0 | ✅ 0.8.12 | ✅ 2.8.8 | ✅ Sí | ✅ |
 | **discovery-server** | 8 | 2 | 0 | ❌ No | ❌ No | N/A (server) | ✅ |
@@ -350,7 +350,7 @@ El README.md fue auditado y corregido durante esta sesión:
 |--------|-----------|-----------------|-----------------|--------|
 | ms-students | 17 | 80% | 66% | 10 |
 | ms-attendance | 101 | 84% | 75% | 20 |
-| backend-bff | 17 | 83% | 100% | 4 |
+| backend-bff | 17 | 77% | n/a | 4 |
 | api-gateway | 9 | Sin JaCoCo | Sin JaCoCo | — |
 | frontend | 349 | ~28% lines | — | — |
 | **Total backend** | **146** | — | — | — |
