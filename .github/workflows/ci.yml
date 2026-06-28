@@ -1,4 +1,4 @@
-name: CI — Colegio O'Higgins
+name: CI - Colegio O'Higgins
 
 on:
   push:
