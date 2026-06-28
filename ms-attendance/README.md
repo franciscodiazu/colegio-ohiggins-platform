@@ -38,9 +38,9 @@ docker run -p 8082:8082 ms-attendance:local
 
 El microservicio utiliza JUnit 5, Mockito y JaCoCo para asegurar la calidad del codigo.
 
-- Total Tests: 101
+- Total Tests: 118
 - Cobertura de codigo: 84.86% (Lineas), 89.87% (Metodos), 75.38% (Ramas)
-- Clases criticas testeadas: ControladorAsistenciaTest, ServicioAsistenciaTest, ClienteEstudiantesResilienceTest, AtrasoFactoryTest, ValidationStrategyTest.
+- Clases criticas testeadas: ControladorAsistenciaTest, ServicioAsistenciaTest, ClienteEstudiantesResilienceTest, AtrasoFactoryTest, ValidationStrategyTest, RepositorioRegistroAsistenciaDataJpaTest.
 
 Ejecutar pruebas:
 ```bash

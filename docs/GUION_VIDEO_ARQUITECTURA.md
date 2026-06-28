@@ -40,18 +40,18 @@
 | Tiempo | Acción en pantalla | Locución |
 |--------|-------------------|----------|
 | 3:35 | Abrir `ms-students/` estructura de carpetas | "ms-students cubre el dominio de gestión de estudiantes: CRUD completo con validación de RUT chileno." |
-| 3:50 | Abrir `EstudianteController.java` — mostrar endpoints | "El controlador expone endpoints REST: GET, POST, PUT, DELETE sobre `/api/estudiantes`. Retorna HttpStatus 201 al crear, 200 en consultas, 204 al eliminar, 400 si los datos son inválidos, 404 si no existe." |
+| 3:50 | Abrir `StudentController.java` — mostrar endpoints | "En ms-students, el núcleo de la lógica está en StudentController.java, donde exponemos endpoints REST: GET, POST, PUT, DELETE sobre `/api/estudiantes`. Retorna HttpStatus 201 al crear, 200 en consultas, 204 al eliminar, 400 si los datos son inválidos, 404 si no existe." |
 | 4:10 | Abrir `RutValidator.java` — mostrar lógica de validación | "La regla de negocio principal es la validación de RUT con dígito verificador. Implementamos el algoritmo oficial chileno en un validador reutilizable." |
-| 4:25 | Abrir Swagger: `http://localhost:8081/swagger-ui.html` | "La especificación OpenAPI documenta cada endpoint, sus parámetros y códigos de respuesta. Aquí se puede probar cada operación." |
+| 4:25 | Abrir Swagger: `http://localhost:8081/swagger-ui/index.html` | "Para la documentación, utilizamos Swagger. Si accedemos a swagger-ui/index.html, podemos ver el contrato de la API, probar cada endpoint y ver sus parámetros y códigos de respuesta." |
 | 4:40 | Mostrar `pom.xml` de ms-students — dependencias clave | "Las dependencias: spring-boot-starter-data-jpa, spring-boot-starter-web, mysql-connector-j, eureka-client, actuator, prometheus." |
 
 ### 3b. ms-attendance (~1:30 min)
 
 | Tiempo | Acción en pantalla | Locución |
 |--------|-------------------|----------|
-| 4:55 | Abrir `ms-attendance/` estructura, mostrar `AttendanceController.java` | "ms-attendance gestiona la asistencia: registro por curso y fecha, con regla de negocio de un solo registro por estudiante por día." |
+| 4:55 | Abrir `ms-attendance/` estructura, mostrar `ControladorAsistencia.java` | "Pasando a ms-attendance, el manejo de registros se centraliza en ControladorAsistencia.java. Gestiona la asistencia: registro por curso y fecha, con regla de negocio de un solo registro por estudiante por día." |
 | 5:10 | Abrir paquete `strategy/` — mostrar `ValidationStrategy`, `AsistenciaStrategy` | "Aplicamos el patrón Strategy: cada estado de asistencia —Presente, Atraso, Inasistencia— es una estrategia de validación con su propia lógica. Se selecciona en tiempo de ejecución según el valor recibido." |
-| 5:30 | Abrir `ClienteEstudiantesResilienceTest.java` o `AttendanceService.java` con `@CircuitBreaker` | "El Circuit Breaker con Resilience4j protege la llamada a ms-students. Si el servicio remoto falla, se abre el circuito y retorna una respuesta por defecto en lugar de propagar el error." |
+| 5:30 | Abrir `ClienteEstudiantes.java` con `@CircuitBreaker` | "Para garantizar la resiliencia ante fallos de comunicación, implementamos el patrón Circuit Breaker en ClienteEstudiantes.java. Si ms-students no responde, se abre el circuito y retorna una respuesta por defecto, evitando que un error en cadena afecte a todo el clúster." |
 | 5:50 | Abrir paquete `factory/` — mostrar `StudentFactory` | "También aplicamos Factory Pattern para la creación de objetos complejos, centralizando la lógica de construcción." |
 | 6:05 | Mostrar `GlobalExceptionHandler.java` — tabla de excepciones | "El manejo de excepciones está centralizado en un GlobalExceptionHandler que captura errores de validación, recursos no encontrados, excepciones de JPA, y retorna códigos HTTP semánticos con mensajes descriptivos." |
 
@@ -61,7 +61,7 @@
 |--------|-------------------|----------|
 | 6:30 | Mostrar `application.properties` en cada MS | "Cada microservicio tiene su archivo de configuración con datasource, eureka, server port, logging, y métricas. Se levantan individualmente con `docker compose up ms-students` o todos juntos." |
 | 6:45 | Mostrar logs en consola: `docker compose logs ms-students --tail 20` | "El logging interno con SLF4J permite rastrear peticiones, errores y tiempos de respuesta. Además, cada servicio expone métricas via Actuator y Prometheus." |
-| 7:05 | Mostrar `docs/INFORME_AUDITORIA_EV3.md` sección 4 — cobertura JaCoCo | "Las pruebas unitarias y de integración están documentadas. 104 tests Java pasan correctamente. La cobertura JaCoCo se exporta como reporte HTML en `docs/coverage-report/`." |
+| 7:05 | Mostrar `docs/INFORME_AUDITORIA_EV3.md` sección 4 — cobertura JaCoCo | "Las pruebas unitarias y de integración están documentadas. 175 tests Java pasan correctamente. La cobertura JaCoCo se exporta como reporte HTML en `docs/coverage-report/`." |
 | 7:25 | Transición | "Ahora veamos cómo protegemos el acceso." |
 
 ---
@@ -71,22 +71,22 @@
 
 | Tiempo | Acción en pantalla | Locución |
 |--------|-------------------|----------|
-| 7:30 | Abrir `api-gateway/src/main/java/.../jwt/JwtUtil.java` | "La seguridad se justifica porque manejamos datos sensibles de estudiantes y apoderados. Implementamos autenticación JWT con tokens de acceso de 30 minutos y refresh tokens de 7 días revocables." |
+| 7:30 | Abrir `api-gateway/src/main/java/.../security/jwt/JwtTokenProvider.java` | "La gestión de identidades y tokens se maneja a través de JwtTokenProvider.java, encargado de la firma y validación de tokens. Implementamos autenticación JWT con tokens de acceso de 30 minutos y refresh tokens de 7 días revocables." |
 | 7:45 | Señalar `generateToken()`, `validateToken()` | "El JWT se genera con el email y rol del usuario, firmado con HMAC-SHA256. En cada petición, el Gateway valida la firma, fecha de expiración, y extrae el subject para los controladores." |
-| 8:00 | Mostrar `SecurityConfig.java` con cadena de filtros | "Spring Security configura una cadena de filtros: el `JwtAuthenticationFilter` intercepta cada request antes del ruteo, extrae el token del header Authorization, lo valida y lo inyecta en el contexto de seguridad." |
-| 8:20 | Mostrar `GatewayConfig.java` con rutas protegidas | "El Gateway enruta las peticiones según el path: `/api/students/**` a ms-students, `/api/asistencia/**` a ms-attendance, y `/api/v1/auth/**` se maneja internamente. Solo el login y register son públicos; el resto requiere token." |
+| 8:00 | Mostrar `security/config/SecurityConfig.java` con cadena de filtros | "Toda la configuración de seguridad, incluyendo filtros y políticas de acceso, se define de manera modular en SecurityConfig.java. El `JwtAuthenticationFilter` intercepta cada request antes del ruteo, extrae el token del header Authorization, lo valida y lo inyecta en el contexto de seguridad." |
+| 8:20 | Mostrar `application.properties` con rutas protegidas | "El ruteo y balanceo no dependen de clases pesadas, sino que se define directamente en application.properties, centralizando la configuración de los Predicates y Filters. Las peticiones `/api/students/**` van a ms-students, `/api/asistencia/**` a ms-attendance, y `/api/v1/auth/**` se maneja internamente. Solo el login y register son públicos; el resto requiere token." |
 | 8:40 | Transición | "Y el API Gateway orquesta todo." |
 
 ---
 
 ## Bloque 5: API Gateway (ítems 36–38)
-**Duración:** ~1:00 min | **Pantalla:** Código Gateway
+**Duración:** ~1:00 min | **Pantalla:** Configuración Gateway
 
 | Tiempo | Acción en pantalla | Locución |
 |--------|-------------------|----------|
-| 8:45 | Abrir `api-gateway/src/main/java/.../config/GatewayConfig.java` | "El API Gateway es el punto único de entrada. Implementa Spring Cloud Gateway MVC con routing dinámico y balanceo de carga." |
-| 9:00 | Mostrar rutas: `/api/students/**` → `lb://ms-students`, `/api/asistencia/**` → `lb://ms-attendance` | "Las rutas se definen declarativamente. Cada ruta tiene un filtro JWT que valida el token antes de reenviar la petición al microservicio destino." |
-| 9:15 | Mostrar filtros: `JwtAuthGatewayFilterFactory.java` | "Los componentes clave son: el RouteLocator con las rutas, los filtros de autenticación, y los predicates que deciden qué rutas aplicar. Cada petición pasa por el filtro JWT, se valida, y se reenvía al destino o se rechaza con 401." |
+| 8:45 | Mostrar `application.properties` con rutas del gateway | "El API Gateway es el punto único de entrada. Implementa Spring Cloud Gateway MVC con routing dinámico y balanceo de carga." |
+| 9:00 | Mostrar rutas en properties: `/api/students/**` → `http://localhost:8081`, `/api/asistencia/**` → `http://localhost:8082` | "Como ven en la configuración, los servicios se acceden vía rutas directas optimizando la resolución de nombres en el clúster Docker. Cada ruta tiene un filtro JWT que valida el token antes de reenviar la petición." |
+| 9:15 | Mostrar `JwtAuthenticationFilter.java` | "La seguridad en el Gateway se aplica mediante JwtAuthenticationFilter.java, que intercepta cada petición antes de llegar al servicio final. Se valida el token, y si es inválido, se rechaza con 401." |
 | 9:35 | Transición | "Pasemos al monitoreo." |
 
 ---

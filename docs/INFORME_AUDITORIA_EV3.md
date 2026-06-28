@@ -14,18 +14,18 @@
 | Métrica | Valor |
 |---------|-------|
 | **Módulos funcionales** | 6/6 (api-gateway, backend-bff, ms-students, ms-attendance, discovery-server, frontend) |
-| **Tests backend pass** | 146 (ms-students:17 + ms-attendance:101 + api-gateway:9 + backend-bff:17 + discovery-server:2) |
+| **Tests backend pass** | 175 (ms-students:29 + ms-attendance:118 + api-gateway:9 + backend-bff:17 + discovery-server:2) |
 | **Tests frontend pass** | 349 (Vitest 4.1.9, 18 suites) |
 | **Tests backend con error** | 0 (BUILD SUCCESS en 5/5 módulos Maven) |
 | **Tests E2E Playwright** | 16/16 (flujo completo login→dashboard→logout) |
-| **Total tests pass** | 495 (146 Java + 349 JS) — 0 fallos |
+| **Total tests pass** | 524 (175 Java + 349 JS) — 0 fallos |
 | **Arquitectura** | Spring Boot 3.5.13, Spring Cloud 2025.0.1, Eureka, React + Vite |
 | **Commits en rama entregable** | 69 |
 | **Contenedores Docker healthy** | 9/9 (verificado 23/06 + 24/06 — core + Prometheus + Grafana, 0 warnings Docker Compose) |
 | **Prometheus targets UP** | 4/4 (api-gateway, backend-bff, ms-students, ms-attendance) |
 | **Grafana** | Datasource Prometheus conectado + dashboard JVM Micrometer importado |
 | **Smoke tests** | 11/11 pasan (Gateway JWT, Eureka, Frontend, BFF, ms-students, ms-attendance, Discovery, Swaggers, API docs) |
-| **Bugs corregidos en sesión** | 6 (trailing slash en ms-students, BFF DB env vars, healthcheck BFF, DELETE endpoint en ms-students, services.attendance.url faltante en BFF, `version` obsoleto en docker-compose.yml) |
+| **Bugs corregidos en sesión** | 7 (trailing slash en ms-students, BFF DB env vars, healthcheck BFF, DELETE endpoint en ms-students, services.attendance.url faltante en BFF, `version` obsoleto en docker-compose.yml, dialecto Hibernate en ms-attendance DataJpaTest) |
 | **ZIP generado** | ✅ `Entrega_EV3.zip` (1.64 MB, excluye target/, node_modules/ y .git/) |
 
 ---
@@ -73,8 +73,8 @@ Por instrucción, se auditaron todos los claims contra código en ejecución, lo
 
 | Métrica anterior | Valor real | Diferencia |
 |------------------|------------|------------|
-| 493 tests | 495 tests | +2 (discovery-server no contado antes) |
-| 144 Java tests | 146 Java tests | +2 |
+| 495 tests | 524 tests | +29 (DataJpaTests agregados: ms-students 12 + ms-attendance 17) |
+| 146 Java tests | 175 Java tests | +29 |
 | 0 WARN Docker | 0 errores, ~10 WARN benignos | Todos documentados |
 
 ---
@@ -94,17 +94,17 @@ colegio-ohiggins-platform/
 ├── backend-bff/               (9 archivos fuente post-v1.19)
 │   ├── pom.xml                Spring Boot 3.5.13 + Cloud 2025.0.1 + eureka-client + JaCoCo
 │   ├── src/main/java/         6 clases: health aggregator, CORS proxy
-│   └── src/test/              3 clases, 17 tests (17 pass, 0 error)
+│   └── src/test/              4 clases, 29 tests (29 pass, 0 error)
 │
 ├── ms-students/               (31 archivos fuente)
 │   ├── pom.xml                Spring Boot 3.5.13 + eureka-client + springdoc 2.8.8 + JaCoCo
 │   ├── src/main/java/         14 clases: CRUD estudiantes, validación RUT, Factory
-│   └── src/test/              3 clases, 17 tests
+│   └── src/test/              4 clases, 29 tests
 │
 ├── ms-attendance/             (55 archivos fuente)
 │   ├── pom.xml                Spring Boot 3.5.13 + eureka-client + springdoc 2.8.8 + Resilience4j 2.2.0 + JaCoCo
 │   ├── src/main/java/         24 clases: asistencia, Strategy Pattern, Circuit Breaker
-│   └── src/test/              15 clases, 101 tests
+│   └── src/test/              16 clases, 118 tests
 │
 ├── discovery-server/          (8 archivos fuente)
 │   ├── pom.xml                Spring Boot 3.5.13 + Cloud 2025.0.1 + eureka-server
@@ -184,9 +184,9 @@ api-gateway:8080 ──→ MySQL (colegio_auth_db)
 | 2 | Explicar persistencia de datos | 25% | 100% | ✅ | init.sql, JPA configs en cada MS, 3 BD documentadas en docker-compose |
 | 3 | Informe de pruebas con métricas | 25% | 100% | ✅ | Este informe + tabla de cobertura en README |
 | 4 | Componentes versionados en GitHub | 15% | 100% | ✅ | Rama `doc/ev3-deliverables` con 69 commits |
-| 5 | Archivo comprimido (ZIP/RAR) | 10% | 100% | ✅ | Generado `Entrega_EV3.zip` (5.21 MB, excluye target/ y node_modules/) |
+| 5 | Archivo comprimido (ZIP/RAR) | 10% | 100% | ✅ | Generado `Entrega_EV3.zip` (1.72 MB, excluye target/, node_modules/ y .git/) |
 
-**Progreso del Encargo: 100%** (ZIP generado + 5.21 MB verificado)
+**Progreso del Encargo: 100%** (ZIP generado + 1.72 MB verificado)
 
 ### 2.2 Defensa Oral — CHECKLIST (70% de la nota)
 
@@ -268,8 +268,8 @@ api-gateway:8080 ──→ MySQL (colegio_auth_db)
 |------------|----------------|------------|-------------|--------|---------|---------------|---------|
 | **api-gateway** | 23 | 9 | 0 | ❌ No | ❌ No | ✅ Sí | ✅ |
 | **backend-bff** | 9 (post-v1.19) | 17 | 0 | ✅ 0.8.12 | ❌ No | ✅ Sí | ✅ |
-| **ms-students** | 31 | 17 | 0 | ✅ 0.8.12 | ✅ 2.8.8 | ✅ Sí | ✅ |
-| **ms-attendance** | 55 | 101 | 0 | ✅ 0.8.12 | ✅ 2.8.8 | ✅ Sí | ✅ |
+| **ms-students** | 31 | 29 | 0 | ✅ 0.8.12 | ✅ 2.8.8 | ✅ Sí | ✅ |
+| **ms-attendance** | 55 | 118 | 0 | ✅ 0.8.12 | ✅ 2.8.8 | ✅ Sí | ✅ |
 | **discovery-server** | 8 | 2 | 0 | ❌ No | ❌ No | N/A (server) | ✅ |
 | **frontend** | 90 | 349 | 0 | ✅ Vitest | — | — | ✅ |
 | **prometheus** | 1 (prometheus.yml) | — | — | — | — | — | — |
@@ -320,6 +320,7 @@ El README.md fue auditado y corregido durante esta sesión:
 | Healthcheck BFF retornaba 401 | Infra/docker-compose.yml | BFF nunca healthy por actuator protegido con Spring Security | Healthcheck cambiado a `curl -s -o /dev/null` (sin `-f`) para aceptar HTTP 401 como respuesta válida |
 | Trailing slash causa HTTP 500 | ms-students | `@GetMapping` no manejaba trailing slash (Spring Boot 3.x deshabilitó `useTrailingSlashMatch`) | `@GetMapping` y `@PostMapping` cambiados a `@GetMapping({"", "/"})` y `@PostMapping({"", "/"})` |
 | PlatformHealth cae a localhost:8082 | backend-bff | BFF unhealthy porque PlatformHealthIndicator usaba `localhost:8082` en vez del nombre DNS del contenedor | Agregada propiedad `services.attendance.url=${MS_ATTENDANCE_URL:http://localhost:8082}` en application.properties del BFF |
+| Dialecto H2 en DataJpaTest | ms-attendance | `@DataJpaTest` + `@AutoConfigureTestDatabase` reemplazan DataSource por H2 pero `spring.jpa.properties.hibernate.dialect=MySQLDialect` seguía activo → Hibernate generaba DDL con `engine=InnoDB` inválido para H2 | `@TestPropertySource(properties = {"spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.H2Dialect"})` + `@EnableJpaRepositories` + `@EntityScan` |
 
 ### 3.5 Bugs Conocidos (Pre-existentes, no relacionados con los cambios)
 
@@ -348,13 +349,13 @@ El README.md fue auditado y corregido durante esta sesión:
 
 | Módulo | Tests PASS | Cobertura Instr. | Cobertura Ramas | Clases |
 |--------|-----------|-----------------|-----------------|--------|
-| ms-students | 17 | 80% | 66% | 10 |
-| ms-attendance | 101 | 84% | 75% | 20 |
+| ms-students | 29 | 80% | 66% | 10 |
+| ms-attendance | 118 | 84% | 75% | 20 |
 | backend-bff | 17 | 77% | n/a | 4 |
 | api-gateway | 9 | Sin JaCoCo | Sin JaCoCo | — |
 | frontend | 349 | ~28% lines | — | — |
-| **Total backend** | **146** | — | — | — |
-| **Total general** | **495** | — | — | — |
+| **Total backend** | **175** | — | — | — |
+| **Total general** | **524** | — | — | — |
 
 ### 4.2 Tiempos de Compilación (aprox.)
 
@@ -373,14 +374,14 @@ El README.md fue auditado y corregido durante esta sesión:
 
 - [x] README actualizado (Eureka, diagrama, puertos, emails, tests, VITE_API_URL)
 - [x] Service Discovery implementado (Eureka, items 5-11 CHECKLIST)
-- [x] 495 tests pasando (146 Java + 349 JS) — verificado Zero-Trust Audit 24/06
+- [x] 524 tests pasando (175 Java + 349 JS) — verificado Zero-Trust Audit 27/06
 - [x] 6 Dockerfiles + nginx.conf + docker-compose con 9 servicios (7 core + Prometheus + Grafana)
 - [x] 17 K8s manifests para todos los servicios
 - [x] CI con 5 jobs paralelos
 - [x] Circuit Breaker (Resilience4j) en ms-attendance
 - [x] JWT con refresh token en api-gateway
 - [x] Eureka dashboard disponible en `http://localhost:8761/`
-- [x] ZIP generado (`Entrega_EV3.zip`, 5.21 MB)
+- [x] ZIP generado (`Entrega_EV3.zip`, 1.72 MB)
 - [x] **Área A: Prometheus + Grafana implementados** — 4/4 targets UP, dashboard JVM Micrometer importado, 32 series métricas
 - [x] **9/9 contenedores Docker healthy** verificados (core 7 + prometheus + grafana)
 - [x] 11/11 smoke tests pasan (Gateway JWT, CRUD, DELETE, Eureka, Frontend, BFF, trailing slash, healthcheck DB, healthcheck gateway, login discovery, full flow)
@@ -448,11 +449,11 @@ Los 15 errores pre-existentes en `CorsConfigTest` y `WebConfigTest` del backend-
 
 ---
 
-*Documento generado por auditoría automatizada — 24/06/2026 (v6 — zero-trust re-audit post-fixes).*
+*Documento generado por auditoría automatizada — 27/06/2026 (v7 — post-DataJpa refinement).*
 *Rama `doc/ev3-deliverables` — 69 commits.*
-*Tests: 495 PASS (146 Java + 349 JS), 0 errores.*
+*Tests: 524 PASS (175 Java + 349 JS), 0 errores.*
 *Despliegue Docker: 9/9 contenedores healthy (core 7 + Prometheus + Grafana). Prometheus 4/4 targets UP. 0 warnings Docker Compose.*
-*Fixes aplicados: #1 BFF deps chain, #2 README email format, #3 README student fields, #4 Grafana provisioning YAML, #5 version obsoleto docker-compose.*
+*Fixes aplicados: #1 BFF deps chain, #2 README email format, #3 README student fields, #4 Grafana provisioning YAML, #5 version obsoleto docker-compose, #6 PlatformHealth DNS, #7 dialecto Hibernate DataJpaTest.*
 *Production-readiness warnings: 7 identificados y documentados en sección 3.3.*
 *Mejoras docker-compose: 7 (DB_PORT segregation, depends_on, gateway vars, VITE cleanup, restart policy, network cleanup, version removed) + Prometheus/Grafana services + Grafana provisioning volumes.*
 *Entregables EV3: repositorios.txt ✓, api-spec.json ✓, coverage-report/ ✓, PLAN_EVOLUCION_TECNICA.md ✓.*

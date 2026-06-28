@@ -38,9 +38,9 @@ docker run -p 8081:8081 ms-students:local
 
 El microservicio utiliza JUnit 5 y Mockito para las pruebas unitarias.
 
-- Total Tests: 17
+- Total Tests: 29
 - Cobertura de codigo: >60%
-- Clases testeadas: StudentServiceTest, StudentControllerTest, MsStudentsApplicationTests
+- Clases testeadas: StudentServiceTest, StudentControllerTest, MsStudentsApplicationTests, StudentRepositoryDataJpaTest
 
 Ejecutar pruebas:
 ```bash

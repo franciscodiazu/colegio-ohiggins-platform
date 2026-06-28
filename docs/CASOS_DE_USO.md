@@ -35,4 +35,4 @@
 | Precondición | Usuario autenticado |
 | Flujo principal | 1. Usuario accede al dashboard<br>2. Sistema muestra resumen según rol del usuario<br>3. Profesor: total estudiantes, asistencia del día, alertas<br>4. Estudiante/Apoderado: resumen de calificaciones y asistencia |
 | Postcondición | Datos mostrados en tiempo real desde los microservicios |
-| Nota | En MV3 los datos son simulados vía mock services con localStorage |
+| Nota | El sistema está integrado directamente con el backend real a través de los microservicios desplegados en Docker. Los datos son persistidos en las bases de datos MySQL configuradas, eliminando la necesidad de mocks para el entorno de producción/docker-compose. |

@@ -88,12 +88,12 @@ bffClient.interceptors.response.use(
     }
 );
 
-// Mapeo de campos: Frontend (nombre, curso) -> Backend (name, grade, rut)
+// Mapeo de campos: Frontend (nombre, curso) -> Backend (rut_estudiante, nombre_completo, grado_academico)
 const mapFrontendToBackend = (frontendData) => ({
     id: frontendData.id,
-    rut: frontendData.rut || generateTempRut(),
-    name: frontendData.nombre || frontendData.name || '',
-    grade: frontendData.curso || frontendData.grade || '',
+    rut_estudiante: frontendData.rut || generateTempRut(),
+    nombre_completo: frontendData.nombre || frontendData.name || '',
+    grado_academico: frontendData.curso || frontendData.grade || '',
 });
 
 const mapBackendToFrontend = (backendData) => ({
@@ -107,10 +107,19 @@ const mapBackendToFrontend = (backendData) => ({
 });
 
 // Generador temporal de RUT para compatibilidad con backend
-let tempRutCounter = 10000000;
+// Algoritmo Módulo 11 (misma implementación que ms-students RutValidator)
+let tempRutCounter = 10000000 + (Date.now() % 90000000);
+const calcularDigitoVerificador = (rut) => {
+    let m = 0, s = 1, num = rut;
+    while (num !== 0) {
+        s = (s + (num % 10) * (9 - (m++ % 6))) % 11;
+        num = Math.floor(num / 10);
+    }
+    return s !== 0 ? String.fromCharCode(s + 47) : 'K';
+};
 const generateTempRut = () => {
     const num = tempRutCounter++;
-    return `${num}-${num % 11}`;
+    return `${num}-${calcularDigitoVerificador(num)}`;
 };
 
 // Servicio de Estudiantes - Conexión real al BFF

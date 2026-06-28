@@ -26,3 +26,5 @@ Entrega_EV3.zip
 *.bak
 mvn_err.txt
 mvn_out.txt
+
+frontend/test-results/

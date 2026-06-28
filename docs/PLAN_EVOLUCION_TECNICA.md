@@ -49,11 +49,10 @@ El presente documento describe las brechas técnicas identificadas durante la au
 
 | Aspecto | Detalle |
 |---------|---------|
-| **Estado actual** | Manejo de excepciones básico en cada microservicio con `@ExceptionHandler` parcial |
-| **Brecha** | No hay un handler global estandarizado que unifique formato de respuesta HTTP para todo tipo de errores |
-| **Estrategia V4** | Implementar `@ControllerAdvice` global en cada servicio con formato estandarizado: `{ "timestamp", "status", "error", "message", "path", "traceId" }`. Mapear todas las excepciones HTTP estándar (400, 401, 403, 404, 500, 503) |
+| **Estado actual** | ✅ **Implementado en MV3.** La gestión de excepciones está centralizada mediante `GlobalExceptionHandler` (`@RestControllerAdvice`) en cada microservicio (`ms-students` y `ms-attendance`). Captura excepciones específicas (`EntidadNoEncontradaException` → 404, `ServicioNoDisponibleException` → 503, `MethodArgumentNotValidException` → 400, `IllegalArgumentException` → 400) y retorna una respuesta uniforme estructurada (`ApiError`/`ErrorResponse`) con timestamp, código HTTP, mensaje y path. |
+| **Documentación** | Ver `DESCRIPCION_PERSISTENCIA.md` §6 — tabla completa de 8 códigos HTTP con escenarios y estructura JSON de respuesta |
 | **Patrón** | `@ControllerAdvice` + `ResponseEntityExceptionHandler` |
-| **Prioridad** | Media |
+| **Prioridad** | Cerrada (V4: evolución opcional con traceId) |
 
 ### 2.4 Circuit Breaker — Dashboard Hystrix / Resilience4j
 

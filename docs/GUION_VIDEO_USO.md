@@ -77,7 +77,7 @@
 | Tiempo | Acción en pantalla | Locución |
 |--------|-------------------|----------|
 | 6:00 | Mostrar `docs/PLAN_EVOLUCION_TECNICA.md` | "La plataforma está construida para escalar. El Plan de Evolución Técnica documenta las próximas iteraciones: migración a TypeScript, logging en frontend, integración con Loki para logs centralizados, y despliegue en AWS EKS con Kubernetes." |
-| 6:20 | Mostrar `docs/CHECKLIST_INFORME.md` resumen 58/61 | "Actualmente cumplimos 58 de 61 ítems del checklist EV3. Las 3 brechas identificadas —TypeScript, logging frontend y descarga directa del JAR— están formalmente documentadas y tienen estrategia de implementación." |
+| 6:20 | Mostrar `docs/CHECKLIST_INFORME.md` resumen 60/61 | "Actualmente cumplimos 60 de 61 ítems del checklist EV3. La única brecha restante —TypeScript— está formalmente documentada con estrategia de implementación para la iteración V4. Las brechas de logging frontend y descarga directa del JAR fueron cerradas durante el sprint." |
 | 6:40 | Cierre | "En conclusión, la Plataforma Colegio O'Higgins entrega una solución completa de gestión académica con microservicios, autenticación segura, monitoreo en tiempo real y una arquitectura preparada para evolución continua. Gracias por su atención." |
 
 ---

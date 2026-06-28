@@ -1,8 +1,8 @@
 # Informe de Cobertura — CHECKLIST EV3
 
-## Fecha: 24/06/2026 (Zero-Trust Audit)
+## Fecha: 27/06/2026 (Post-Refinement Audit)
 ## Despliegue: 9/9 contenedores healthy | 4/4 Prometheus targets UP | 0 errores en logs | 0 vulnerabilidades npm | Grafana provisioning automático
-## Tests: 495 total (146 Java + 349 JS) — 0 fallos | Build: 5/5 módulos Maven BUILD SUCCESS | Vitest 4.1.9
+## Tests: 524 total (175 Java + 349 JS) — 0 fallos | Build: 5/5 módulos Maven BUILD SUCCESS | Vitest 4.1.9
 
 ---
 

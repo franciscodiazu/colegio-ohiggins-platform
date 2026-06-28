@@ -326,13 +326,13 @@ Luego en Grafana, dashboard JVM Micrometer muestra los picos en tiempo real.
 
 | Módulo | Tests | Cobertura Instr. | Cobertura Ramas |
 |---|---|------------------|---|
-| ms-students | 17 | 80%              | 66% |
-| ms-attendance | 101 | 84%              | 75% |
+| ms-students | 29 | 80%              | 66% |
+| ms-attendance | 118 | 84%              | 75% |
 | backend-bff | 17 | 77% | n/a |
 | api-gateway | 9 | Sin JaCoCo       | Sin JaCoCo |
 | discovery-server | 2 | Sin JaCoCo       | Sin JaCoCo |
 | frontend (src/) | 349 | ~28% (Vitest)    | — |
-| **Total** | **495** | —                | — |
+| **Total** | **524** | —                | — |
 
 ### Ejecutar todas las pruebas localmente
 

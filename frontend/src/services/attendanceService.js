@@ -83,12 +83,12 @@ export const attendanceService = {
                 throw new Error('Clase, estudiante y estado son obligatorios');
             }
 
-            // Mapear desde frontend a backend
+            // Mapear desde frontend a backend (ms-attendance espera snake_case)
             const backendPayload = {
-                clase_id: payload.classId,
-                estudiante_id: payload.studentId,
-                estado: payload.estado,
-                ...(payload.observacion && { observacion: payload.observacion })
+                estudiante_id: Number(payload.studentId),
+                fecha_registro: new Date().toISOString().slice(0, 10),
+                tipo_registro: payload.estado === 'AUSENTE' ? 'INASISTENCIA' : payload.estado,
+                ...(payload.observacion && { notas: payload.observacion })
             };
 
             // POST a BFF (que routea a ms-attendance)

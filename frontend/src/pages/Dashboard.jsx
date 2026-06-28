@@ -119,28 +119,37 @@ export default function Dashboard({ session }) {
   const [loading, setLoading] = useState(true);
 
    useEffect(() => {
-     const bootstrap = async () => {
-       try {
-         const [studentsList, classesList, attendanceList, evalList, gradesList] = await Promise.all([
-           studentsService.listStudents(),
-           attendanceService.listClasses(),
-           attendanceService.listAttendanceRecords(),
-           evaluationsMockService.listEvaluations(),
-           evaluationsMockService.listGrades(),
-         ]);
-         setStudents(studentsList);
-         setClasses(classesList);
-         setAttendanceRecords(attendanceList);
-         setEvaluaciones(evalList);
-         setCalificaciones(gradesList);
-       } catch (err) {
-         console.error('Error al cargar datos del dashboard:', err);
-       } finally {
-         setLoading(false);
-       }
-     };
-     bootstrap();
-   }, []);
+      const bootstrap = async () => {
+        try {
+          const [studentsList] = await Promise.allSettled([
+            studentsService.listStudents(),
+          ]);
+          if (studentsList.status === 'fulfilled') setStudents(studentsList.value);
+        } catch (_) { /* ignore */ }
+
+        try {
+          const classesList = await attendanceService.listClasses();
+          setClasses(classesList);
+        } catch (_) { /* classes endpoint not available */ }
+
+        try {
+          const attendanceList = await attendanceService.listAttendanceRecords();
+          setAttendanceRecords(attendanceList);
+        } catch (_) { /* attendance records endpoint not available */ }
+
+        try {
+          const [evalList, gradesList] = await Promise.all([
+            evaluationsMockService.listEvaluations(),
+            evaluationsMockService.listGrades(),
+          ]);
+          setEvaluaciones(evalList);
+          setCalificaciones(gradesList);
+        } catch (_) { /* evaluations mock unavailable */ }
+
+        setLoading(false);
+      };
+      bootstrap();
+    }, []);
 
   // ── Estadísticas derivadas ────────────────────────────────────────────────────
 
