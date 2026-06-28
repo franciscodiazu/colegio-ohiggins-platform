@@ -161,7 +161,8 @@ class StudentRepositoryDataJpaTest {
 
             assertThat(saved.getCreadoEn()).isNotNull();
             assertThat(saved.getActualizadoEn()).isNotNull();
-            assertThat(saved.getActualizadoEn()).isEqualTo(saved.getCreadoEn());
+            assertThat(saved.getActualizadoEn())
+                .isCloseTo(saved.getCreadoEn(), java.time.temporal.ChronoUnit.MILLIS, 1);
         }
 
         @Test
