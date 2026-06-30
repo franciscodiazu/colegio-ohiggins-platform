@@ -2,7 +2,6 @@ spring:
   application:
     name: ms-attendance
 
-
   datasource:
     url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:db_record}?createDatabaseIfNotExist=true
     username: ${DB_USERNAME:root}
@@ -25,10 +24,15 @@ eureka:
 server:
   port: ${MS_ATTENDANCE_PORT:8082}
 
-# Configuración de Servicios Inter-Microservicio
+# ============================================================
+# CONFIGURACIÓN DE SERVICIOS - ¡CAMBIA ESTO!
+# ============================================================
 services:
   students:
-    url: ${STUDENTS_SERVICE_URL:http://ms-students:8081}
+    # PARA LOCAL: usa localhost
+    url: ${STUDENTS_SERVICE_URL:http://localhost:8081}
+    # PARA DOCKER: usa ms-students
+    # url: ${STUDENTS_SERVICE_URL:http://ms-students:8081}
 
 # Logging para CloudWatch
 logging:
@@ -36,6 +40,8 @@ logging:
     com.backend.ms_attendance: DEBUG
     org.springframework.web: INFO
     org.springframework.boot: INFO
+    # Log específico para ver las llamadas HTTP
+    org.springframework.web.client: DEBUG
 
 management:
   endpoints:
