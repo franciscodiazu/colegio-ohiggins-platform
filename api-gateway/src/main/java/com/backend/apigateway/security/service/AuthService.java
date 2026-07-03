@@ -3,6 +3,7 @@ package com.backend.apigateway.security.service;
 import com.backend.apigateway.security.dto.LoginRequest;
 import com.backend.apigateway.security.dto.LoginResponse;
 import com.backend.apigateway.security.dto.RegisterRequest;
+import com.backend.apigateway.security.dto.ResetPasswordRequest;
 import com.backend.apigateway.security.entity.RefreshToken;
 import com.backend.apigateway.security.entity.Usuario;
 import com.backend.apigateway.security.jwt.JwtTokenProvider;
@@ -93,6 +94,15 @@ public class AuthService {
         String frontendRole = ROLE_MAP.getOrDefault(usuario.getRole(), usuario.getRole().toLowerCase());
 
         return new LoginResponse(token, refreshToken, usuario.getUsername(), usuario.getNombre(), frontendRole);
+    }
+
+    public void resetPassword(ResetPasswordRequest request) {
+        String username = request.getUsername().trim().toLowerCase();
+        Usuario usuario = usuarioRepository.findByUsername(username)
+            .orElseThrow(() -> new RuntimeException("No encontramos una cuenta asociada a ese correo."));
+        usuario.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        usuarioRepository.save(usuario);
+        log.info("Contraseña actualizada para: {}", username);
     }
 
     public LoginResponse refresh(String refreshTokenStr) {

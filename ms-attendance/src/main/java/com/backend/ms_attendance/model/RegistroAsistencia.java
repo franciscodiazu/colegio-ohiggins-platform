@@ -1,5 +1,7 @@
 package com.backend.ms_attendance.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -24,8 +26,13 @@ public abstract class RegistroAsistencia {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @JsonIgnore
     @Column(nullable = false)
     private Long estudianteId;
+
+    @JsonIgnore
+    @Column(nullable = true)
+    private Long claseId;
 
     @Column(nullable = false)
     private LocalDate fechaRegistro;
@@ -52,5 +59,23 @@ public abstract class RegistroAsistencia {
     public abstract String obtenerEstado();
 
     public abstract boolean esValido();
+
+    @Transient
+    @JsonProperty("classId")
+    public Long getClassId() {
+        return this.claseId;
+    }
+
+    @Transient
+    @JsonProperty("studentId")
+    public Long getStudentId() {
+        return this.estudianteId;
+    }
+
+    @Transient
+    @JsonProperty("estado")
+    public String getEstadoSerializado() {
+        return obtenerEstado();
+    }
 }
 

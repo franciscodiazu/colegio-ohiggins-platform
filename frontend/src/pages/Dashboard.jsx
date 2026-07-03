@@ -3,7 +3,7 @@ import React from 'react';
 import { LayoutSection } from '../components/layout/BaseLayout';
 import { studentsService } from '../services/bffClient';
 import { attendanceService } from '../services/attendanceService';
-import { evaluationsMockService } from '../services/evaluationsMockService';
+import { evaluationsService } from '../services/evaluationsService';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -118,33 +118,21 @@ export default function Dashboard({ session }) {
   const [calificaciones, setCalificaciones] = useState([]);
   const [loading, setLoading] = useState(true);
 
-   useEffect(() => {
+  useEffect(() => {
       const bootstrap = async () => {
-        try {
-          const [studentsList] = await Promise.allSettled([
-            studentsService.listStudents(),
-          ]);
-          if (studentsList.status === 'fulfilled') setStudents(studentsList.value);
-        } catch (_) { /* ignore */ }
+        const [students, classes, attendance, evals, grades] = await Promise.allSettled([
+          studentsService.listStudents(),
+          attendanceService.listClasses(),
+          attendanceService.listAttendanceRecords(),
+          evaluationsService.listEvaluations(),
+          evaluationsService.listGrades(),
+        ]);
 
-        try {
-          const classesList = await attendanceService.listClasses();
-          setClasses(classesList);
-        } catch (_) { /* classes endpoint not available */ }
-
-        try {
-          const attendanceList = await attendanceService.listAttendanceRecords();
-          setAttendanceRecords(attendanceList);
-        } catch (_) { /* attendance records endpoint not available */ }
-
-        try {
-          const [evalList, gradesList] = await Promise.all([
-            evaluationsMockService.listEvaluations(),
-            evaluationsMockService.listGrades(),
-          ]);
-          setEvaluaciones(evalList);
-          setCalificaciones(gradesList);
-        } catch (_) { /* evaluations mock unavailable */ }
+        if (students.status === 'fulfilled') setStudents(students.value);
+        if (classes.status === 'fulfilled') setClasses(classes.value);
+        if (attendance.status === 'fulfilled') setAttendanceRecords(attendance.value);
+        if (evals.status === 'fulfilled') setEvaluaciones(evals.value);
+        if (grades.status === 'fulfilled') setCalificaciones(grades.value);
 
         setLoading(false);
       };

@@ -20,4 +20,10 @@ public class StudentRequestDto {
     @NotBlank(message = "El grado es obligatorio")
     @JsonProperty("grado_academico")
     private String grade;
+
+    @JsonProperty("correo")
+    private String email;
+
+    @JsonProperty("telefono")
+    private String phone;
 }

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import React from 'react';
 import { LayoutCard, LayoutSection } from '../components/layout/BaseLayout';
-import { resetUserPassword } from '../services/authMockService';
+import { resetUserPassword } from '../services/authService';
 
 export default function ForgotPassword({ onGoToLogin }) {
   const [email, setEmail] = useState('');
@@ -11,7 +11,7 @@ export default function ForgotPassword({ onGoToLogin }) {
   const [success, setSuccess] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
     setSuccess('');
@@ -23,7 +23,7 @@ export default function ForgotPassword({ onGoToLogin }) {
       return;
     }
 
-    const result = resetUserPassword({ email, newPassword });
+    const result = await resetUserPassword({ email, newPassword });
 
     if (!result.ok) {
       setError(result.error);

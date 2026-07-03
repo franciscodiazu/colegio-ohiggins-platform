@@ -291,7 +291,7 @@ describe('Asistencia — consulta por curso', () => {
     fireEvent.click(consultarBtns[1]);
 
     await waitFor(() =>
-      expect(attendanceService.listAttendanceByCourse).toHaveBeenCalledWith('1A', expect.any(Array))
+      expect(attendanceService.listAttendanceByCourse).toHaveBeenCalledWith('1A')
     );
   });
 });

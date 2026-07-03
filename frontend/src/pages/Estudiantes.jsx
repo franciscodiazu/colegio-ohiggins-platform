@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import React from 'react';
 import { LayoutCard, LayoutSection } from '../components/layout/BaseLayout';
 import { studentsService } from '../services/bffClient';
@@ -13,17 +13,26 @@ export default function Estudiantes() {
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [cursosDetalle, setCursosDetalle] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [detailLoading, setDetailLoading] = useState(false);
 
   const [createFeedback, setCreateFeedback] = useState(emptyFeedback);
   const [editFeedback, setEditFeedback] = useState(emptyFeedback);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
+  const detailRef = useRef(null);
+
+  const scrollToDetail = () => {
+    setTimeout(() => {
+      detailRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  };
+
   const [createForm, setCreateForm] = useState({
-    nombre: '', correo: '', curso: '', telefono: '', cursosAsociados: '',
+    nombre: '', correo: '', curso: '', telefono: '', rut: '', cursosAsociados: '',
   });
 
   const [editForm, setEditForm] = useState({
-    nombre: '', correo: '', curso: '', telefono: '', cursosAsociados: '',
+    nombre: '', correo: '', curso: '', telefono: '', rut: '', cursosAsociados: '',
   });
 
   const totalCursos = new Set(estudiantes.map((item) => item.curso)).size;
@@ -68,6 +77,7 @@ export default function Estudiantes() {
   };
 
   const handleSelectStudent = async (studentId, studentsCache) => {
+    setDetailLoading(true);
     try {
       const source = Array.isArray(studentsCache) ? studentsCache : estudiantes;
       const local = source.find((item) => item.id === Number(studentId));
@@ -81,16 +91,19 @@ export default function Estudiantes() {
 
       setSelectedStudentId(detail.id);
       setSelectedStudent(detail);
-      setCursosDetalle(detail.cursosAsociados || []);
+      setCursosDetalle([]);
       setEditFeedback(emptyFeedback);
       setEditForm({
         nombre: detail.nombre || '',
         correo: detail.correo || '',
         curso: detail.curso || '',
         telefono: detail.telefono || '',
-        cursosAsociados: (detail.cursosAsociados || []).join(', '),
+        rut: detail.rut || '',
+        cursosAsociados: '',
       });
+      setDetailLoading(false);
     } catch (err) {
+      setDetailLoading(false);
       console.error('Error al consultar detalle', err);
       setEditFeedback({ error: 'No se pudo consultar el detalle del estudiante.', success: '' });
     }
@@ -110,13 +123,14 @@ export default function Estudiantes() {
 
     try {
       const created = await studentsService.createStudent(createForm);
-      setCreateForm({ nombre: '', correo: '', curso: '', telefono: '', cursosAsociados: '' });
+      setCreateForm({ nombre: '', correo: '', curso: '', telefono: '', rut: '', cursosAsociados: '' });
       await cargarEstudiantes(false);
       await handleSelectStudent(created.id);
       setCreateFeedback({ error: '', success: 'Estudiante registrado correctamente.' });
+      scrollToDetail();
     } catch (err) {
       console.error(err);
-      setCreateFeedback({ error: 'Error al registrar el estudiante.', success: '' });
+      setCreateFeedback({ error: err.userMessage || err.message || 'Error al registrar el estudiante.', success: '' });
     }
   };
 
@@ -151,9 +165,10 @@ export default function Estudiantes() {
       await cargarEstudiantes(false);
       await handleSelectStudent(updated.id);
       setEditFeedback({ error: '', success: 'Información del estudiante actualizada.' });
+      scrollToDetail();
     } catch (err) {
       console.error('Error al actualizar estudiante', err);
-      setEditFeedback({ error: 'No se pudo actualizar la información del estudiante.', success: '' });
+      setEditFeedback({ error: err.userMessage || err.message || 'No se pudo actualizar la información del estudiante.', success: '' });
     }
   };
 
@@ -162,12 +177,15 @@ export default function Estudiantes() {
       setEditFeedback({ error: 'Selecciona un estudiante para consultar sus cursos.', success: '' });
       return;
     }
+    setDetailLoading(true);
     try {
       const courses = await studentsService.listStudentCourses(selectedStudentId);
       setCursosDetalle(courses);
+      setDetailLoading(false);
     } catch (err) {
       console.error('Error al consultar cursos', err);
-      setEditFeedback({ error: 'No se pudieron consultar los cursos asociados.', success: '' });
+      setEditFeedback({ error: err.userMessage || err.message || 'No se pudieron consultar los cursos asociados.', success: '' });
+      setDetailLoading(false);
     }
   };
 
@@ -220,12 +238,17 @@ export default function Estudiantes() {
             <input id="create-est-nombre" type="text" className="field-control" value={createForm.nombre}
               onChange={(e) => setCreateForm((prev) => ({ ...prev, nombre: e.target.value }))} placeholder="Ej: Juan Pérez" />
           </div>
-          <div className="field-group">
-            <label className="field-label" htmlFor="create-est-correo">Correo</label>
-            <input id="create-est-correo" type="email" className="field-control" value={createForm.correo}
-              onChange={(e) => setCreateForm((prev) => ({ ...prev, correo: e.target.value }))} placeholder="correo@alum.cl" />
-          </div>
-          <div className="form-row form-row--2">
+            <div className="field-group">
+              <label className="field-label" htmlFor="create-est-correo">Correo</label>
+              <input id="create-est-correo" type="email" className="field-control" value={createForm.correo}
+                onChange={(e) => setCreateForm((prev) => ({ ...prev, correo: e.target.value }))} placeholder="correo@alum.cl" />
+            </div>
+            <div className="field-group">
+              <label className="field-label" htmlFor="create-est-rut">RUT</label>
+              <input id="create-est-rut" type="text" className="field-control" value={createForm.rut}
+                onChange={(e) => setCreateForm((prev) => ({ ...prev, rut: e.target.value }))} placeholder="Ej: 12345678-9" />
+            </div>
+            <div className="form-row form-row--2">
             <div className="field-group">
               <label className="field-label" htmlFor="create-est-curso">Curso base</label>
               <input id="create-est-curso" type="text" className="field-control" value={createForm.curso}
@@ -295,8 +318,10 @@ export default function Estudiantes() {
         <h3 className="asistencia-section-heading">Detalle y actualización</h3>
       </div>
 
-      <LayoutCard className="students-panel students-panel--detail">
-        {!selectedStudent ? (
+      <LayoutCard ref={detailRef} className="students-panel students-panel--detail">
+        {detailLoading ? (
+          <p className="asistencia-hint">Cargando detalle del estudiante...</p>
+        ) : !selectedStudent ? (
           <p className="asistencia-hint">Selecciona un estudiante del listado para ver y editar su información.</p>
         ) : (
           <div className="students-detail">
@@ -337,6 +362,11 @@ export default function Estudiantes() {
                 <label className="field-label" htmlFor="edit-est-correo">Correo</label>
                 <input id="edit-est-correo" type="email" className="field-control" value={editForm.correo}
                   onChange={(e) => setEditForm((prev) => ({ ...prev, correo: e.target.value }))} />
+              </div>
+              <div className="field-group">
+                <label className="field-label" htmlFor="edit-est-rut">RUT</label>
+                <input id="edit-est-rut" type="text" className="field-control" value={editForm.rut}
+                  onChange={(e) => setEditForm((prev) => ({ ...prev, rut: e.target.value }))} />
               </div>
               <div className="form-row form-row--2">
                 <div className="field-group">

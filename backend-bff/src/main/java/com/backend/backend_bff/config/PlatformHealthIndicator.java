@@ -1,33 +1,37 @@
 package com.backend.backend_bff.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.actuate.health.Health;
 import org.springframework.boot.actuate.health.HealthIndicator;
 import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.web.reactive.function.client.WebClient;
+
+import java.time.Duration;
 
 @Component("platformHealth")
 public class PlatformHealthIndicator implements HealthIndicator {
 
-    @Autowired
-    private RestTemplate restTemplate;
+    private static final Duration TIMEOUT = Duration.ofSeconds(5);
 
-    @Value("${services.students.url:http://localhost:8081}")
-    private String studentsUrl;
+    private final WebClient.Builder webClientBuilder;
 
-    @Value("${services.attendance.url:http://localhost:8082}")
-    private String attendanceUrl;
+    public PlatformHealthIndicator(WebClient.Builder webClientBuilder) {
+        this.webClientBuilder = webClientBuilder;
+    }
 
     @Override
     public Health health() {
         try {
-            restTemplate.getForObject(studentsUrl + "/actuator/health", String.class);
-            restTemplate.getForObject(attendanceUrl + "/actuator/health", String.class);
+            String studentsHealth = webClientBuilder.build()
+                .get().uri("lb://MS-STUDENTS/actuator/health")
+                .retrieve().bodyToMono(String.class).block(TIMEOUT);
+
+            String attendanceHealth = webClientBuilder.build()
+                .get().uri("lb://MS-ATTENDANCE/actuator/health")
+                .retrieve().bodyToMono(String.class).block(TIMEOUT);
 
             return Health.up()
-                    .withDetail("ms-students", "UP")
-                    .withDetail("ms-attendance", "UP")
+                    .withDetail("ms-students", studentsHealth)
+                    .withDetail("ms-attendance", attendanceHealth)
                     .build();
         } catch (Exception e) {
             return Health.down()

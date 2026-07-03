@@ -53,5 +53,7 @@ public interface RepositorioRegistroAsistencia extends JpaRepository<RegistroAsi
 
     @Query("SELECT COUNT(r) FROM RegistroAtraso r WHERE r.estudianteId = :estudianteId")
     long countAtrasoRegistros(@Param("estudianteId") Long estudianteId);
+
+    List<RegistroAsistencia> findByEstudianteIdIn(List<Long> estudianteIds);
 }
 

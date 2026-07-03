@@ -31,6 +31,7 @@
 | 8082 | ms-attendance | Microservicio asistencia |
 | 8083 | backend-bff | Backend for Frontend (Docker) |
 | 8761 | discovery-server | Eureka Service Discovery |
+| 8084 | admin-server | Spring Boot Admin — monitoreo de servicios |
 | 9090 | Prometheus | Métricas de servicios (Docker) |
 | 3000 | Grafana | Dashboards de monitoreo (Docker) |
 
@@ -64,6 +65,7 @@ Todos los contenedores deben mostrar `(healthy)`.
 |------------|-----|
 | Frontend | http://localhost:5173 |
 | API Gateway | http://localhost:8080 |
+| Admin Server | http://localhost:8084 |
 | Eureka Dashboard | http://localhost:8761 |
 | Prometheus Targets | http://localhost:9090/targets |
 | Grafana Dashboards | http://localhost:3000 (admin/admin) |

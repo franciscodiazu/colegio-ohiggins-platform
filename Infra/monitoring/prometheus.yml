@@ -11,3 +11,4 @@ scrape_configs:
           - 'backend-bff:8083'
           - 'ms-students:8081'
           - 'ms-attendance:8082'
+          - 'admin-server:8084'

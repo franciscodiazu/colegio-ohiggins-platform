@@ -37,7 +37,7 @@ La plataforma permite a profesores gestionar informacion academica de forma cent
 ## Patrones de diseño implementados
 
 ### 1. Service Layer
-Los servicios mock (attendanceMockService, studentsMockService, evaluationsMockService, authMockService) encapsulan toda la logica de acceso a datos. Los componentes nunca acceden directamente al localStorage, siempre lo hacen a traves del servicio correspondiente. Esto facilita la sustitucion por llamadas HTTP reales sin modificar los componentes.
+Los servicios (authService, attendanceService, evaluationsService) encapsulan toda la logica de acceso a datos. Se conectan al backend real via HTTP a traves de `bffClient` (instancia Axios con interceptor JWT). El `bffClient` centraliza el manejo de tokens, refresh automatico en 401 y logging de errores.
 
 ### 2. Container / Presenter
 Las paginas (Estudiantes, Asistencia, Evaluaciones) actuan como contenedores: manejan el estado y la logica de negocio. Los componentes reutilizables (TableSkeleton, ConfirmModal, FormField, Navbar) actuan como presentadores: solo reciben props y renderizan UI, sin logica propia.
@@ -104,21 +104,21 @@ npx playwright test
 
 | Capa | Herramienta | Archivos cubiertos |
 |------|------------|----------------------|
-| Unitaria | Vitest | useFieldValidation.js, authMockService.js |
-| Integracion | Vitest + Testing Library | Login.jsx, Register.jsx |
+| Unitaria | Vitest | useFieldValidation.js, authService.js, bffClient.js, attendanceService.js, evaluationsService.js, ErrorBoundary.jsx, ConfirmModal.jsx, TableSkeleton.jsx, NotFound.jsx |
+| Integracion | Vitest + Testing Library | Login.jsx, Register.jsx, Dashboard.jsx, Estudiantes.jsx, Asistencia.jsx, Evaluaciones.jsx, ForgotPassword.jsx, Navbar.jsx |
 | E2E | Playwright | Flujo completo: registro -> login -> dashboard -> logout |
 
 ### Resultados obtenidos (Vitest)
 
-- Tests Pasados: 349 (Vitest)
+- Tests Pasados: 302 (Vitest)
 - Tests Fallidos: 0
-- Cobertura de Lineas: 28.04%
-- Cobertura de Funciones: 79.24%
-- Cobertura de Ramas: 89.84%
+- Cobertura de Lineas: ~28%
+- Cobertura de Funciones: ~79%
+- Cobertura de Ramas: ~89%
 
 ### Resultados obtenidos (Playwright)
 
-- Tests Pasados: 16
+- Tests Pasados: 3 specs
 - Tests Fallidos: 0
 
 ## Credenciales de prueba
@@ -141,10 +141,10 @@ El sistema infiere el rol del usuario a partir del dominio del correo:
 
 ## Notas para el evaluador
 
-- La capa de servicios mock simula tiempos de respuesta reales mediante setTimeout.
-- Los datos persisten entre sesiones gracias a localStorage.
-- El sistema esta preparado para conectarse a un backend real reemplazando la implementacion de los servicios.
+- La capa de servicios se conecta al backend real via HTTP (api-gateway en Docker), utilizando Axios con interceptor JWT y refresh automatico.
+- Los datos persisten en MySQL 8.0 a traves de los microservicios Spring Boot.
+- En desarrollo local (sin Docker), usar `VITE_API_URL=http://localhost:8080`.
 
 ## Etica y responsabilidad
 
-La solucion fue diseñada para un contexto academico y de demostracion. Los registros almacenados en localStorage son informacion simulada. La interfaz favorece el uso responsable mediante validaciones y confirmaciones.
+La solucion fue diseñada para un contexto academico y de demostracion. Los registros se almacenan en MySQL 8.0 con usuarios de privilegio minimo (`app_colegio`). La interfaz favorece el uso responsable mediante validaciones y confirmaciones.

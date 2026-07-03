@@ -5,7 +5,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import ForgotPassword from '../../pages/ForgotPassword';
 
 // Mock del servicio y del layout para aislar el componente
-vi.mock('../../services/authMockService', () => ({
+vi.mock('../../services/authService', () => ({
   resetUserPassword: vi.fn(),
 }));
 
@@ -14,7 +14,7 @@ vi.mock('../../components/layout/BaseLayout', () => ({
   LayoutSection: ({ children }) => <div>{children}</div>,
 }));
 
-import { resetUserPassword } from '../../services/authMockService';
+import { resetUserPassword } from '../../services/authService';
 
 const mockOnGoToLogin = vi.fn();
 

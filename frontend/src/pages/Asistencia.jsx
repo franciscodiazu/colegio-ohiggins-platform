@@ -34,19 +34,21 @@ export default function Asistencia() {
   const [studentQueryRows, setStudentQueryRows] = useState([]);
   const [courseQueryRows, setCourseQueryRows] = useState([]);
   const [queryFeedback, setQueryFeedback] = useState(emptyFeedback);
+  const [studentQueryLoading, setStudentQueryLoading] = useState(false);
+  const [courseQueryLoading, setCourseQueryLoading] = useState(false);
 
   useEffect(() => {
     const bootstrap = async () => {
       setLoading(true);
        try {
-         const [studentsList, classesList, attendanceList] = await Promise.all([
-           studentsService.listStudents(),
-           attendanceService.listClasses(),
-           attendanceService.listAttendanceRecords(),
-         ]);
-         setStudents(studentsList);
-         setClasses(classesList);
-         setAttendanceRecords(attendanceList);
+         const results = await Promise.allSettled([
+            studentsService.listStudents(),
+            attendanceService.listClasses(),
+            attendanceService.listAttendanceRecords(),
+          ]);
+          setStudents(results[0].status === 'fulfilled' ? results[0].value : []);
+          setClasses(results[1].status === 'fulfilled' ? results[1].value : []);
+          setAttendanceRecords(results[2].status === 'fulfilled' ? results[2].value : []);
        } catch (err) {
          console.error('No se pudo cargar el módulo de asistencia', err);
        } finally {
@@ -76,8 +78,12 @@ export default function Asistencia() {
   const mapRowsWithContext = (records) => records.map((record) => {
     const classInfo = classesById[record.classId] || null;
     const studentInfo = studentsById[record.studentId] || null;
+    const estado = record.estado === 'INASISTENCIA' ? 'AUSENTE'
+      : record.estado === 'INASISTENCIA_JUSTIFICADA' ? 'JUSTIFICADO'
+      : record.estado || 'PRESENTE';
     return {
       ...record,
+      estado,
       classFecha: classInfo?.fecha || '-',
       classAsignatura: classInfo?.asignatura || '-',
       classCurso: classInfo?.curso || '-',
@@ -118,27 +124,31 @@ export default function Asistencia() {
      }
    };
 
-   const handleQueryByStudent = async (e) => {
-     e.preventDefault();
-     setQueryFeedback(emptyFeedback);
-     if (!queryStudentId) { setQueryFeedback({ error: 'Selecciona un estudiante para consultar.', success: '' }); return; }
-     try {
-       const records = await attendanceService.listAttendanceByStudent(queryStudentId);
-       setStudentQueryRows(mapRowsWithContext(records));
-       setQueryFeedback({ error: '', success: `${records.length} registro(s) encontrado(s).` });
-     } catch { setQueryFeedback({ error: 'No se pudo consultar la asistencia por estudiante.', success: '' }); }
-   };
+    const handleQueryByStudent = async (e) => {
+      e.preventDefault();
+      setQueryFeedback(emptyFeedback);
+      if (!queryStudentId) { setQueryFeedback({ error: 'Selecciona un estudiante para consultar.', success: '' }); return; }
+      setStudentQueryLoading(true);
+      try {
+        const records = await attendanceService.listAttendanceByStudent(queryStudentId);
+        setStudentQueryRows(mapRowsWithContext(records));
+        setQueryFeedback({ error: '', success: `${records.length} registro(s) encontrado(s).` });
+      } catch (err) { setQueryFeedback({ error: err.userMessage || err.message || 'No se pudo consultar la asistencia por estudiante.', success: '' }); }
+      finally { setStudentQueryLoading(false); }
+    };
 
-   const handleQueryByCourse = async (e) => {
-     e.preventDefault();
-     setQueryFeedback(emptyFeedback);
-     if (!queryCourse) { setQueryFeedback({ error: 'Selecciona un curso para consultar.', success: '' }); return; }
-     try {
-       const records = await attendanceService.listAttendanceByCourse(queryCourse, classes);
-       setCourseQueryRows(mapRowsWithContext(records));
-       setQueryFeedback({ error: '', success: `${records.length} registro(s) encontrado(s).` });
-     } catch { setQueryFeedback({ error: 'No se pudo consultar la asistencia por curso.', success: '' }); }
-   };
+    const handleQueryByCourse = async (e) => {
+      e.preventDefault();
+      setQueryFeedback(emptyFeedback);
+      if (!queryCourse) { setQueryFeedback({ error: 'Selecciona un curso para consultar.', success: '' }); return; }
+      setCourseQueryLoading(true);
+      try {
+        const records = await attendanceService.listAttendanceByCourse(queryCourse);
+        setCourseQueryRows(mapRowsWithContext(records));
+        setQueryFeedback({ error: '', success: `${records.length} registro(s) encontrado(s).` });
+      } catch (err) { setQueryFeedback({ error: err.userMessage || err.message || 'No se pudo consultar la asistencia por curso.', success: '' }); }
+      finally { setCourseQueryLoading(false); }
+    };
 
   return (
     <LayoutSection
@@ -309,9 +319,10 @@ export default function Asistencia() {
                 ))}
               </select>
             </div>
-            <button type="submit" className="btn btn--info btn--block">Consultar</button>
+            <button type="submit" className="btn btn--info btn--block" disabled={studentQueryLoading}>Consultar</button>
           </form>
           <div className="query-results">
+            {studentQueryLoading && <p className="asistencia-hint">Consultando...</p>}
             <table className="app-table">
               <thead><tr><th>Fecha</th><th>Asignatura</th><th>Estado</th></tr></thead>
               <tbody>
@@ -344,9 +355,10 @@ export default function Asistencia() {
                 ))}
               </select>
             </div>
-            <button type="submit" className="btn btn--neutral btn--block">Consultar</button>
+            <button type="submit" className="btn btn--neutral btn--block" disabled={courseQueryLoading}>Consultar</button>
           </form>
           <div className="query-results">
+            {courseQueryLoading && <p className="asistencia-hint">Consultando...</p>}
             <table className="app-table">
               <thead><tr><th>Fecha</th><th>Estudiante</th><th>Estado</th></tr></thead>
               <tbody>

@@ -108,7 +108,7 @@ Cada módulo tiene `eureka.client.serviceUrl.defaultZone` con valor por defecto 
 | Compilación ms-students + eureka-client | ✅ `mvnw compile` — OK |
 | Compilación ms-attendance + eureka-client | ✅ `mvnw compile` — OK |
 | Package discovery-server (JAR) | ✅ `mvnw package -DskipTests` — OK |
-| Frontend tests (vitest) | ✅ 349/349 passed, 18 suites |
+| Frontend tests (vitest) | ✅ 302/302 passed, 14 suites |
 | Backend tests api-gateway | ✅ Sin regresión |
 | Backend tests backend-bff | ✅ 17/17 tests PASS (CorsConfigTest 7, WebConfigTest 8, ApplicationTest 2) |
 | Backend tests ms-students | ✅ Sin regresión |

@@ -19,6 +19,9 @@ public class AsistenciaRequestDto {
     @JsonProperty("estudiante_id")
     private Long estudianteId;
 
+    @JsonProperty("clase_id")
+    private Long claseId;
+
     @NotNull(message = "fechaRegistro es obligatorio")
     @JsonProperty("fecha_registro")
     private LocalDate fechaRegistro;
@@ -41,27 +44,5 @@ public class AsistenciaRequestDto {
 
     @JsonProperty("notas")
     private String notas;
-
-    public boolean esValidoParaTipo() {
-        if (this.tipoRegistro == null) {
-            return false;
-        }
-
-        switch (this.tipoRegistro.toUpperCase()) {
-            case "PRESENTE":
-                return this.estudianteId != null && this.fechaRegistro != null;
-
-            case "INASISTENCIA":
-                return this.estudianteId != null && this.fechaRegistro != null;
-
-            case "ATRASO":
-                return this.estudianteId != null &&
-                       this.fechaRegistro != null &&
-                       this.horaLlegada != null;
-
-            default:
-                return false;
-        }
-    }
 }
 

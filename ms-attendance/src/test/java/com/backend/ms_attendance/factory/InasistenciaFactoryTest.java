@@ -121,14 +121,58 @@ class InasistenciaFactoryTest {
     }
 
     @Test
-    @DisplayName("Factory arroja mensaje correcto cuando faltan datos obligatorios")
-    void testCrearInasistencia_MensajeErrorDatosObligatorios() {
+    @DisplayName("Factory arroja mensaje correcto cuando estudianteId es nulo")
+    void testCrearInasistencia_MensajeErrorEstudianteIdNulo() {
         AsistenciaRequestDto dto = new AsistenciaRequestDto();
         dto.setEstudianteId(null);
         dto.setFechaRegistro(LocalDate.of(2026, 5, 17));
 
         IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> factory.crearRegistro(dto));
 
-        assertEquals("estudianteId y fechaRegistro son obligatorios para crear RegistroInasistencia", ex.getMessage());
+        assertEquals("estudianteId es obligatorio y debe ser un número positivo para crear RegistroInasistencia", ex.getMessage());
+    }
+
+    @Test
+    @DisplayName("Factory rechaza DTO con estudianteId <= 0")
+    void testCrearInasistencia_EstudianteIdCero() {
+        AsistenciaRequestDto dto = new AsistenciaRequestDto();
+        dto.setEstudianteId(0L);
+        dto.setFechaRegistro(LocalDate.of(2026, 5, 17));
+
+        assertThrows(IllegalArgumentException.class, () -> factory.crearRegistro(dto));
+    }
+
+    @Test
+    @DisplayName("Factory rechaza DTO con fechaRegistro en el futuro")
+    void testCrearInasistencia_FechaFuturo() {
+        AsistenciaRequestDto dto = new AsistenciaRequestDto();
+        dto.setEstudianteId(2001L);
+        dto.setFechaRegistro(LocalDate.now().plusDays(1));
+
+        assertThrows(IllegalArgumentException.class, () -> factory.crearRegistro(dto));
+    }
+
+    @Test
+    @DisplayName("Factory rechaza inasistencia justificada sin razón")
+    void testCrearInasistencia_JustificadaSinRazon() {
+        AsistenciaRequestDto dto = new AsistenciaRequestDto();
+        dto.setEstudianteId(2001L);
+        dto.setFechaRegistro(LocalDate.now());
+        dto.setEsJustificada(true);
+        dto.setRazonJustificacion(null);
+
+        assertThrows(IllegalArgumentException.class, () -> factory.crearRegistro(dto));
+    }
+
+    @Test
+    @DisplayName("Factory rechaza inasistencia justificada con razón vacía")
+    void testCrearInasistencia_JustificadaRazonVacia() {
+        AsistenciaRequestDto dto = new AsistenciaRequestDto();
+        dto.setEstudianteId(2001L);
+        dto.setFechaRegistro(LocalDate.now());
+        dto.setEsJustificada(true);
+        dto.setRazonJustificacion("");
+
+        assertThrows(IllegalArgumentException.class, () -> factory.crearRegistro(dto));
     }
 }

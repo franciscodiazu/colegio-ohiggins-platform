@@ -20,8 +20,8 @@
 | Tiempo | Acción en pantalla | Locución |
 |--------|-------------------|----------|
 | 1:00 | Mostrar `docs/REQUISITOS_SISTEMA.md` | "Los requisitos mínimos son: Docker Desktop 4.x con WSL2, 8 GB RAM, 10 GB disco, y Node.js 22 para desarrollo. Puertos libres: 5173, 8080–8083, 8761, 9090, 3000." |
-| 1:20 | Terminal: `git clone`, `cd colegio-ohiggins-platform`, `docker compose up -d` | "La instalación es simple: clonar el repositorio y ejecutar `docker compose up -d`. Docker construye las imágenes y levanta los 9 contenedores automáticamente." |
-| 1:45 | Terminal: `docker compose ps` — mostrar 9/9 healthy | "En aproximadamente 2 minutos, los 9 servicios están saludables." |
+| 1:20 | Terminal: `git clone`, `cd colegio-ohiggins-platform`, `docker compose up -d` | "La instalación es simple: clonar el repositorio y ejecutar `docker compose up -d`. Docker construye las imágenes y levanta los 10 contenedores automáticamente." |
+| 1:45 | Terminal: `docker compose ps` — mostrar 10/10 healthy | "En aproximadamente 2 minutos, los 10 servicios están saludables." |
 
 ---
 

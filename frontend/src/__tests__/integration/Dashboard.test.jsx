@@ -16,8 +16,8 @@ vi.mock('../../services/attendanceService', () => ({
   },
 }));
 
-vi.mock('../../services/evaluationsMockService', () => ({
-  evaluationsMockService: {
+vi.mock('../../services/evaluationsService', () => ({
+  evaluationsService: {
     listEvaluations: vi.fn(),
     listGrades: vi.fn(),
   },
@@ -35,7 +35,7 @@ vi.mock('../../components/layout/BaseLayout', () => ({
 
 import { studentsService } from '../../services/bffClient';
 import { attendanceService } from '../../services/attendanceService';
-import { evaluationsMockService } from '../../services/evaluationsMockService';
+import { evaluationsService } from '../../services/evaluationsService';
 
 const today = new Date().toISOString().slice(0, 10);
 
@@ -70,8 +70,8 @@ const setupMocks = (overrides = {}) => {
   studentsService.listStudents.mockResolvedValue(overrides.students ?? mockStudents);
   attendanceService.listClasses.mockResolvedValue(overrides.classes ?? mockClasses);
   attendanceService.listAttendanceRecords.mockResolvedValue(overrides.attendance ?? mockAttendance);
-  evaluationsMockService.listEvaluations.mockResolvedValue(overrides.evaluaciones ?? mockEvaluaciones);
-  evaluationsMockService.listGrades.mockResolvedValue(overrides.calificaciones ?? mockCalificaciones);
+  evaluationsService.listEvaluations.mockResolvedValue(overrides.evaluaciones ?? mockEvaluaciones);
+  evaluationsService.listGrades.mockResolvedValue(overrides.calificaciones ?? mockCalificaciones);
 };
 
 const renderDashboard = (session = defaultSession) =>
@@ -217,8 +217,8 @@ describe('Dashboard — manejo de errores', () => {
     studentsService.listStudents.mockRejectedValue(new Error('Network error'));
     attendanceService.listClasses.mockRejectedValue(new Error('Network error'));
     attendanceService.listAttendanceRecords.mockRejectedValue(new Error('Network error'));
-    evaluationsMockService.listEvaluations.mockRejectedValue(new Error('Network error'));
-    evaluationsMockService.listGrades.mockRejectedValue(new Error('Network error'));
+    evaluationsService.listEvaluations.mockRejectedValue(new Error('Network error'));
+    evaluationsService.listGrades.mockRejectedValue(new Error('Network error'));
 
     renderDashboard();
     await waitFor(() => expect(screen.queryByText(/cargando/i)).not.toBeInTheDocument());

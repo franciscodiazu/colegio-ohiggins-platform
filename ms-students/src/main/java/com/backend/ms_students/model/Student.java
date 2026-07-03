@@ -21,6 +21,10 @@ public class Student {
     @Column(nullable = false)
     private String grade;
 
+    private String email;
+
+    private String phone;
+
     @Column(updatable = false)
     private LocalDateTime creadoEn;
     private LocalDateTime actualizadoEn;

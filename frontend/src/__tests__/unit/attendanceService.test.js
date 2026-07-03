@@ -118,9 +118,9 @@ describe('attendanceService.createAttendanceRecord', () => {
       classId: 1, studentId: 2, estado: 'PRESENTE', observacion: 'OK',
     });
 
-    expect(bffClient.post).toHaveBeenCalledWith('/api/asistencia', {
-      clase_id: 1, estudiante_id: 2, estado: 'PRESENTE', observacion: 'OK',
-    });
+    expect(bffClient.post).toHaveBeenCalledWith('/api/asistencia', expect.objectContaining({
+      clase_id: 1, estudiante_id: 2, tipo_registro: 'PRESENTE', es_justificada: false, notas: 'OK',
+    }));
   });
 
   it('omite observacion del payload si no se provee', async () => {
@@ -129,7 +129,7 @@ describe('attendanceService.createAttendanceRecord', () => {
     await attendanceService.createAttendanceRecord({ classId: 1, studentId: 2, estado: 'PRESENTE' });
 
     const sentPayload = bffClient.post.mock.calls[0][1];
-    expect(sentPayload).not.toHaveProperty('observacion');
+    expect(sentPayload).not.toHaveProperty('notas');
   });
 
   it('lanza error si falta classId', async () => {

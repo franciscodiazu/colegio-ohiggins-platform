@@ -1,9 +1,11 @@
 package com.backend.apigateway.security.controller;
 
+import com.backend.apigateway.exception.ApiError;
 import com.backend.apigateway.security.dto.LoginRequest;
 import com.backend.apigateway.security.dto.LoginResponse;
 import com.backend.apigateway.security.dto.RefreshRequest;
 import com.backend.apigateway.security.dto.RegisterRequest;
+import com.backend.apigateway.security.dto.ResetPasswordRequest;
 import com.backend.apigateway.security.service.AuthService;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +13,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
+import java.time.LocalDateTime;
 
 @Slf4j
 @RestController
@@ -33,7 +35,8 @@ public class AuthController {
         } catch (RuntimeException e) {
             log.warn("Login fallido para {}: {}", request.getUsername(), e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", e.getMessage()));
+                    .body(new ApiError(LocalDateTime.now(), HttpStatus.UNAUTHORIZED.value(),
+                            "No Autorizado", e.getMessage(), null));
         }
     }
 
@@ -46,7 +49,8 @@ public class AuthController {
         } catch (RuntimeException e) {
             log.warn("Refresh fallido: {}", e.getMessage());
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                    .body(Map.of("error", e.getMessage()));
+                    .body(new ApiError(LocalDateTime.now(), HttpStatus.UNAUTHORIZED.value(),
+                            "No Autorizado", e.getMessage(), null));
         }
     }
 
@@ -59,7 +63,27 @@ public class AuthController {
         } catch (RuntimeException e) {
             log.warn("Registro fallido para {}: {}", request.getUsername(), e.getMessage());
             return ResponseEntity.badRequest()
-                    .body(Map.of("error", e.getMessage()));
+                    .body(new ApiError(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(),
+                            "Registro Fallido", e.getMessage(), null));
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        log.info("Solicitud de reset password para: {}", request.getUsername());
+        try {
+            authService.resetPassword(request);
+            return ResponseEntity.ok(ApiError.builder()
+                .timestamp(LocalDateTime.now())
+                .status(HttpStatus.OK.value())
+                .error("OK")
+                .message("Contrasena actualizada correctamente.")
+                .build());
+        } catch (RuntimeException e) {
+            log.warn("Reset password fallido para {}: {}", request.getUsername(), e.getMessage());
+            return ResponseEntity.badRequest()
+                    .body(new ApiError(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(),
+                            "Error", e.getMessage(), null));
         }
     }
 }

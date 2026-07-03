@@ -43,6 +43,7 @@ graph TD
         end
 
         subgraph "Observabilidad"
+            ADMIN["admin-server:8084<br/>Spring Boot Admin Server<br/>Monitoreo de servicios"]
             PROM["prometheus:9090<br/>Scrape métricas cada 5s"]
             GRAF["grafana:3000<br/>Dashboard JVM Micrometer"]
         end
@@ -70,15 +71,18 @@ graph TD
     MS2 -.->|"registro Eureka"| DS
     GW -.->|"registro Eureka"| DS
     BFF -.->|"registro Eureka"| DS
+    ADMIN -.->|"registro Eureka"| DS
 
     PROM -->|"/actuator/prometheus"| GW
     PROM -->|"/actuator/prometheus"| BFF
     PROM -->|"/actuator/prometheus"| MS1
     PROM -->|"/actuator/prometheus"| MS2
+    PROM -->|"/actuator/prometheus"| ADMIN
     GRAF -->|"datasource"| PROM
 
     style Browser fill:#e1f5fe
     style CI fill:#e8f5e9
+    style ADMIN fill:#fce4ec
     style PROM fill:#fff3e0
     style GRAF fill:#fff3e0
 ```
@@ -89,22 +93,20 @@ graph TD
 
 ```
 colegio-ohiggins-platform/
+├── admin-server/             # Spring Boot Admin Server (monitoreo de servicios)
 ├── api-gateway/              # Spring Cloud Gateway MVC (auth + routing)
 ├── backend-bff/              # Backend for Frontend — CORS proxy + health aggregator (6 clases vivas post-v1.19)
 ├── ms-students/              # Microservicio estudiantes (CRUD + validación RUT)
 ├── ms-attendance/            # Microservicio asistencia (Strategy Pattern + Factory + CB)
 ├── frontend/                 # React + Vite + Vitest
-├── packages/
-│   ├── ui/                   # Componentes UI compartidos (@colegio-ohiggins/ui)
-│   └── maven-archetype-basic/# Arquetipo Maven para generar proyectos Java
 ├── Infra/
-│   ├── docker/               # 6 Dockerfiles + nginx.conf
-│   ├── monitoring/           # prometheus.yml con targets a los 4 servicios
+│   ├── docker/               # 7 Dockerfiles + nginx.conf
+│   ├── monitoring/           # prometheus.yml con targets a los 5 servicios
 │   ├── mysql/init.sql        # Inicialización de bases de datos
-│   ├── docker-compose.yml    # 9 servicios (7 core + prometheus + grafana)
+│   ├── docker-compose.yml    # 10 servicios (8 core + prometheus + grafana)
 │   ├── .env                  # Variables de entorno reales (no versionado)
 │   └── .env.example          # Template versionable
-├── infra/k8s/                # 17 manifests K8s para AWS EKS
+├── infra/k8s/                # 21 manifests K8s para AWS EKS
 ├── .github/workflows/
 │   └── ci.yml                # CI pipeline — 5 jobs en paralelo
 ├── discovery-server/         # Eureka Service Registry
@@ -153,13 +155,13 @@ docker compose up --build -d
 **Tiempo estimado (primera vez):** 10–15 minutos (descarga de imágenes base + build Maven de 5 módulos Java + npm install + build frontend).  
 **Tiempo estimado (subsecuente):** 2–4 minutos (todo cacheado).
 
-### 3. Verificar que 9/9 contenedores están healthy
+### 3. Verificar que 10/10 contenedores están healthy
 
 ```bash
 docker ps --format "table {{.Names}}\t{{.Status}}"
 ```
 
-Debe mostrar 9 contenedores, todos con estado `Up` o `(healthy)`:
+Debe mostrar 10 contenedores, todos con estado `Up` o `(healthy)`:
 
 ```
 discovery-server      Up (healthy)
@@ -168,6 +170,7 @@ colegio-ms-students   Up (healthy)
 colegio-ms-attendance Up (healthy)
 colegio-gateway       Up (healthy)
 colegio-bff           Up (healthy)
+colegio-admin         Up (healthy)
 colegio-frontend      Up (healthy)
 colegio-prometheus    Up
 colegio-grafana       Up
@@ -181,6 +184,7 @@ colegio-grafana       Up
 | Componente | URL | Credenciales |
 |------------|-----|-------------|
 | Frontend (React) | [http://localhost:5173](http://localhost:5173) | Registrarse libremente |
+| Admin Server | [http://localhost:8084](http://localhost:8084) | Sin autenticación |
 | API Gateway | [http://localhost:8080](http://localhost:8080) | — |
 | Eureka Dashboard | [http://localhost:8761](http://localhost:8761) | Sin autenticación |
 | Prometheus Targets | [http://localhost:9090/targets](http://localhost:9090/targets) | — |
@@ -211,7 +215,7 @@ curl -s -X POST -H "Authorization: Bearer $TOKEN" \
   -d '{"rut_estudiante":"12345678-5","nombre_completo":"Juan Perez","grado_academico":"1A"}' \
   http://localhost:8080/api/students/
 
-# 5e. Verificar Prometheus — 4 targets deben estar UP
+# 5e. Verificar Prometheus — 5 targets deben estar UP
 curl -s http://localhost:9090/api/v1/targets \
   | python -c "import sys,json;d=json.load(sys.stdin);[print(t['labels']['instance']+': '+t['health']) for t in d['data']['activeTargets']]"
 
@@ -231,7 +235,7 @@ curl -s "http://localhost:9090/api/v1/query?query=jvm_memory_used_bytes" \
 
 ### 7. Ver monitoreo en vivo
 
-1. Abrir **Prometheus** → [http://localhost:9090/targets](http://localhost:9090/targets) → verificar 4 targets UP
+1. Abrir **Prometheus** → [http://localhost:9090/targets](http://localhost:9090/targets) → verificar 5 targets UP
 2. Abrir **Grafana** → [http://localhost:3000](http://localhost:3000) → `admin` / `admin`
 3. En Grafana, ir a **Dashboards** → **JVM Micrometer** → ver métricas en vivo:
    - Uso de heap por servicio
@@ -263,7 +267,8 @@ docker compose down -v
 | ms-students | 8081 | `http://localhost:8081` | CRUD estudiantes |
 | ms-attendance | 8082 | `http://localhost:8082` | Gestión asistencia |
 | backend-bff | 8083 | `http://localhost:8083/actuator/health` | Health aggregator |
-| Prometheus | 9090 | `http://localhost:9090/targets` | Métricas (4 targets) |
+| Admin Server | 8084 | `http://localhost:8084` | Spring Boot Admin — monitoreo de servicios |
+| Prometheus | 9090 | `http://localhost:9090/targets` | Métricas (5 targets) |
 | Grafana | 3000 | `http://localhost:3000` | Dashboards (admin/admin) |
 | MySQL | — | Interno Docker | Sin exposición al host |
 
@@ -274,9 +279,9 @@ docker compose down -v
 ```
 mysql (healthy) → discovery-server (healthy)
                     ↓
-   ┌───────────────┼───────────────┐
-   ↓               ↓               ↓
-ms-students   ms-attendance    backend-bff
+   ┌───────────────┼───────────────────────┐
+   ↓               ↓               ↓       ↓
+ms-students   ms-attendance    backend-bff  admin-server
    ↓               ↓               ↓
    └────────────── api-gateway ────┘
                         ↓
@@ -294,17 +299,17 @@ Dependencias con `depends_on` + `condition: service_healthy` garantizan el orden
 | Componente | Rol | Configuración |
 |---|---|---|
 | **Micrometer** | Exposición de métricas en `/actuator/prometheus` | `management.metrics.tags.application` en cada service |
-| **Prometheus** | Scraping cada 5s de 4 servicios Java | `Infra/monitoring/prometheus.yml` |
+| **Prometheus** | Scraping cada 5s de 5 servicios Java | `Infra/monitoring/prometheus.yml` |
 | **Grafana** | Dashboard JVM Micrometer (4701) | Datasource: `http://prometheus:9090` |
 
-### 32 series JVM monitoreadas por servicio
+### 40 series JVM monitoreadas por servicio
 
 - `jvm_memory_used_bytes` (heap + no-heap)
 - `jvm_gc_pause_seconds`
 - `jvm_threads_live_threads`
 - `http_server_requests_seconds_count`
 - `process_cpu_usage`
-- Y más — 8 series por servicio × 4 servicios = 32 series total
+- Y más — 8 series por servicio × 5 servicios = 40 series total
 
 ### Para generar tráfico y ver métricas reaccionar
 
@@ -325,19 +330,21 @@ Luego en Grafana, dashboard JVM Micrometer muestra los picos en tiempo real.
 ### Métricas de Cobertura (JaCoCo — instrucciones)
 
 | Módulo | Tests | Cobertura Instr. | Cobertura Ramas |
-|---|---|------------------|---|
+|---|---|---|------------------|---|
+| admin-server | 1 | Sin JaCoCo       | Sin JaCoCo |
 | ms-students | 29 | 80%              | 66% |
-| ms-attendance | 118 | 84%              | 75% |
+| ms-attendance | 106 | 84%              | 75% |
 | backend-bff | 17 | 77% | n/a |
-| api-gateway | 9 | Sin JaCoCo       | Sin JaCoCo |
+| api-gateway | 18 | Sin JaCoCo       | Sin JaCoCo |
 | discovery-server | 2 | Sin JaCoCo       | Sin JaCoCo |
-| frontend (src/) | 349 | ~28% (Vitest)    | — |
-| **Total** | **524** | —                | — |
+| frontend (src/) | 302 | ~28% (Vitest)    | — |
+| **Total** | **475** | —                | — |
 
 ### Ejecutar todas las pruebas localmente
 
 ```bash
-# Backend (4 módulos, requiere Java 21 local)
+# Backend (5 módulos, requiere Java 21 local)
+cd admin-server && ./mvnw clean test && cd ..
 cd api-gateway && ./mvnw clean test && cd ..
 cd backend-bff && ./mvnw clean test && cd ..
 cd ms-students && ./mvnw clean test && cd ..
@@ -352,6 +359,25 @@ O via Docker (las pruebas se ejecutan durante el build):
 ```bash
 docker compose build
 ```
+
+---
+
+## Integración Continua (GitHub Actions)
+
+El proyecto incluye un pipeline CI con **8 jobs paralelos** definido en `.github/workflows/ci.yml`:
+
+| Job | Descripción |
+|---|---|
+| `frontend` | `npm ci` → `npm run build` → `npm run test` (302 tests) |
+| `api-gateway` | `mvn clean test` (18 tests) |
+| `backend-bff` | `mvn clean test` (17 tests) |
+| `ms-students` | `mvn clean test` (29 tests) |
+| `ms-attendance` | `mvn clean test` (106 tests) |
+| `discovery-server` | `mvn clean test` (2 tests) |
+| `admin-server` | `mvn clean test` (1 test) |
+| **Total** | **475 tests — 0 fallos** |
+
+Se ejecuta en cada push a `main`, `master`, `develop` y `doc/ev3-deliverables`, y en PRs hacia esas ramas.
 
 ---
 
@@ -400,6 +426,8 @@ Los siguientes documentos están disponibles en `docs/`:
 | `DESCRIPCION_PERSISTENCIA.md` | Estrategia Database per Service |
 | `CASOS_DE_USO.md` | 4 casos de uso documentados |
 | `REQUISITOS_SISTEMA.md` | Hardware, software, puertos, instalación |
+| `GUION_VIDEO_ARQUITECTURA.md` | Guion para video de arquitectura (52 items) |
+| `GUION_VIDEO_USO.md` | Guion para video de uso (9 items) |
 | `api-specifications/` | Swagger specs en JSON |
 
 ---

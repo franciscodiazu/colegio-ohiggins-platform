@@ -1,8 +1,8 @@
 # Informe de Cobertura — CHECKLIST EV3
 
-## Fecha: 27/06/2026 (Post-Refinement Audit)
-## Despliegue: 9/9 contenedores healthy | 4/4 Prometheus targets UP | 0 errores en logs | 0 vulnerabilidades npm | Grafana provisioning automático
-## Tests: 524 total (175 Java + 349 JS) — 0 fallos | Build: 5/5 módulos Maven BUILD SUCCESS | Vitest 4.1.9
+## Fecha: 02/07/2026 (Post-Deuda Tecnica)
+## Despliegue: 10/10 contenedores healthy | 5/5 Prometheus targets UP | 0 errores en logs | 0 vulnerabilidades npm | Grafana provisioning automático
+## Tests: 468+ total (174 Java + 294+ JS) — 0 fallos | Build: 6/6 módulos Maven BUILD SUCCESS
 
 ---
 
@@ -36,13 +36,13 @@
 | 12 | Explica el dominio (necesidad que cubre) de cada microservicio | ✅ | READMEs individuales de cada MS |
 | 13 | Explica las reglas de negocio que aplican | ✅ | Validaciones documentadas en código + READMEs |
 | 14 | Explica el procesamiento de datos | ✅ | `docs/DESCRIPCION_PERSISTENCIA.md` |
-| 15 | Explica las validaciones | ✅ | RutValidator (students), ValidationStrategy (attendance) |
+| 15 | Explica las validaciones | ✅ | RutValidator (students), PresenteFactory/AtrasoFactory/InasistenciaFactory (attendance) |
 | 16 | Explica los casos de uso específicos | ✅ | `docs/CASOS_DE_USO.md` — 4 casos documentados |
 | 17 | Explica estructura de carpetas y organización de clases | ✅ | `README.md` raíz secc Estructura |
 | 18 | Explica cada dependencia en su configuración | ✅ | `pom.xml` + READMEs individuales |
 | 19 | Explica funcionamiento de cada controlador | ✅ | Swagger UI + código fuente documentado |
 | 20 | Explica métodos de seguridad aplicados | ✅ | JWT + refresh token documentado en `api-gateway/README.md` |
-| 21 | Explica patrones aplicados y dónde en el código | ✅ | Factory (StudentFactory), Strategy (ValidationStrategy), Circuit Breaker (Resilience4j) |
+| 21 | Explica patrones aplicados y dónde en el código | ✅ | Factory (StudentFactory, PresenteFactory, AtrasoFactory, InasistenciaFactory), Strategy, Circuit Breaker (Resilience4j) |
 | 22 | Explica archivos de configuración | ✅ | `application.properties` / `application.yml` |
 | 23 | Explica cómo levantar y comprobar funcionamiento | ✅ | READMEs individuales |
 | 24 | Explica manejo de excepciones | ✅ | `docs/DESCRIPCION_PERSISTENCIA.md` secc 6 — GlobalExceptionHandler documentado con códigos, estructura y excepciones manejadas |
@@ -75,7 +75,7 @@
 
 | # | Ítem | Logrado | Evidencia |
 |---|------|---------|-----------|
-| 39 | Justifica aplicación de monitoreo | ✅ | Prometheus (`http://localhost:9090/targets` — 4/4 UP) + Grafana (`http://localhost:3000` — dashboard JVM Micrometer). `Infra/monitoring/prometheus.yml` con targets a los 4 servicios Java |
+| 39 | Justifica aplicación de monitoreo | ✅ | Prometheus (`http://localhost:9090/targets` — 5/5 UP) + Grafana (`http://localhost:3000` — dashboard JVM Micrometer). `Infra/monitoring/prometheus.yml` con targets a los 5 servicios Java |
 | 40 | Explica acciones a realizar si algún MS falla | ✅ | Prometheus detecta caída via `up` metric (scrape 5s). Grafana refleja pérdida de series JVM. Docker restart policy + Eureka heartbeat como recuperación automática |
 | 41 | Explica cómo se entera si un MS falla | ✅ | Prometheus target se marca DOWN en `http://localhost:9090/targets`. Dashboard Grafana pierde las series del servicio. Además Eureka marca la instancia DOWN |
 | 42 | Tiene seguimiento para mejoras en monitoreo | ✅ | `docs/PLAN_EVOLUCION_TECNICA.md` secc 2.1 — Logging centralizado (Loki) planificado V4. Alertas Prometheus + notificaciones como mejora post-MV3 |
@@ -124,9 +124,8 @@
 | Componentes Backend (pom.xml, properties) | ✅ | `api-gateway/`, `backend-bff/`, `ms-students/`, `ms-attendance/`, `discovery-server/` |
 | Swagger / Postman Collection | ✅ | `docs/api-specifications/ms-students-api.json`, `docs/api-specifications/ms-attendance-api.json` |
 | Recurso de persistencia (JPA/SPs) | ✅ | JPA/Hibernate + MySQL, documentado en `DESCRIPCION_PERSISTENCIA.md` |
-| Reportes de cobertura (HTML) | ✅ | `docs/coverage-report/ms-students/index.html`, `docs/coverage-report/ms-attendance/index.html` |
+| Reportes de cobertura | ✅ | Generados por JaCoCo via `mvn clean test` — HTML en cada `target/site/jacoco/` |
 | repositorios.txt con enlaces GitHub | ✅ | `repositorios.txt` |
-| Archivo ZIP comprimido | ✅ | `Entrega_EV3.zip` (1.64 MB) |
 
 ---
 
@@ -147,7 +146,7 @@
 
 ---
 
-## 5. Brechas Restantes (NO LOGRADO)
+## 5. Brechas Restantes
 
 ### Impacto Alto (pregunta probable en defensa)
 
@@ -155,11 +154,11 @@
 |--|------|---------|------------------|
 | 45 | Sin TypeScript | Alto | "El frontend usa JavaScript por decisión técnica en EV1. TypeScript es el estándar objetivo para V4 (ver PLAN_EVOLUCION_TECNICA.md deuda técnica). La migración requeriría refactorización completa que no justifica su riesgo antes de una entrega." |
 
-### Nota: Brechas #10 y #50 cerradas post-auditoría
+### Brechas cerradas post-auditoría
 
 | # | Ítem | Estado anterior | Solución aplicada |
 |--|------|-----------------|-------------------|
-| 10 | Sin enlace de descarga | ❌ No LOGRADO | ✅ `discovery-server/README.md` — sección de compilación manual con `mvn package` + `java -jar` |
+| 10 | Sin enlace de descarga | ❌ No LOGRADO | ✅ `discovery-server/README.md` — sección de compilación manual con `./mvnw package` + `java -jar` |
 | 50 | Sin log interno frontend | ❌ No LOGRADO | ✅ `frontend/src/services/logger.js` — logger estructurado 4 niveles + integración en interceptor `bffClient.js` |
 
 ### Defensa Genérica para Brechas Técnicas
@@ -178,7 +177,7 @@
 
 ---
 
-*Documento generado por auditoría automatizada — Sprint de Cierre EV3 (v4).*
-*Despliegue: 9/9 contenedores healthy | Prometheus 4/4 UP | Smoke tests: 11/11 PASS.*
-*Build: 495 tests (146 Java + 349 JS), 0 errores en todos los módulos. Auditoría Zero-Trust: todos los claims verificados contra código en ejecución.*
-*Cobertura de pauta: 60/61 items (98%). Brecha restante: 1 (item #45 — TypeScript planificado V4). Brechas #10 y #50 cerradas con documentación JAR + logger estructurado frontend.*
+*Documento generado por auditoría automatizada — Post-Deuda Tecnica (v2.0).*
+*Despliegue: 10/10 contenedores healthy | Prometheus 5/5 UP | Smoke tests: 11/11 PASS.*
+*Build: 468+ tests (174 Java + 294+ JS), 0 errores en todos los módulos. Auditoría Zero-Trust: todos los claims verificados contra código en ejecución.*
+*Cobertura de pauta: 60/61 items (98%). Brecha restante: 1 (item #45 — TypeScript planificado V4).*

@@ -1,7 +1,7 @@
 package com.backend.ms_attendance.service;
 
 import com.backend.ms_attendance.dto.AsistenciaRequestDto;
-import com.backend.ms_attendance.dto.EstadísticasAsistenciaDto;
+import com.backend.ms_attendance.dto.EstadisticasAsistenciaDto;
 import com.backend.ms_attendance.exception.EntidadNoEncontradaException;
 import com.backend.ms_attendance.exception.ServicioNoDisponibleException;
 import com.backend.ms_attendance.factory.AsistenciaFactory;
@@ -230,7 +230,7 @@ public class ServicioAsistenciaTest {
         IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () ->
             servicioAsistencia.crearAsistencia(dto)
         );
-        assertThat(thrown.getMessage()).contains("AsistenciaRequestDto inválido para tipo ATRASO");
+        assertThat(thrown.getMessage()).contains("horaLlegada es obligatoria para crear RegistroAtraso");
         verify(clienteEstudiantes, times(1)).validarExistenciaEstudiante(estudianteId);
         verify(repositorio, never()).save(any(RegistroAsistencia.class));
     }
@@ -252,7 +252,7 @@ public class ServicioAsistenciaTest {
         IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, () ->
             servicioAsistencia.crearAsistencia(dto)
         );
-        assertThat(thrown.getMessage()).contains("AsistenciaRequestDto inválido para tipo TIPO_INEXISTENTE");
+        assertThat(thrown.getMessage()).contains("No existe factory registrada para tipo 'TIPO_INEXISTENTE'");
         verify(clienteEstudiantes, times(1)).validarExistenciaEstudiante(estudianteId);
         verify(repositorio, never()).save(any(RegistroAsistencia.class));
     }
@@ -332,7 +332,7 @@ public class ServicioAsistenciaTest {
         when(repositorio.countAtrasoRegistros(estudianteId)).thenReturn(3L);
 
         // Act
-        EstadísticasAsistenciaDto estadisticas = servicioAsistencia.obtenerEstadísticasEstudiante(estudianteId);
+        EstadisticasAsistenciaDto estadisticas = servicioAsistencia.obtenerEstadísticasEstudiante(estudianteId);
 
         // Assert
         assertThat(estadisticas).isNotNull();
@@ -357,7 +357,7 @@ public class ServicioAsistenciaTest {
         when(repositorio.countAtrasoRegistros(estudianteId)).thenReturn(0L);
 
         // Act
-        EstadísticasAsistenciaDto estadisticas = servicioAsistencia.obtenerEstadísticasEstudiante(estudianteId);
+        EstadisticasAsistenciaDto estadisticas = servicioAsistencia.obtenerEstadísticasEstudiante(estudianteId);
 
         // Assert
         assertThat(estadisticas).isNotNull();

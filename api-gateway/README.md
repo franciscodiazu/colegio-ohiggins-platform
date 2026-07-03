@@ -18,16 +18,18 @@ Punto de entrada único implementado con **Spring Cloud Gateway MVC**. Centraliz
 | `/api/v1/auth/refresh` | Gateway (propio) | JWT |
 | `/api/students/**` | ms-students:8081 | JWT |
 | `/api/asistencia/**` | ms-attendance:8082 | JWT |
+| `/api/clases/**` | ms-attendance:8082 | JWT |
+| `/api/evaluaciones/**` | ms-attendance:8082 | JWT |
 
 ## Seguridad JWT
-- **JwtUtil**: genera token de acceso (30 min) + refresh token (7 días) firmados con HMAC-SHA384
+- **JwtTokenProvider**: genera token de acceso (15 min) + refresh token (7 días) firmados con HMAC-SHA384
 - **JwtAuthenticationFilter**: intercepta cada request, extrae token del header `Authorization`, valida firma y expiración, inyecta `UsernamePasswordAuthenticationToken` en el contexto de seguridad
 - **SecurityConfig**: `SecurityFilterChain` con rutas públicas (`/api/v1/auth/register`, `/api/v1/auth/login`) y protegidas (todo lo demás)
-- **GatewayConfig**: `RouteLocator` declarativo — cada ruta tiene un filtro `JwtAuthGatewayFilterFactory` que valida el token antes de reenviar al microservicio destino
+- Las rutas se definen en `application.properties` via `spring.cloud.gateway.routes[]` con predicates y filters declarativos, incluyendo reescritura de paths para cada microservicio
 
 ## Pruebas
 ```bash
-./mvnw clean test    # 9 tests: CorsConfig (7) + ApplicationContext (2)
+./mvnw clean test    # 18 tests: CorsConfig (7) + GlobalExceptionHandler (10) + ApplicationContext (1)
 ```
 
 ## Dependencias clave (pom.xml)
@@ -43,7 +45,7 @@ Punto de entrada único implementado con **Spring Cloud Gateway MVC**. Centraliz
 | `SERVER_PORT` | 8080 | Puerto del gateway |
 | `EUREKA_URL` | http://discovery-server:8761/eureka/ | URL de Eureka |
 | `JWT_SECRET` | (valor fijo) | Secreto HMAC-SHA384 para firmar tokens |
-| `JWT_EXPIRATION` | 1800000 | TTL del token de acceso (30 min) |
+| `JWT_EXPIRATION` | 900000 | TTL del token de acceso (15 min) |
 | `DB_HOST` | mysql | Host MySQL |
 | `DB_PORT` | 3306 | Puerto MySQL |
 | `DB_NAME_AUTH` | colegio_auth_db | Base de datos de autenticación |

@@ -12,6 +12,8 @@ public class StudentRegularFactory implements StudentFactory {
         student.setRut(dto.getRut());
         student.setName(dto.getName());
         student.setGrade(dto.getGrade());
+        student.setEmail(dto.getEmail());
+        student.setPhone(dto.getPhone());
         return student;
     }
 }

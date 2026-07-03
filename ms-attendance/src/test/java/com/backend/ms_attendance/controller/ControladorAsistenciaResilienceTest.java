@@ -47,7 +47,7 @@ class ControladorAsistenciaResilienceTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(payload))
             .andExpect(status().isServiceUnavailable())
-            .andExpect(jsonPath("$.mensaje").value(
+            .andExpect(jsonPath("$.message").value(
                 "Validación temporalmente no disponible. Intente nuevamente más tarde."
             ));
     }

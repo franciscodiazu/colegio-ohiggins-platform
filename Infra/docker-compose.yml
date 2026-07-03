@@ -209,6 +209,35 @@ services:
       retries: 6
       start_period: 120s
 
+  admin-server:
+    build:
+      context: ../
+      dockerfile: Infra/docker/admin.Dockerfile
+    container_name: colegio-admin
+    hostname: admin-server
+    restart: on-failure
+    environment:
+      SERVER_PORT: ${ADMIN_SERVER_PORT:-8084}
+      EUREKA_URL: http://discovery-server:8761/eureka/
+      LOGGING_LEVEL_ROOT: ${LOGGING_LEVEL_ROOT:-INFO}
+    ports:
+      - "${ADMIN_SERVER_PORT:-8084}:8084"
+    networks:
+      - colegio-network
+    depends_on:
+      discovery-server:
+        condition: service_healthy
+      ms-students:
+        condition: service_started
+      ms-attendance:
+        condition: service_started
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:${ADMIN_SERVER_PORT:-8084}/actuator/health"]
+      interval: 20s
+      timeout: 10s
+      retries: 6
+      start_period: 120s
+
   frontend:
     build:
       context: ../

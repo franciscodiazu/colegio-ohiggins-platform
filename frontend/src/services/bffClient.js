@@ -84,70 +84,133 @@ bffClient.interceptors.response.use(
         const url = originalRequest?.url || 'UNKNOWN';
         logger.error(`Fallo en comunicación BFF [Status ${status}] | ${method} -> ${url}`, error.message);
 
+        const backendMessage = error.response?.data?.message || '';
+
+        if (status === 400) {
+            error.userMessage = backendMessage || 'Datos inválidos. Revisa la información ingresada.';
+            error.type = 'VALIDATION_ERROR';
+        } else if (status === 401) {
+            error.userMessage = 'Sesión expirada. Inicia sesión nuevamente.';
+            error.type = 'UNAUTHORIZED';
+        } else if (status === 403) {
+            error.userMessage = 'No tienes permisos para realizar esta acción.';
+            error.type = 'FORBIDDEN';
+        } else if (status === 404) {
+            error.userMessage = backendMessage || 'El recurso solicitado no fue encontrado.';
+            error.type = 'NOT_FOUND';
+        } else if (status === 409) {
+            error.userMessage = backendMessage || 'Conflicto: el recurso ya existe o está duplicado.';
+            error.type = 'CONFLICT';
+        } else if (status === 503) {
+            error.userMessage = 'El servicio no está disponible. Intenta más tarde.';
+            error.type = 'SERVICE_UNAVAILABLE';
+        } else {
+            error.userMessage = backendMessage || error.message || 'Error inesperado. Intenta nuevamente.';
+            error.type = 'UNKNOWN_ERROR';
+        }
+
         return Promise.reject(error);
     }
 );
 
 // Mapeo de campos: Frontend (nombre, curso) -> Backend (rut_estudiante, nombre_completo, grado_academico)
 const mapFrontendToBackend = (frontendData) => ({
-    id: frontendData.id,
-    rut_estudiante: frontendData.rut || generateTempRut(),
+    rut_estudiante: frontendData.rut || '',
     nombre_completo: frontendData.nombre || frontendData.name || '',
     grado_academico: frontendData.curso || frontendData.grade || '',
+    correo: frontendData.correo || frontendData.email || '',
+    telefono: frontendData.telefono || frontendData.phone || '',
 });
 
 const mapBackendToFrontend = (backendData) => ({
     id: backendData.id,
-    nombre: backendData.name,
-    rut: backendData.rut,
+    nombre: backendData.name || '',
+    rut: backendData.rut || '',
     correo: backendData.email || '',
-    curso: backendData.grade,
+    curso: backendData.grade || '',
     telefono: backendData.phone || '',
-    cursosAsociados: backendData.courses || [],
 });
-
-// Generador temporal de RUT para compatibilidad con backend
-// Algoritmo Módulo 11 (misma implementación que ms-students RutValidator)
-let tempRutCounter = 10000000 + (Date.now() % 90000000);
-const calcularDigitoVerificador = (rut) => {
-    let m = 0, s = 1, num = rut;
-    while (num !== 0) {
-        s = (s + (num % 10) * (9 - (m++ % 6))) % 11;
-        num = Math.floor(num / 10);
-    }
-    return s !== 0 ? String.fromCharCode(s + 47) : 'K';
-};
-const generateTempRut = () => {
-    const num = tempRutCounter++;
-    return `${num}-${calcularDigitoVerificador(num)}`;
-};
 
 // Servicio de Estudiantes - Conexión real al BFF
 export const studentsService = {
     async listStudents() {
-        const response = await bffClient.get('/api/students');
-        return Array.isArray(response.data) ? response.data.map(mapBackendToFrontend) : [];
+        try {
+            const response = await bffClient.get('/api/students');
+            return Array.isArray(response.data) ? response.data.map(mapBackendToFrontend) : [];
+        } catch (error) {
+            console.error('[studentsService:listStudents]', {
+                status: error.response?.status,
+                message: error.response?.data?.message,
+                timestamp: new Date().toISOString()
+            });
+            throw error;
+        }
     },
 
     async createStudent(payload) {
-        const backendPayload = mapFrontendToBackend(payload);
-        const response = await bffClient.post('/api/students', backendPayload);
-        return mapBackendToFrontend(response.data);
+        try {
+            if (!payload.nombre && !payload.name) {
+                throw new Error('El nombre del estudiante es obligatorio');
+            }
+            const backendPayload = mapFrontendToBackend(payload);
+            const response = await bffClient.post('/api/students', backendPayload);
+            return mapBackendToFrontend(response.data);
+        } catch (error) {
+            console.error('[studentsService:createStudent]', {
+                status: error.response?.status,
+                message: error.response?.data?.message || error.message,
+                timestamp: new Date().toISOString()
+            });
+            throw error;
+        }
     },
 
     async getStudentById(studentId) {
-        const response = await bffClient.get(`/api/students/${studentId}`);
-        return response.data ? mapBackendToFrontend(response.data) : null;
+        try {
+            const response = await bffClient.get(`/api/students/${studentId}`);
+            return response.data ? mapBackendToFrontend(response.data) : null;
+        } catch (error) {
+            console.error('[studentsService:getStudentById]', {
+                studentId,
+                status: error.response?.status,
+                message: error.response?.data?.message,
+                timestamp: new Date().toISOString()
+            });
+            throw error;
+        }
     },
 
     async updateStudent(studentId, payload) {
-        const backendPayload = mapFrontendToBackend(payload);
-        const response = await bffClient.put(`/api/students/${studentId}`, backendPayload);
-        return response.data ? mapBackendToFrontend(response.data) : null;
+        try {
+            if (!payload.nombre && !payload.name) {
+                throw new Error('El nombre del estudiante es obligatorio');
+            }
+            const backendPayload = mapFrontendToBackend(payload);
+            const response = await bffClient.put(`/api/students/${studentId}`, backendPayload);
+            return response.data ? mapBackendToFrontend(response.data) : null;
+        } catch (error) {
+            console.error('[studentsService:updateStudent]', {
+                studentId,
+                status: error.response?.status,
+                message: error.response?.data?.message || error.message,
+                timestamp: new Date().toISOString()
+            });
+            throw error;
+        }
     },
 
     async listStudentCourses(studentId) {
-        const response = await bffClient.get(`/api/students/${studentId}/courses`);
-        return response.data || [];
+        try {
+            const response = await bffClient.get(`/api/students/${studentId}/courses`);
+            return response.data || [];
+        } catch (error) {
+            console.error('[studentsService:listStudentCourses]', {
+                studentId,
+                status: error.response?.status,
+                message: error.response?.data?.message,
+                timestamp: new Date().toISOString()
+            });
+            throw error;
+        }
     },
 };

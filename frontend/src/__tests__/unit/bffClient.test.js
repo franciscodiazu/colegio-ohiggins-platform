@@ -33,14 +33,14 @@ describe('studentsService.listStudents', () => {
   it('mapea correctamente los datos del backend al formato frontend', async () => {
     mockClient.get.mockResolvedValue({
       data: [
-        { id: 1, name: 'Juan Pérez', rut: '11111111-1', email: 'juan@alum.cl', grade: '1A', phone: '123', courses: ['Mate'] },
+        { id: 1, name: 'Juan Pérez', rut: '11111111-1', email: 'juan@alum.cl', grade: '1A', phone: '123' },
       ],
     });
 
     const result = await studentsService.listStudents();
 
     expect(result).toEqual([
-      { id: 1, nombre: 'Juan Pérez', rut: '11111111-1', correo: 'juan@alum.cl', curso: '1A', telefono: '123', cursosAsociados: ['Mate'] },
+      { id: 1, nombre: 'Juan Pérez', rut: '11111111-1', correo: 'juan@alum.cl', curso: '1A', telefono: '123' },
     ]);
   });
 
@@ -63,7 +63,6 @@ describe('studentsService.listStudents', () => {
     const result = await studentsService.listStudents();
     expect(result[0].correo).toBe('');
     expect(result[0].telefono).toBe('');
-    expect(result[0].cursosAsociados).toEqual([]);
   });
 });
 
@@ -79,7 +78,7 @@ describe('studentsService.createStudent', () => {
 
     expect(mockClient.post).toHaveBeenCalledWith(
       '/api/students',
-      expect.objectContaining({ name: 'Pedro', grade: '3C' })
+      expect.objectContaining({ nombre_completo: 'Pedro', grado_academico: '3C', correo: '', telefono: '' })
     );
   });
 
@@ -94,12 +93,12 @@ describe('studentsService.createStudent', () => {
     expect(result.curso).toBe('3C');
   });
 
-  it('genera un rut temporal si no se provee uno', async () => {
+  it('envía rut vacío si no se provee uno', async () => {
     mockClient.post.mockResolvedValue({ data: { id: 6, name: 'Ana', grade: '1A' } });
     await studentsService.createStudent({ nombre: 'Ana', curso: '1A' });
 
     const sentPayload = mockClient.post.mock.calls[0][1];
-    expect(sentPayload.rut).toMatch(/^\d+-\d+$/);
+    expect(sentPayload.rut_estudiante).toBe('');
   });
 
   it('usa el rut provisto si existe en el payload', async () => {
@@ -107,7 +106,7 @@ describe('studentsService.createStudent', () => {
     await studentsService.createStudent({ nombre: 'Luis', curso: '2A', rut: '99999999-9' });
 
     const sentPayload = mockClient.post.mock.calls[0][1];
-    expect(sentPayload.rut).toBe('99999999-9');
+    expect(sentPayload.rut_estudiante).toBe('99999999-9');
   });
 });
 
@@ -143,7 +142,7 @@ describe('studentsService.updateStudent', () => {
 
     expect(mockClient.put).toHaveBeenCalledWith(
       '/api/students/1',
-      expect.objectContaining({ name: 'Juan Actualizado', grade: '2A' })
+      expect.objectContaining({ nombre_completo: 'Juan Actualizado', grado_academico: '2A', correo: '', telefono: '' })
     );
   });
 

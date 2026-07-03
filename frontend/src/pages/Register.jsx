@@ -1,5 +1,5 @@
 import { LayoutCard, LayoutSection } from '../components/layout/BaseLayout';
-import { registerUser } from '../services/authMockService';
+import { registerUser } from '../services/authService';
 import { useFieldValidation, rules } from '../hooks/useFieldValidation';
 import FormField from '../components/Formfield';
 import { useState } from 'react';

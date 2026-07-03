@@ -1,6 +1,7 @@
 package com.backend.ms_students.controller;
 
 import com.backend.ms_students.dto.StudentRequestDto;
+import com.backend.ms_students.dto.StudentUpdateDto;
 import com.backend.ms_students.exception.EntidadNoEncontradaException;
 import com.backend.ms_students.model.Student;
 import com.backend.ms_students.service.StudentService;
@@ -140,36 +141,46 @@ class StudentControllerTest {
 
     @Test
     void updateStudent_cuandoExiste_debeRetornar200ConDatosActualizados() throws Exception {
+        StudentUpdateDto dto = new StudentUpdateDto();
+        dto.setRut("11111111-1");
+        dto.setName("Juan Actualizado");
+        dto.setGrade("6°A");
+
         Student actualizado = new Student();
         actualizado.setId(1L);
         actualizado.setRut("11111111-1");
         actualizado.setName("Juan Actualizado");
         actualizado.setGrade("6°A");
 
-        when(studentService.updateStudent(eq(1L), any(Student.class)))
+        when(studentService.updateStudent(eq(1L), any(StudentUpdateDto.class)))
                 .thenReturn(Optional.of(actualizado));
 
         mockMvc.perform(put(BASE_URL + "/1")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(actualizado)))
+                        .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Juan Actualizado"))
                 .andExpect(jsonPath("$.rut").value("11111111-1"))
                 .andExpect(jsonPath("$.grade").value("6°A"));
 
-        verify(studentService, times(1)).updateStudent(eq(1L), any(Student.class));
+        verify(studentService, times(1)).updateStudent(eq(1L), any(StudentUpdateDto.class));
     }
 
     @Test
     void updateStudent_cuandoNoExiste_debeRetornar404() throws Exception {
-        when(studentService.updateStudent(eq(99L), any(Student.class)))
+        StudentUpdateDto dto = new StudentUpdateDto();
+        dto.setRut("99999999-9");
+        dto.setName("No Existe");
+        dto.setGrade("0°Z");
+
+        when(studentService.updateStudent(eq(99L), any(StudentUpdateDto.class)))
                 .thenReturn(Optional.empty());
 
         mockMvc.perform(put(BASE_URL + "/99")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(student)))
+                        .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isNotFound());
 
-        verify(studentService, times(1)).updateStudent(eq(99L), any(Student.class));
+        verify(studentService, times(1)).updateStudent(eq(99L), any(StudentUpdateDto.class));
     }
 }

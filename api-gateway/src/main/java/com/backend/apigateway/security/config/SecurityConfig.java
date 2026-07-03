@@ -1,5 +1,6 @@
 package com.backend.apigateway.security.config;
 
+import com.backend.apigateway.exception.ApiError;
 import com.backend.apigateway.security.jwt.JwtAuthenticationFilter;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletResponse;
@@ -19,8 +20,8 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
 
 @Configuration
 @EnableMethodSecurity
@@ -44,14 +45,44 @@ public class SecurityConfig {
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/actuator/health", "/actuator/prometheus").permitAll()
+                .requestMatchers("/actuator/**").permitAll()
                 .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/auth/reset-password").permitAll()
+                .requestMatchers(HttpMethod.GET, "/api/students").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/students/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/asistencia").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/asistencia/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/clases").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/clases/**").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/evaluaciones").authenticated()
+                .requestMatchers(HttpMethod.GET, "/api/evaluaciones/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/students").hasAnyRole("ADMIN", "DOCENTE")
                 .requestMatchers(HttpMethod.POST, "/api/students/**").hasAnyRole("ADMIN", "DOCENTE")
+                .requestMatchers(HttpMethod.PUT, "/api/students").hasAnyRole("ADMIN", "DOCENTE")
                 .requestMatchers(HttpMethod.PUT, "/api/students/**").hasAnyRole("ADMIN", "DOCENTE")
+                .requestMatchers(HttpMethod.DELETE, "/api/students").hasAnyRole("ADMIN")
                 .requestMatchers(HttpMethod.DELETE, "/api/students/**").hasAnyRole("ADMIN")
+                .requestMatchers(HttpMethod.POST, "/api/asistencia").hasAnyRole("ADMIN", "DOCENTE")
+                .requestMatchers(HttpMethod.POST, "/api/asistencia/**").hasAnyRole("ADMIN", "DOCENTE")
+                .requestMatchers(HttpMethod.POST, "/api/clases").hasAnyRole("ADMIN", "DOCENTE")
+                .requestMatchers(HttpMethod.POST, "/api/clases/**").hasAnyRole("ADMIN", "DOCENTE")
+                .requestMatchers(HttpMethod.POST, "/api/evaluaciones").hasAnyRole("ADMIN", "DOCENTE")
+                .requestMatchers(HttpMethod.POST, "/api/evaluaciones/**").hasAnyRole("ADMIN", "DOCENTE")
+                .requestMatchers(HttpMethod.PUT, "/api/asistencia").hasAnyRole("ADMIN", "DOCENTE")
+                .requestMatchers(HttpMethod.PUT, "/api/asistencia/**").hasAnyRole("ADMIN", "DOCENTE")
+                .requestMatchers(HttpMethod.PUT, "/api/clases").hasAnyRole("ADMIN", "DOCENTE")
+                .requestMatchers(HttpMethod.PUT, "/api/clases/**").hasAnyRole("ADMIN", "DOCENTE")
+                .requestMatchers(HttpMethod.PUT, "/api/evaluaciones").hasAnyRole("ADMIN", "DOCENTE")
+                .requestMatchers(HttpMethod.PUT, "/api/evaluaciones/**").hasAnyRole("ADMIN", "DOCENTE")
+                .requestMatchers(HttpMethod.DELETE, "/api/asistencia").hasAnyRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/asistencia/**").hasAnyRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/clases").hasAnyRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/clases/**").hasAnyRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/evaluaciones").hasAnyRole("ADMIN")
+                .requestMatchers(HttpMethod.DELETE, "/api/evaluaciones/**").hasAnyRole("ADMIN")
                 .anyRequest().authenticated()
             )
             .exceptionHandling(ex -> ex
@@ -59,14 +90,28 @@ public class SecurityConfig {
                     response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
                     response.getWriter().write(new ObjectMapper().writeValueAsString(
-                        Map.of("error", "No autenticado", "message", authException.getMessage())
+                        ApiError.builder()
+                            .timestamp(LocalDateTime.now())
+                            .status(HttpServletResponse.SC_UNAUTHORIZED)
+                            .error("No autenticado")
+                            .code("UNAUTHORIZED")
+                            .message(authException.getMessage())
+                            .path(request.getRequestURI())
+                            .build()
                     ));
                 })
                 .accessDeniedHandler((request, response, accessDeniedException) -> {
                     response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                     response.setContentType(MediaType.APPLICATION_JSON_VALUE);
                     response.getWriter().write(new ObjectMapper().writeValueAsString(
-                        Map.of("error", "Acceso denegado", "message", accessDeniedException.getMessage())
+                        ApiError.builder()
+                            .timestamp(LocalDateTime.now())
+                            .status(HttpServletResponse.SC_FORBIDDEN)
+                            .error("Acceso denegado")
+                            .code("FORBIDDEN")
+                            .message(accessDeniedException.getMessage())
+                            .path(request.getRequestURI())
+                            .build()
                     ));
                 })
             )

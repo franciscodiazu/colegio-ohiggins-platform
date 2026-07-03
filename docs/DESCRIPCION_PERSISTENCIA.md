@@ -78,6 +78,5 @@ Cada microservicio implementa un `GlobalExceptionHandler` con `@ControllerAdvice
 
 - **DTOs**: Separación estricta entre entidad JPA y request/response DTO.
 - **Validación de entrada**: `@Valid` + anotaciones Jakarta Validation + `RutValidator` personalizado.
-- **Factory Pattern**: Creación de entidades encapsulada en factorías (StudentFactory, AsistenciaFactory).
-- **Strategy Pattern**: Validaciones de negocio como estrategias intercambiables (ValidationStrategy).
+- **Factory Pattern**: Creación de entidades encapsulada en factorías (StudentFactory, AsistenciaFactory, PresenteFactory, AtrasoFactory, InasistenciaFactory).
 - **Logging**: SLF4J con niveles diferenciados (INFO para operaciones, ERROR para fallos, DEBUG para trazabilidad).

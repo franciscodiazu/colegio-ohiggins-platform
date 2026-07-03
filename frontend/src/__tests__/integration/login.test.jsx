@@ -4,19 +4,13 @@ import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import Login from '../../pages/Login';
 
-const { mockRegisterUser, mockLoginUser } = vi.hoisted(() => ({
-  mockRegisterUser: vi.fn(),
+const { mockLoginUser } = vi.hoisted(() => ({
   mockLoginUser: vi.fn(),
 }));
 
-vi.mock('../../services/authMockService', () => ({
-  registerUser: mockRegisterUser,
+vi.mock('../../services/authService', () => ({
   loginUser: mockLoginUser,
-  resetUserPassword: vi.fn(),
   normalizeEmail: (e) => e.trim().toLowerCase(),
-  isProfesorEmail: (e) => /@profesor\.cl$/i.test(e),
-  isEstudianteEmail: (e) => /@alum\.cl$/i.test(e),
-  isApoderadoEmail: (e) => /@apod\.cl$/i.test(e),
   USER_ROLES: { APODERADO: 'apoderado', ESTUDIANTE: 'estudiante', PROFESOR: 'profesor' },
 }));
 
@@ -37,7 +31,6 @@ beforeEach(() => {
   localStorage.clear();
   vi.clearAllMocks();
   mockLoginUser.mockResolvedValue({ ok: true, user: { email: 'ana@profesor.cl', name: 'Ana López', role: 'profesor' } });
-  mockRegisterUser.mockResolvedValue({ ok: true, user: { email: 'ana@profesor.cl', name: 'Ana López', role: 'profesor' } });
 });
 
 describe('Login — renderizado inicial', () => {

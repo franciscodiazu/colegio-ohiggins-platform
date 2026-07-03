@@ -11,7 +11,8 @@ import Estudiantes from './pages/Estudiantes';
 import Asistencia from './pages/Asistencia';
 import Evaluaciones from './pages/Evaluaciones';
 import NotFound from './pages/NotFound';
-import { USER_ROLES } from './services/authMockService';
+import ErrorBoundary from './components/ErrorBoundary';
+import { USER_ROLES } from './services/authService';
 
 // ─── Constantes ───────────────────────────────────────────────────────────────
 
@@ -34,7 +35,8 @@ const readInitialSession = () => {
     const raw = localStorage.getItem(SESSION_STORAGE_KEY);
     if (!raw) return null;
     const parsed = JSON.parse(raw);
-    return { ...parsed, role: parsed.role || USER_ROLES.PROFESOR };
+    if (!parsed.role) return null;
+    return parsed;
   } catch (error) {
     console.error('No se pudo leer la sesión local:', error);
     return null;
@@ -100,21 +102,23 @@ function App() {
 
   if (!session) {
     return (
-      <LayoutContainer>
-        {authView === 'register' && (
-          <Register onGoToLogin={() => setAuthView('login')} />
-        )}
-        {authView === 'forgot' && (
-          <ForgotPassword onGoToLogin={() => setAuthView('login')} />
-        )}
-        {authView === 'login' && (
-          <Login
-            onLogin={handleLogin}
-            onGoToRegister={() => setAuthView('register')}
-            onGoToForgot={() => setAuthView('forgot')}
-          />
-        )}
-      </LayoutContainer>
+      <ErrorBoundary>
+        <LayoutContainer>
+          {authView === 'register' && (
+            <Register onGoToLogin={() => setAuthView('login')} />
+          )}
+          {authView === 'forgot' && (
+            <ForgotPassword onGoToLogin={() => setAuthView('login')} />
+          )}
+          {authView === 'login' && (
+            <Login
+              onLogin={handleLogin}
+              onGoToRegister={() => setAuthView('register')}
+              onGoToForgot={() => setAuthView('forgot')}
+            />
+          )}
+        </LayoutContainer>
+      </ErrorBoundary>
     );
   }
 
@@ -123,27 +127,29 @@ function App() {
   const isProfesor = session.role === USER_ROLES.PROFESOR;
 
   return (
-    <LayoutContainer>
-      <Navbar
-        items={NAV_ITEMS}
-        activeKey={vistaActual}
-        onChange={handleNavigate}
-        session={session}
-        onLogout={handleLogout}
-      />
+    <ErrorBoundary>
+      <LayoutContainer>
+        <Navbar
+          items={NAV_ITEMS}
+          activeKey={vistaActual}
+          onChange={handleNavigate}
+          session={session}
+          onLogout={handleLogout}
+        />
 
-      <main>
-        {isProfesor ? (
-          <DashboardView
-            vistaActual={vistaActual}
-            session={session}
-            onGoHome={handleGoHome}
-          />
-        ) : (
-          <PendingAccessView />
-        )}
-      </main>
-    </LayoutContainer>
+        <main>
+          {isProfesor ? (
+            <DashboardView
+              vistaActual={vistaActual}
+              session={session}
+              onGoHome={handleGoHome}
+            />
+          ) : (
+            <PendingAccessView />
+          )}
+        </main>
+      </LayoutContainer>
+    </ErrorBoundary>
   );
 }
 

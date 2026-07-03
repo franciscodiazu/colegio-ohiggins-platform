@@ -1,6 +1,7 @@
 package com.backend.ms_students.service;
 
 import com.backend.ms_students.dto.StudentRequestDto;
+import com.backend.ms_students.dto.StudentUpdateDto;
 import com.backend.ms_students.exception.EntidadNoEncontradaException;
 import com.backend.ms_students.factory.StudentFactory;
 import com.backend.ms_students.model.Student;
@@ -49,11 +50,13 @@ public class StudentService {
         return repository.findById(id);
     }
 
-    public Optional<Student> updateStudent(Long id, Student details) {
+    public Optional<Student> updateStudent(Long id, StudentUpdateDto dto) {
         return repository.findById(id).map(existing -> {
-            existing.setRut(details.getRut());
-            existing.setName(details.getName());
-            existing.setGrade(details.getGrade());
+            existing.setRut(dto.getRut());
+            existing.setName(dto.getName());
+            existing.setGrade(dto.getGrade());
+            existing.setEmail(dto.getEmail());
+            existing.setPhone(dto.getPhone());
             return repository.save(existing);
         });
     }

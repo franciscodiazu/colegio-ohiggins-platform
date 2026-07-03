@@ -5,11 +5,15 @@ import com.backend.ms_attendance.exception.ServicioNoDisponibleException;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -57,6 +61,21 @@ public class ClienteEstudiantes {
         } catch (Exception e) {
             log.error("Falló la validación inter-servicio para estudiante {}. Error: {}", estudianteId, e.getMessage());
             throw new ServicioNoDisponibleException(MENSAJE_FALLA_VALIDACION, e);
+        }
+    }
+
+    public List<Map<String, Object>> listarEstudiantes() {
+        String url = String.format("%s/api/v1/estudiantes", urlServicioEstudiantes);
+        log.debug("Listando estudiantes desde: {}", url);
+        try {
+            ResponseEntity<List<Map<String, Object>>> respuesta = restTemplate.exchange(
+                url, HttpMethod.GET, null,
+                new ParameterizedTypeReference<List<Map<String, Object>>>() {}
+            );
+            return respuesta.getBody() != null ? respuesta.getBody() : List.of();
+        } catch (Exception e) {
+            log.warn("No se pudieron listar estudiantes desde ms-students: {}", e.getMessage());
+            return List.of();
         }
     }
 

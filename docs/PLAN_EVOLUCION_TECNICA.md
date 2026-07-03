@@ -29,7 +29,7 @@ El presente documento describe las brechas técnicas identificadas durante la au
 
 | Aspecto | Detalle |
 |---------|---------|
-| **Estado actual (MV3+)** | ✅ **Cerrada en sesión post-EV3.** Prometheus scrapea cada 5s los 4 servicios Java con targets en `http://localhost:9090/targets` (4/4 UP). Grafana con datasource Prometheus conectada y dashboard JVM Micrometer importado (32 series JVM: memoria, threads, GC, HTTP). Micrometer configurado en api-gateway, backend-bff y ms-students (`management.metrics.tags.application`). |
+| **Estado actual (MV3+)** | ✅ **Cerrada.** Prometheus scrapea cada 5s los 5 servicios Java con targets en `http://localhost:9090/targets` (5/5 UP). Grafana con datasource Prometheus conectada y dashboard JVM Micrometer importado (40 series JVM: 8 series × 5 servicios). |
 | **Implementación** | `Infra/monitoring/prometheus.yml` + servicios en `docker-compose.yml`. Dashboard: https://grafana.com/grafana/dashboards/4701 (JVM Micrometer) |
 | **Próximos pasos V4** | Alerting con Alertmanager, métricas de negocio personalizadas, dashboard de latencia p99 por endpoint |
 | **Patrón** | Observability sidecar + metrics exporter |
@@ -70,10 +70,10 @@ El MV3+ implementa un esquema de monitoreo en dos capas —healthchecks básicos
 
 | Mecanismo | Cobertura | Propósito |
 |-----------|-----------|-----------|
-| **Prometheus scrape** | 4 servicios Java (api-gateway, backend-bff, ms-students, ms-attendance) | Métricas cada 5s via `/actuator/prometheus` |
-| **Grafana dashboard** | Dashboard JVM Micrometer (4701) — 32 series | Visualización de memoria, threads, GC, HTTP metrics |
-| **actuator/health** | Todos los servicios (9/9) | Healthcheck para Docker Compose y balanceadores |
-| **Eureka Heartbeat** | Todos los servicios (4 clientes) | Registro automático y detección de caídas (renovación cada 30s) |
+| **Prometheus scrape** | 5 servicios Java (api-gateway, backend-bff, ms-students, ms-attendance, admin-server) | Métricas cada 5s via `/actuator/prometheus` |
+| **Grafana dashboard** | Dashboard JVM Micrometer (4701) — 40 series | Visualización de memoria, threads, GC, HTTP metrics |
+| **actuator/health** | Todos los servicios (10/10) | Healthcheck para Docker Compose y balanceadores |
+| **Eureka Heartbeat** | Todos los servicios (5 clientes) | Registro automático y detección de caídas (renovación cada 30s) |
 | **Docker restart policy** | `unless-stopped`/`on-failure` | Recuperación automática ante caídas no controladas |
 | **depends_on + condition** | Cadena completa | Orden de inicio garantizado |
 
@@ -160,7 +160,7 @@ Estos warnings no afectan la funcionalidad del sistema pero representan mejoras 
 
 | Iteración | Objetivo | Métricas objetivo |
 |-----------|----------|-------------------|
-| V3 (actual) | Entrega funcional microservicios + frontend + monitoreo | 11/11 smoke tests, 9/9 contenedores healthy, 4/4 Prometheus targets UP |
+| V3 (actual) | Entrega funcional microservicios + frontend + monitoreo | 11/11 smoke tests, 10/10 contenedores healthy, 5/5 Prometheus targets UP |
 | V4 | Logging centralizado + excepciones globales + alertas | Loki/Grafana, handler global, Alertmanager |
 | V5 | Kubernetes + escalado | Despliegue K8s con HPA, migración a `lb://` |
 

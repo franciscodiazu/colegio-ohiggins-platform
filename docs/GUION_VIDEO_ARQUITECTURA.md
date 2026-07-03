@@ -1,7 +1,7 @@
 # Guion Video de Arquitectura — Colegio O'Higgins Platform
 **Duración estimada:** 12–15 min | **Checklist EV3:** Items 1–52 (Video Arquitectura)
 **Equipo:** Francisco Diaz, Genesis Flores, Emilio Hormazabal
-**Preparación:** Docker Compose corriendo (9/9 healthy), pantalla partida: editor + navegador
+**Preparación:** Docker Compose corriendo (10/10 healthy), pantalla partida: editor + navegador
 
 ---
 
@@ -50,9 +50,9 @@
 | Tiempo | Acción en pantalla | Locución |
 |--------|-------------------|----------|
 | 4:55 | Abrir `ms-attendance/` estructura, mostrar `ControladorAsistencia.java` | "Pasando a ms-attendance, el manejo de registros se centraliza en ControladorAsistencia.java. Gestiona la asistencia: registro por curso y fecha, con regla de negocio de un solo registro por estudiante por día." |
-| 5:10 | Abrir paquete `strategy/` — mostrar `ValidationStrategy`, `AsistenciaStrategy` | "Aplicamos el patrón Strategy: cada estado de asistencia —Presente, Atraso, Inasistencia— es una estrategia de validación con su propia lógica. Se selecciona en tiempo de ejecución según el valor recibido." |
+| 5:10 | Abrir paquete `factory/` — mostrar `PresenteFactory`, `AtrasoFactory`, `InasistenciaFactory` | "Aplicamos el patrón Factory: cada estado de asistencia —Presente, Atraso, Inasistencia— tiene su propia fábrica que construye el objeto de dominio con validaciones específicas. Se selecciona en tiempo de ejecución según el estado recibido." |
 | 5:30 | Abrir `ClienteEstudiantes.java` con `@CircuitBreaker` | "Para garantizar la resiliencia ante fallos de comunicación, implementamos el patrón Circuit Breaker en ClienteEstudiantes.java. Si ms-students no responde, se abre el circuito y retorna una respuesta por defecto, evitando que un error en cadena afecte a todo el clúster." |
-| 5:50 | Abrir paquete `factory/` — mostrar `StudentFactory` | "También aplicamos Factory Pattern para la creación de objetos complejos, centralizando la lógica de construcción." |
+| 5:50 | Abrir paquete `factory/` — mostrar `AsistenciaFactory` y sus implementaciones | "También aplicamos el patrón Factory Method: la interfaz `AsistenciaFactory` define el contrato y cada estado concreto (Presente, Atraso, Inasistencia) implementa su propia lógica de construcción." |
 | 6:05 | Mostrar `GlobalExceptionHandler.java` — tabla de excepciones | "El manejo de excepciones está centralizado en un GlobalExceptionHandler que captura errores de validación, recursos no encontrados, excepciones de JPA, y retorna códigos HTTP semánticos con mensajes descriptivos." |
 
 ### 3c. Cross-cutting (~1:00 min)
@@ -61,7 +61,7 @@
 |--------|-------------------|----------|
 | 6:30 | Mostrar `application.properties` en cada MS | "Cada microservicio tiene su archivo de configuración con datasource, eureka, server port, logging, y métricas. Se levantan individualmente con `docker compose up ms-students` o todos juntos." |
 | 6:45 | Mostrar logs en consola: `docker compose logs ms-students --tail 20` | "El logging interno con SLF4J permite rastrear peticiones, errores y tiempos de respuesta. Además, cada servicio expone métricas via Actuator y Prometheus." |
-| 7:05 | Mostrar `docs/INFORME_AUDITORIA_EV3.md` sección 4 — cobertura JaCoCo | "Las pruebas unitarias y de integración están documentadas. 175 tests Java pasan correctamente. La cobertura JaCoCo se exporta como reporte HTML en `docs/coverage-report/`." |
+| 7:05 | Mostrar `docs/INFORME_AUDITORIA_EV3.md` sección 4 — cobertura JaCoCo | "Las pruebas unitarias y de integración están documentadas. 174 tests Java pasan correctamente. La cobertura JaCoCo se exporta como reporte HTML." |
 | 7:25 | Transición | "Ahora veamos cómo protegemos el acceso." |
 
 ---
@@ -71,8 +71,8 @@
 
 | Tiempo | Acción en pantalla | Locución |
 |--------|-------------------|----------|
-| 7:30 | Abrir `api-gateway/src/main/java/.../security/jwt/JwtTokenProvider.java` | "La gestión de identidades y tokens se maneja a través de JwtTokenProvider.java, encargado de la firma y validación de tokens. Implementamos autenticación JWT con tokens de acceso de 30 minutos y refresh tokens de 7 días revocables." |
-| 7:45 | Señalar `generateToken()`, `validateToken()` | "El JWT se genera con el email y rol del usuario, firmado con HMAC-SHA256. En cada petición, el Gateway valida la firma, fecha de expiración, y extrae el subject para los controladores." |
+| 7:30 | Abrir `api-gateway/src/main/java/.../security/jwt/JwtTokenProvider.java` | "La gestión de identidades y tokens se maneja a través de JwtTokenProvider.java, encargado de la firma y validación de tokens. Implementamos autenticación JWT con tokens de acceso de 15 minutos y refresh tokens de 7 días revocables." |
+| 7:45 | Señalar `generateToken()`, `validateToken()` | "El JWT se genera con el email y rol del usuario, firmado con HMAC-SHA384. En cada petición, el Gateway valida la firma, fecha de expiración, y extrae el subject para los controladores." |
 | 8:00 | Mostrar `security/config/SecurityConfig.java` con cadena de filtros | "Toda la configuración de seguridad, incluyendo filtros y políticas de acceso, se define de manera modular en SecurityConfig.java. El `JwtAuthenticationFilter` intercepta cada request antes del ruteo, extrae el token del header Authorization, lo valida y lo inyecta en el contexto de seguridad." |
 | 8:20 | Mostrar `application.properties` con rutas protegidas | "El ruteo y balanceo no dependen de clases pesadas, sino que se define directamente en application.properties, centralizando la configuración de los Predicates y Filters. Las peticiones `/api/students/**` van a ms-students, `/api/asistencia/**` a ms-attendance, y `/api/v1/auth/**` se maneja internamente. Solo el login y register son públicos; el resto requiere token." |
 | 8:40 | Transición | "Y el API Gateway orquesta todo." |
@@ -85,7 +85,7 @@
 | Tiempo | Acción en pantalla | Locución |
 |--------|-------------------|----------|
 | 8:45 | Mostrar `application.properties` con rutas del gateway | "El API Gateway es el punto único de entrada. Implementa Spring Cloud Gateway MVC con routing dinámico y balanceo de carga." |
-| 9:00 | Mostrar rutas en properties: `/api/students/**` → `http://localhost:8081`, `/api/asistencia/**` → `http://localhost:8082` | "Como ven en la configuración, los servicios se acceden vía rutas directas optimizando la resolución de nombres en el clúster Docker. Cada ruta tiene un filtro JWT que valida el token antes de reenviar la petición." |
+| 9:00 | Mostrar rutas en properties: `/api/students/**` → `ms-students:8081`, `/api/asistencia/**` → `ms-attendance:8082`, `/api/clases/**` y `/api/evaluaciones/**` → `ms-attendance:8082` | "Como ven en la configuración, los servicios se acceden vía nombres DNS del clúster Docker con reescritura de paths. Cada ruta tiene validación JWT antes de reenviar la petición." |
 | 9:15 | Mostrar `JwtAuthenticationFilter.java` | "La seguridad en el Gateway se aplica mediante JwtAuthenticationFilter.java, que intercepta cada petición antes de llegar al servicio final. Se valida el token, y si es inválido, se rechaza con 401." |
 | 9:35 | Transición | "Pasemos al monitoreo." |
 
@@ -96,7 +96,7 @@
 
 | Tiempo | Acción en pantalla | Locución |
 |--------|-------------------|----------|
-| 9:40 | Abrir `http://localhost:9090/targets` — mostrar 4/4 UP | "Justificamos el monitoreo porque en una arquitectura de microservicios, es crítico detectar fallas temprano. Prometheus scrapea cada 5 segundos los endpoints `/actuator/prometheus` de los 4 servicios Java." |
+| 9:40 | Abrir `http://localhost:9090/targets` — mostrar 5/5 UP | "Justificamos el monitoreo porque en una arquitectura de microservicios, es crítico detectar fallas temprano. Prometheus scrapea cada 5 segundos los endpoints `/actuator/prometheus` de los 5 servicios Java (api-gateway, backend-bff, ms-students, ms-attendance, admin-server)." |
 | 10:00 | Abrir `http://localhost:3000` — login admin/admin, mostrar dashboard JVM Micrometer | "Grafana se aprovisiona automáticamente sin configuración manual. Importa el dashboard JVM Micrometer con 27 paneles que muestran: memoria heap, uso de CPU, tasas de solicitudes HTTP, tiempos de respuesta, y estado de los threads." |
 | 10:20 | Señalar los 4 servicios en las series del dashboard | "Si un microservicio falla, sus series de métricas JVM desaparecen del dashboard. Además, Prometheus marca el target como DOWN en `/targets`, y Eureka cambia su estado a DOWN. Entre los 3 sistemas —Prometheus, Grafana, Eureka— la detección de fallas es inmediata." |
 | 10:40 | Mostrar `Infra/monitoring/prometheus.yml` | "La configuración está en `Infra/monitoring/`. Para mejoras futuras, tenemos planificado integrar Loki para logs centralizados y alertas vía Alertmanager." |
@@ -110,11 +110,11 @@
 | Tiempo | Acción en pantalla | Locución |
 |--------|-------------------|----------|
 | 11:00 | Abrir `http://localhost:5173` en navegador, mostrar login | "El frontend es una SPA con React 19 + Vite 8. Elegimos React por su ecosistema maduro, componentes reutilizables y testing con Vitest." |
-| 11:15 | Mostrar página de Dashboard (login con `ana.perez@profesor.cl`, pass `123456`) | "Las reglas de negocio en frontend incluyen 3 principales: validación de RUT en formularios, roles inferidos por dominio de correo (.profesor.cl, .alum.cl), y bloqueo de asistencia duplicada por estudiante/día." |
+| 11:15 | Mostrar página de Dashboard (login con `ana.perez@profesor.cl`, pass `123456`) | "Las reglas de negocio en frontend incluyen: validación de RUT en formularios, roles inferidos por dominio de correo (@profesor.cl, @alum.cl, @apod.cl), y bloqueo de asistencia duplicada por estudiante/día." |
 | 11:30 | Abrir DevTools Network, mostrar interceptor axios con Bearer token | "La seguridad se implementa con un interceptor de Axios que agrega el token JWT a cada petición. Si recibe 401, intenta refresh automático antes de redirigir a login." |
 | 11:45 | Mostrar `src/components/ConfirmModal.jsx`, `TableSkeleton.jsx` | "Aplicamos patrón Container/Presenter: las páginas manejan estado y lógica, los componentes reutilizables reciben props y renderizan UI. El hook personalizado `useFieldValidation` centraliza la validación en tiempo real." |
 | 12:00 | Mostrar tabla de errores en `frontend/README.md` sección de manejo de errores | "Para manejo de excepciones, tenemos 5 escenarios documentados: error de red muestra mensaje de conexión, 401 redirige a login, 400 muestra errores de validación, 500 muestra fallback, y timeout muestra botón de reintento." |
-| 12:15 | Mostrar test runner: `npm test` en frontend (349 pass) | "Las pruebas unitarias corren con Vitest: 349 tests en 18 suites. Playwright E2E cubre el flujo completo registro → login → dashboard → logout con 16 tests." |
+| 12:15 | Mostrar test runner: `npm test` en frontend | "Las pruebas unitarias corren con Vitest: más de 290 tests. Playwright E2E cubre el flujo completo registro, login, dashboard y logout." |
 | 12:30 | Cierre | "El estándar de rendimiento definido: latencia p99 menor a 2s, uptime 99.5%, tiempo de carga de página <3s. La plataforma está preparada para escalar horizontalmente agregando instancias detrás del Gateway." |
 
 ---
@@ -139,5 +139,5 @@
 - **Editor:** Split screen: 70% código/navegador, 30% cámara (opcional)
 - **Auto-captions:** Recomendado
 - **Transiciones:** Cortes directos entre bloques
-- **Repaso antes de grabar:** Ejecutar `docker compose ps` para confirmar 9/9 healthy, abrir todas las URLs de antemano
+- **Repaso antes de grabar:** Ejecutar `docker compose ps` para confirmar 10/10 healthy, abrir todas las URLs de antemano
 - **Posibles contratiempos:** Si algún contenedor no responde, reiniciar con `docker compose restart <servicio>`

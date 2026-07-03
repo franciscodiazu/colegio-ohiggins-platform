@@ -1,5 +1,6 @@
 package com.backend.ms_students.service;
 
+import com.backend.ms_students.dto.StudentUpdateDto;
 import com.backend.ms_students.model.Student;
 import com.backend.ms_students.repository.StudentRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -141,10 +142,10 @@ class StudentServiceTest {
     @Test
     void updateStudent_cuandoExiste_debeActualizarYRetornarEstudiante() {
         // Arrange
-        Student detallesActualizados = new Student();
-        detallesActualizados.setRut("11111111-1");
-        detallesActualizados.setName("Juan Pérez Actualizado");
-        detallesActualizados.setGrade("6°A");
+        StudentUpdateDto dto = new StudentUpdateDto();
+        dto.setRut("11111111-1");
+        dto.setName("Juan Pérez Actualizado");
+        dto.setGrade("6°A");
 
         Student estudianteActualizado = new Student();
         estudianteActualizado.setId(1L);
@@ -156,7 +157,7 @@ class StudentServiceTest {
         when(studentRepository.save(any(Student.class))).thenReturn(estudianteActualizado);
 
         // Act
-        Optional<Student> resultado = studentService.updateStudent(1L, detallesActualizados);
+        Optional<Student> resultado = studentService.updateStudent(1L, dto);
 
         // Assert
         assertTrue(resultado.isPresent());
@@ -172,8 +173,13 @@ class StudentServiceTest {
         // Arrange
         when(studentRepository.findById(99L)).thenReturn(Optional.empty());
 
+        StudentUpdateDto dto = new StudentUpdateDto();
+        dto.setRut("99999999-9");
+        dto.setName("No Existe");
+        dto.setGrade("0°Z");
+
         // Act
-        Optional<Student> resultado = studentService.updateStudent(99L, student);
+        Optional<Student> resultado = studentService.updateStudent(99L, dto);
 
         // Assert
         assertFalse(resultado.isPresent());

@@ -30,7 +30,7 @@ docker build -f Infra/docker/bff.Dockerfile -t backend-bff:local .
 
 ## Configuracion y Endpoints
 
-- Puerto local por defecto: 8080 | Puerto en contenedor Docker: 8083 (vía variable de entorno)
+- Puerto: 8083 (configurable vía `SERVER_PORT`)
 - Path base: /
 
 El BFF redirige las peticiones a los siguientes servicios:
@@ -54,7 +54,7 @@ Ejecutar pruebas:
 
 - MS_STUDENTS_URL: URL del microservicio de estudiantes.
 - MS_ATTENDANCE_URL: URL del microservicio de asistencia.
-- SERVER_PORT: Puerto de escucha del BFF (por defecto 8080).
+- SERVER_PORT: Puerto de escucha del BFF (por defecto 8083).
 
 ## Notas
 

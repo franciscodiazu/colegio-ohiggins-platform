@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import React from 'react';
 import { LayoutCard, LayoutSection } from '../components/layout/BaseLayout';
 import { studentsService } from '../services/bffClient';
-import { evaluationsMockService } from '../services/evaluationsMockService';
+import { evaluationsService } from '../services/evaluationsService';
 import TableSkeleton from '../components/TableSkeleton';
 
 const emptyFeedback = { error: '', success: '' };
@@ -32,19 +32,21 @@ export default function Evaluaciones() {
   const [studentQueryRows, setStudentQueryRows] = useState([]);
   const [courseQueryRows, setCourseQueryRows] = useState([]);
   const [queryFeedback, setQueryFeedback] = useState(emptyFeedback);
+  const [studentQueryLoading, setStudentQueryLoading] = useState(false);
+  const [courseQueryLoading, setCourseQueryLoading] = useState(false);
 
   useEffect(() => {
     const loadInitialData = async () => {
       setLoading(true);
       try {
-        const [studentsList, evaluationsList, gradesList] = await Promise.all([
+        const results = await Promise.allSettled([
           studentsService.listStudents(),
-          evaluationsMockService.listEvaluations(),
-          evaluationsMockService.listGrades(),
+          evaluationsService.listEvaluations(),
+          evaluationsService.listGrades(),
         ]);
-        setStudents(studentsList);
-        setEvaluaciones(evaluationsList);
-        setCalificaciones(gradesList);
+        setStudents(results[0].status === 'fulfilled' ? results[0].value : []);
+        setEvaluaciones(results[1].status === 'fulfilled' ? results[1].value : []);
+        setCalificaciones(results[2].status === 'fulfilled' ? results[2].value : []);
       } catch (err) {
         console.error('No se pudo cargar módulo de evaluaciones', err);
       } finally {
@@ -84,7 +86,7 @@ export default function Evaluaciones() {
   const handleAddEvaluation = (e) => {
     e.preventDefault();
     setCreateEvalFeedback(emptyFeedback);
-    evaluationsMockService.createEvaluation(evaluationForm)
+    evaluationsService.createEvaluation(evaluationForm)
       .then((created) => {
         setEvaluaciones((prev) => [...prev, created]);
         setEvaluationForm((prev) => ({ ...prev, nombre: '', curso: '', descripcion: '' }));
@@ -105,7 +107,7 @@ export default function Evaluaciones() {
     e.preventDefault();
     setEditEvalFeedback(emptyFeedback);
     if (!selectedEvaluationId) { setEditEvalFeedback({ error: 'Selecciona una evaluación para actualizar.', success: '' }); return; }
-    evaluationsMockService.updateEvaluation(selectedEvaluationId, editEvaluationForm)
+    evaluationsService.updateEvaluation(selectedEvaluationId, editEvaluationForm)
       .then((updated) => {
         if (!updated) { setEditEvalFeedback({ error: 'No encontramos la evaluación seleccionada.', success: '' }); return; }
         setEvaluaciones((prev) => prev.map((item) => (item.id === updated.id ? updated : item)));
@@ -117,7 +119,7 @@ export default function Evaluaciones() {
   const handleAddGrade = (e) => {
     e.preventDefault();
     setGradeFeedback(emptyFeedback);
-    evaluationsMockService.createGrade(gradeForm)
+    evaluationsService.createGrade(gradeForm)
       .then((created) => {
         setCalificaciones((prev) => [...prev, created]);
         setGradeForm((prev) => ({ ...prev, studentId: '', nota: '', observacion: '' }));
@@ -130,25 +132,29 @@ export default function Evaluaciones() {
     e.preventDefault();
     setQueryFeedback(emptyFeedback);
     if (!queryStudentId) { setQueryFeedback({ error: 'Selecciona un estudiante para consultar sus calificaciones.', success: '' }); return; }
-    evaluationsMockService.listGradesByStudent(queryStudentId)
+    setStudentQueryLoading(true);
+    evaluationsService.listGradesByStudent(queryStudentId)
       .then((records) => {
         const mapped = mapGradeRowsWithDetails(records);
         setStudentQueryRows(mapped);
         setQueryFeedback({ error: '', success: `${mapped.length} registro(s) encontrado(s).` });
       })
-      .catch(() => setQueryFeedback({ error: 'No se pudieron consultar las calificaciones por estudiante.', success: '' }));
+      .catch((err) => setQueryFeedback({ error: err.userMessage || err.message || 'No se pudieron consultar las calificaciones por estudiante.', success: '' }))
+      .finally(() => setStudentQueryLoading(false));
   };
 
   const handleQueryEvaluationsByCourse = (e) => {
     e.preventDefault();
     setQueryFeedback(emptyFeedback);
     if (!queryCourse) { setQueryFeedback({ error: 'Selecciona un curso para consultar evaluaciones.', success: '' }); return; }
-    evaluationsMockService.listEvaluationsByCourse(queryCourse)
+    setCourseQueryLoading(true);
+    evaluationsService.listEvaluationsByCourse(queryCourse)
       .then((records) => {
         setCourseQueryRows(records);
         setQueryFeedback({ error: '', success: `${records.length} evaluación(es) encontrada(s).` });
       })
-      .catch(() => setQueryFeedback({ error: 'No se pudieron consultar evaluaciones por curso.', success: '' }));
+      .catch((err) => setQueryFeedback({ error: err.userMessage || err.message || 'No se pudieron consultar evaluaciones por curso.', success: '' }))
+      .finally(() => setCourseQueryLoading(false));
   };
 
   return (
@@ -370,9 +376,10 @@ export default function Evaluaciones() {
                 {students.map((student) => <option key={student.id} value={student.id}>{student.nombre} ({student.curso})</option>)}
               </select>
             </div>
-            <button type="submit" className="btn btn--neutral btn--block">Consultar</button>
+            <button type="submit" className="btn btn--neutral btn--block" disabled={studentQueryLoading}>Consultar</button>
           </form>
           <div className="query-results">
+            {studentQueryLoading && <p className="asistencia-hint">Consultando...</p>}
             <table className="app-table">
               <thead><tr><th>Evaluación</th><th>Fecha</th><th>Nota</th></tr></thead>
               <tbody>
@@ -403,9 +410,10 @@ export default function Evaluaciones() {
                 {courses.map((course) => <option key={course} value={course}>{course}</option>)}
               </select>
             </div>
-            <button type="submit" className="btn btn--indigo btn--block">Consultar</button>
+            <button type="submit" className="btn btn--indigo btn--block" disabled={courseQueryLoading}>Consultar</button>
           </form>
           <div className="query-results">
+            {courseQueryLoading && <p className="asistencia-hint">Consultando...</p>}
             <table className="app-table">
               <thead><tr><th>Evaluación</th><th>Fecha</th><th>Ponderación</th></tr></thead>
               <tbody>

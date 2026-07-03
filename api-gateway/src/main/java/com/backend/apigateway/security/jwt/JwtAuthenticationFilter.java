@@ -32,7 +32,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = extractToken(request);
 
-        if (StringUtils.hasText(token) && jwtTokenProvider.validateToken(token)) {
+        if (!StringUtils.hasText(token)) {
+            log.debug("No se encontro token JWT en la request: {} {}", request.getMethod(), request.getRequestURI());
+        } else if (jwtTokenProvider.validateToken(token)) {
             String username = jwtTokenProvider.getUsernameFromToken(token);
             String role = jwtTokenProvider.getRoleFromToken(token);
 
@@ -42,7 +44,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     new UsernamePasswordAuthenticationToken(username, null, authorities);
 
             SecurityContextHolder.getContext().setAuthentication(authentication);
-            log.debug("Auth JWT exitosa para: {}", username);
+            log.info("Auth JWT exitosa para: {} (role: {})", username, role);
+        } else {
+            log.warn("Token JWT invalido/expirado en request: {} {}", request.getMethod(), request.getRequestURI());
         }
 
         filterChain.doFilter(request, response);

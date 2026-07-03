@@ -1,8 +1,7 @@
 import { bffClient } from './bffClient';
 
 /**
- * attendanceService.js - Servicio real de asistencia que se conecta al BFF
- * Reemplaza attendanceMockService.js con llamadas HTTP reales
+ * attendanceService.js - Servicio HTTP real de asistencia
  */
 
 export const attendanceService = {
@@ -84,10 +83,13 @@ export const attendanceService = {
             }
 
             // Mapear desde frontend a backend (ms-attendance espera snake_case)
+            const isInasistencia = payload.estado === 'AUSENTE' || payload.estado === 'JUSTIFICADO';
             const backendPayload = {
                 estudiante_id: Number(payload.studentId),
+                clase_id: Number(payload.classId),
                 fecha_registro: new Date().toISOString().slice(0, 10),
-                tipo_registro: payload.estado === 'AUSENTE' ? 'INASISTENCIA' : payload.estado,
+                tipo_registro: isInasistencia ? 'INASISTENCIA' : payload.estado,
+                es_justificada: payload.estado === 'JUSTIFICADO',
                 ...(payload.observacion && { notas: payload.observacion })
             };
 

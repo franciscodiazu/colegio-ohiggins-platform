@@ -10,8 +10,8 @@ vi.mock('../../services/bffClient', () => ({
   studentsService: { listStudents: vi.fn() },
 }));
 
-vi.mock('../../services/evaluationsMockService', () => ({
-  evaluationsMockService: {
+vi.mock('../../services/evaluationsService', () => ({
+  evaluationsService: {
     listEvaluations: vi.fn(),
     listGrades: vi.fn(),
     createEvaluation: vi.fn(),
@@ -32,7 +32,7 @@ vi.mock('../../components/TableSkeleton', () => ({
 }));
 
 import { studentsService } from '../../services/bffClient';
-import { evaluationsMockService } from '../../services/evaluationsMockService';
+import { evaluationsService } from '../../services/evaluationsService';
 
 const today = new Date().toISOString().slice(0, 10);
 
@@ -51,8 +51,8 @@ const mockCalificaciones = [
 
 const setupMocks = (overrides = {}) => {
   studentsService.listStudents.mockResolvedValue(overrides.students ?? mockStudents);
-  evaluationsMockService.listEvaluations.mockResolvedValue(overrides.evaluaciones ?? mockEvaluaciones);
-  evaluationsMockService.listGrades.mockResolvedValue(overrides.calificaciones ?? mockCalificaciones);
+  evaluationsService.listEvaluations.mockResolvedValue(overrides.evaluaciones ?? mockEvaluaciones);
+  evaluationsService.listGrades.mockResolvedValue(overrides.calificaciones ?? mockCalificaciones);
 };
 
 const waitForLoad = () =>
@@ -115,7 +115,7 @@ describe('Evaluaciones — renderizado inicial', () => {
 describe('Evaluaciones — registro de evaluación', () => {
   it('llama a createEvaluation con los datos correctos', async () => {
     const newEval = { id: 802, nombre: 'Control 1', curso: '1A', fecha: today, ponderacion: 20, descripcion: '' };
-    evaluationsMockService.createEvaluation.mockResolvedValue(newEval);
+    evaluationsService.createEvaluation.mockResolvedValue(newEval);
     setupMocks();
     render(<Evaluaciones />);
     await waitForLoad();
@@ -126,7 +126,7 @@ describe('Evaluaciones — registro de evaluación', () => {
     await userEvent.click(screen.getByRole('button', { name: /guardar evaluación/i }));
 
     await waitFor(() =>
-      expect(evaluationsMockService.createEvaluation).toHaveBeenCalledWith(
+      expect(evaluationsService.createEvaluation).toHaveBeenCalledWith(
         expect.objectContaining({ nombre: 'Control 1', curso: '1A' })
       )
     );
@@ -134,7 +134,7 @@ describe('Evaluaciones — registro de evaluación', () => {
 
   it('muestra mensaje de éxito tras crear evaluación', async () => {
     const newEval = { id: 802, nombre: 'Test Eval', curso: '1A', fecha: today, ponderacion: 30, descripcion: '' };
-    evaluationsMockService.createEvaluation.mockResolvedValue(newEval);
+    evaluationsService.createEvaluation.mockResolvedValue(newEval);
     setupMocks();
     render(<Evaluaciones />);
     await waitForLoad();
@@ -151,7 +151,7 @@ describe('Evaluaciones — registro de evaluación', () => {
 
   it('muestra error si falla el servicio al crear', async () => {
     // Simulamos un error del backend
-    evaluationsMockService.createEvaluation.mockRejectedValue(new Error('Error de validación del backend'));
+    evaluationsService.createEvaluation.mockRejectedValue(new Error('Error de validación del backend'));
     setupMocks();
     render(<Evaluaciones />);
     await waitForLoad();
@@ -194,7 +194,7 @@ describe('Evaluaciones — actualización de evaluación', () => {
 
   it('llama a updateEvaluation al guardar cambios', async () => {
     const updated = { ...mockEvaluaciones[0], nombre: 'Prueba 1 Actualizada' };
-    evaluationsMockService.updateEvaluation.mockResolvedValue(updated);
+    evaluationsService.updateEvaluation.mockResolvedValue(updated);
     setupMocks();
     render(<Evaluaciones />);
     await waitForLoad();
@@ -207,11 +207,11 @@ describe('Evaluaciones — actualización de evaluación', () => {
 
     await userEvent.click(updateBtn);
 
-    await waitFor(() => expect(evaluationsMockService.updateEvaluation).toHaveBeenCalledWith('801', expect.any(Object)));
+    await waitFor(() => expect(evaluationsService.updateEvaluation).toHaveBeenCalledWith('801', expect.any(Object)));
   });
 
   it('muestra éxito tras actualizar evaluación', async () => {
-    evaluationsMockService.updateEvaluation.mockResolvedValue({ ...mockEvaluaciones[0] });
+    evaluationsService.updateEvaluation.mockResolvedValue({ ...mockEvaluaciones[0] });
     setupMocks();
     render(<Evaluaciones />);
     await waitForLoad();
@@ -240,7 +240,7 @@ describe('Evaluaciones — registro de calificación', () => {
 
   it('llama a createGrade al registrar calificación válida', async () => {
     const newGrade = { id: 5, evaluationId: 801, studentId: 1, nota: '6.0' };
-    evaluationsMockService.createGrade.mockResolvedValue(newGrade);
+    evaluationsService.createGrade.mockResolvedValue(newGrade);
     
     // 🔴 LA MAGIA AQUÍ: Pasamos calificaciones vacías para que el estudiante 1 no esté bloqueado
     setupMocks({ calificaciones: [] }); 
@@ -255,12 +255,12 @@ describe('Evaluaciones — registro de calificación', () => {
     await waitFor(() => expect(saveGradeBtn).toBeEnabled());
     await userEvent.click(saveGradeBtn);
 
-    await waitFor(() => expect(evaluationsMockService.createGrade).toHaveBeenCalled());
+    await waitFor(() => expect(evaluationsService.createGrade).toHaveBeenCalled());
   });
 
   it('muestra éxito tras registrar calificación', async () => {
     const newGrade = { id: 5, evaluationId: 801, studentId: 1, nota: '6.0' };
-    evaluationsMockService.createGrade.mockResolvedValue(newGrade);
+    evaluationsService.createGrade.mockResolvedValue(newGrade);
     
     // 🔴 LA MAGIA AQUÍ: Igual que arriba
     setupMocks({ calificaciones: [] });
@@ -297,7 +297,7 @@ describe('Evaluaciones — consultas', () => {
   });
 
   it('llama a listGradesByStudent con el id correcto', async () => {
-    evaluationsMockService.listGradesByStudent.mockResolvedValue([]);
+    evaluationsService.listGradesByStudent.mockResolvedValue([]);
     setupMocks();
     render(<Evaluaciones />);
     await waitForLoad();
@@ -308,7 +308,7 @@ describe('Evaluaciones — consultas', () => {
     await userEvent.click(consultarBtns[0]);
 
     await waitFor(() =>
-      expect(evaluationsMockService.listGradesByStudent).toHaveBeenCalledWith('1')
+      expect(evaluationsService.listGradesByStudent).toHaveBeenCalledWith('1')
     );
   });
 
@@ -326,7 +326,7 @@ describe('Evaluaciones — consultas', () => {
   });
 
   it('llama a listEvaluationsByCourse con el curso correcto', async () => {
-    evaluationsMockService.listEvaluationsByCourse.mockResolvedValue([]);
+    evaluationsService.listEvaluationsByCourse.mockResolvedValue([]);
     setupMocks();
     render(<Evaluaciones />);
     await waitForLoad();
@@ -337,7 +337,7 @@ describe('Evaluaciones — consultas', () => {
     await userEvent.click(consultarBtns[1]);
 
     await waitFor(() =>
-      expect(evaluationsMockService.listEvaluationsByCourse).toHaveBeenCalledWith('1A')
+      expect(evaluationsService.listEvaluationsByCourse).toHaveBeenCalledWith('1A')
     );
   });
 });

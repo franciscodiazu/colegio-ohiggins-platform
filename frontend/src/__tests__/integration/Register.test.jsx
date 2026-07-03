@@ -8,7 +8,7 @@ const { mockRegisterUser } = vi.hoisted(() => ({
   mockRegisterUser: vi.fn(),
 }));
 
-vi.mock('../../services/authMockService', () => ({
+vi.mock('../../services/authService', () => ({
   registerUser: mockRegisterUser,
   loginUser: vi.fn(),
   resetUserPassword: vi.fn(),

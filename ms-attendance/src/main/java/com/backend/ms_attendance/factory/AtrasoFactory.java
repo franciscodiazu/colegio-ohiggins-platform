@@ -5,6 +5,7 @@ import com.backend.ms_attendance.model.RegistroAsistencia;
 import com.backend.ms_attendance.model.RegistroAtraso;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Slf4j
@@ -17,10 +18,27 @@ public class AtrasoFactory implements AsistenciaFactory {
     public RegistroAsistencia crearRegistro(AsistenciaRequestDto dto) {
         log.debug("Creando RegistroAtraso desde dto: {}", dto);
 
-        if (dto.getEstudianteId() == null || dto.getFechaRegistro() == null
-            || dto.getHoraLlegada() == null) {
+        if (dto.getEstudianteId() == null || dto.getEstudianteId() <= 0) {
             throw new IllegalArgumentException(
-                "estudianteId, fechaRegistro y horaLlegada son obligatorios para crear RegistroAtraso"
+                "estudianteId es obligatorio y debe ser un número positivo para crear RegistroAtraso"
+            );
+        }
+
+        if (dto.getFechaRegistro() == null) {
+            throw new IllegalArgumentException(
+                "fechaRegistro es obligatoria para crear RegistroAtraso"
+            );
+        }
+
+        if (dto.getFechaRegistro().isAfter(LocalDate.now())) {
+            throw new IllegalArgumentException(
+                "No se puede registrar atraso en el futuro"
+            );
+        }
+
+        if (dto.getHoraLlegada() == null) {
+            throw new IllegalArgumentException(
+                "horaLlegada es obligatoria para crear RegistroAtraso"
             );
         }
 
@@ -40,6 +58,7 @@ public class AtrasoFactory implements AsistenciaFactory {
 
         RegistroAtraso registro = new RegistroAtraso();
         registro.setEstudianteId(dto.getEstudianteId());
+        registro.setClaseId(dto.getClaseId());
         registro.setFechaRegistro(dto.getFechaRegistro());
         registro.setNotas(dto.getNotas());
         registro.setHoraLlegada(horaLlegada);

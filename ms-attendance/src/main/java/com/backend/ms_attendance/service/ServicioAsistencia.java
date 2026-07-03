@@ -1,7 +1,7 @@
 package com.backend.ms_attendance.service;
 
 import com.backend.ms_attendance.dto.AsistenciaRequestDto;
-import com.backend.ms_attendance.dto.EstadísticasAsistenciaDto;
+import com.backend.ms_attendance.dto.EstadisticasAsistenciaDto;
 import com.backend.ms_attendance.factory.AsistenciaFactory;
 import com.backend.ms_attendance.model.RegistroAsistencia;
 import com.backend.ms_attendance.model.RegistroInasistencia;
@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -49,23 +50,12 @@ public class ServicioAsistencia {
         // La ejecución NO continúa más allá de este punto
         clienteEstudiantes.validarExistenciaEstudiante(dto.getEstudianteId());
 
-        // BLOQUEANTE 2: Validación del DTO para el tipo de registro
-        if (!dto.esValidoParaTipo()) {
-            log.error("Bloqueante 2 activado: DTO inválido para tipo {}", dto.getTipoRegistro());
-            throw new IllegalArgumentException(
-                String.format(
-                    "AsistenciaRequestDto inválido para tipo %s: %s",
-                    dto.getTipoRegistro(), dto
-                )
-            );
-        }
-
-        // BLOQUEANTE 3: Obtener factory para el tipo de registro
+        // BLOQUEANTE 2: Obtener factory para el tipo de registro
         String tipoRegistro = dto.getTipoRegistro().toUpperCase();
         AsistenciaFactory factory = mapaFactory.get(tipoRegistro);
 
         if (factory == null) {
-            log.error("Bloqueante 3 activado: no existe factory para tipo {}", tipoRegistro);
+            log.error("Bloqueante 2 activado: no existe factory para tipo {}", tipoRegistro);
             throw new IllegalArgumentException(
                 String.format(
                     "No existe factory registrada para tipo '%s'. " +
@@ -104,6 +94,22 @@ public class ServicioAsistencia {
         }
     }
 
+    public List<RegistroAsistencia> obtenerTodasLasAsistencias() {
+        log.debug("Listando todos los registros de asistencia");
+        return repositorio.findAll();
+    }
+
+    public List<RegistroAsistencia> obtenerAsistenciaPorCurso(String curso) {
+        log.debug("Buscando registros para estudiantes del curso: {}", curso);
+        List<Map<String, Object>> estudiantes = clienteEstudiantes.listarEstudiantes();
+        List<Long> ids = estudiantes.stream()
+            .filter(e -> curso.equals(e.get("grade")))
+            .map(e -> ((Number) e.get("id")).longValue())
+            .collect(Collectors.toList());
+        if (ids.isEmpty()) return List.of();
+        return repositorio.findByEstudianteIdIn(ids);
+    }
+
     public List<RegistroAsistencia> obtenerAsistenciaEstudiante(Long estudianteId) {
         log.debug("Buscando todos los registros para estudiante: {}", estudianteId);
         List<RegistroAsistencia> registros = repositorio.findByEstudianteId(estudianteId);
@@ -126,7 +132,7 @@ public class ServicioAsistencia {
         return repositorio.findByEstudianteIdAndFechaRegistro(estudianteId, fecha);
     }
 
-    public EstadísticasAsistenciaDto obtenerEstadísticasEstudiante(Long estudianteId) {
+    public EstadisticasAsistenciaDto obtenerEstadísticasEstudiante(Long estudianteId) {
         log.debug("Calculando estadísticas para estudiante: {}", estudianteId);
 
         long cantidadPresentes = repositorio.countPresenteRegistros(estudianteId);
@@ -139,7 +145,7 @@ public class ServicioAsistencia {
             porcentajeAsistencia = (cantidadPresentes * 100.0) / cantidadTotal;
         }
 
-        return EstadísticasAsistenciaDto.builder()
+        return EstadisticasAsistenciaDto.builder()
             .estudianteId(estudianteId)
             .cantidadPresentes(cantidadPresentes)
             .cantidadInasistencias(cantidadInasistencias)

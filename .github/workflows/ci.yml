@@ -27,6 +27,9 @@ jobs:
       - name: Build production bundle
         working-directory: frontend
         run: npm run build
+      - name: Run unit tests
+        working-directory: frontend
+        run: npm run test
 
   api-gateway:
     name: Test api-gateway (Maven)
@@ -86,4 +89,34 @@ jobs:
           cache: 'maven'
       - name: Test with Maven
         working-directory: ms-attendance
+        run: mvn clean test -B
+
+  discovery-server:
+    name: Test discovery-server (Maven)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Test with Maven
+        working-directory: discovery-server
+        run: mvn clean test -B
+
+  admin-server:
+    name: Test admin-server (Maven)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Java 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Test with Maven
+        working-directory: admin-server
         run: mvn clean test -B

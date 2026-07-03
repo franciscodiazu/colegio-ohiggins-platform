@@ -18,6 +18,6 @@ export function LayoutSection({ title, subtitle, children, className }) {
   );
 }
 
-export function LayoutCard({ children, className }) {
-  return <article className={joinClassNames('layout-card', className)}>{children}</article>;
-}
+export const LayoutCard = React.forwardRef(({ children, className }, ref) => {
+  return <article ref={ref} className={joinClassNames('layout-card', className)}>{children}</article>;
+});

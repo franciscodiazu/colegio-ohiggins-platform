@@ -3,9 +3,7 @@
   "private": true,
   "scripts": {
     "install:frontend": "npm --prefix frontend install",
-    "install:ui": "npm --prefix packages/ui install",
     "dev:frontend": "npm --prefix frontend run dev",
-    "build:frontend": "npm --prefix frontend run build",
-    "build:ui": "npm --prefix packages/ui run build"
+    "build:frontend": "npm --prefix frontend run build"
   }
 }
